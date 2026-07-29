@@ -1,0 +1,25 @@
+---
+description: No source file may exceed 200 lines
+alwaysApply: true
+---
+
+# Max File Length: 200 Lines
+
+No project file may exceed **200 lines**.
+
+## When writing or editing
+
+- Before finishing a change, check the resulting file length.
+- If a file would exceed 200 lines, split it before saving.
+- Prefer extracting helpers, hooks, components, types, or constants into sibling modules.
+
+## How to split
+
+- One concern per file
+- Colocate related pieces under the same folder
+- Prefer more small files over one large file
+
+## Exceptions
+
+- Generated files (`node_modules/`, `.next/`, lockfiles) are exempt
+- Do not grow an existing file past 200 lines; split instead
