@@ -16,6 +16,11 @@ services:
     # at the same name the Mac's browser uses.
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    # The Next.js dev server runs inside the sandbox, so its port must be
+    # published or the Mac's browser cannot reach it. Bound to loopback rather
+    # than 0.0.0.0 — a dev server has no business being on the LAN.
+    ports:
+      - "127.0.0.1:3000:3000"
     volumes:
       - ${REPO_ROOT}:/workspace
       # ALSO mount the repo at its real host path. When inner runs `supabase

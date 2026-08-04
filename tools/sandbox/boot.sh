@@ -84,6 +84,16 @@ container_is_current() {
     *) return 1 ;;
   esac
 
+  # Published ports are baked in at create time. Without this check a container
+  # created before a `ports:` entry was added keeps running portless, and the
+  # dev server silently isn't reachable from the Mac.
+  local ports
+  ports="$(docker inspect -f '{{range $p, $_ := .HostConfig.PortBindings}}{{$p}} {{end}}' "$SANDBOX_NAME" 2>/dev/null || true)"
+  case "$ports" in
+    *"3000/tcp"*) ;;
+    *) return 1 ;;
+  esac
+
   if [ ! -d "$REFERENCE_ROOT" ]; then
     return 0
   fi
