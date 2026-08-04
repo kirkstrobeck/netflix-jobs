@@ -1,0 +1,10 @@
+{
+  "name": "@netflix-jobs/ingestor",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Mirrors the Netflix Eightfold careers board into local Supabase.",
+  "scripts": {
+    "ingest": "node bin/ingest.ts"
+  }
+}

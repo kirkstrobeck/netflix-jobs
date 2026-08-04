@@ -5,7 +5,12 @@
   "scripts": {
     "build": "turbo build",
     "dev": "turbo dev",
-    "lint": "turbo lint"
+    "lint": "turbo lint",
+    "db:forward": "node tools/supabase-port-forward.mjs",
+    "db:start": "supabase start",
+    "db:stop": "supabase stop",
+    "db:reset": "supabase db reset",
+    "ingest": "pnpm --filter @netflix-jobs/ingestor ingest"
   },
   "devDependencies": {
     "turbo": "^2.10.7"
