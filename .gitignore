@@ -2,6 +2,7 @@
 
 # dependencies
 node_modules/
+.pnpm-store/
 
 # testing
 /coverage
@@ -28,6 +29,9 @@ build/
 
 # vercel
 .vercel
+
+# sandbox credential + state cache — never commit
+tools/sandbox/.cache/
 
 # typescript
 *.tsbuildinfo

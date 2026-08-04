@@ -1,0 +1,74 @@
+services:
+  sandbox:
+    image: netflix-jobs-sandbox:local
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        HOST_UID: ${HOST_UID:-501}
+        HOST_GID: ${HOST_GID:-20}
+    container_name: ${SANDBOX_NAME}
+    working_dir: /workspace
+    # Reap zombies: detached children (supabase CLI helpers, background node)
+    # reparent to PID 1, and a bare `sleep infinity` never wait()s them.
+    init: true
+    # Inner resolves the host — and thus the host-published Supabase ports —
+    # at the same name the Mac's browser uses.
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ${REPO_ROOT}:/workspace
+      # ALSO mount the repo at its real host path. When inner runs `supabase
+      # start` against the host Colima daemon (via the socket below), the daemon
+      # bind-mounts paths from the CLIENT's filesystem. Mounting same-path means
+      # the migrations/config inner references resolve identically on the Colima
+      # VM, so the local stack actually comes up. Without this the daemon would
+      # mount empty/missing dirs (docker-socket path translation).
+      - ${REPO_ROOT}:${REPO_ROOT}
+      - /var/run/docker.sock:/var/run/docker.sock
+      # Container-isolated node_modules. The repo is bind-mounted from the Mac
+      # (darwin binaries); anything installed here must be linux-arm64. These
+      # named volumes shadow every node_modules dir on BOTH repo views so the
+      # container installs its OWN and never mutates the Mac's. Add a pair when
+      # a workspace package is added under apps/* or packages/*.
+      - nm_root:${REPO_ROOT}/node_modules
+      - nm_root:/workspace/node_modules
+      - nm_web:${REPO_ROOT}/apps/web/node_modules
+      - nm_web:/workspace/apps/web/node_modules
+      - nm_ingestor:${REPO_ROOT}/packages/ingestor/node_modules
+      - nm_ingestor:/workspace/packages/ingestor/node_modules
+      # Cached copy of host Claude state, refreshed by boot.sh, so inner never
+      # reads the host's live files mid-write.
+      #
+      # The credential lives inside a WRITABLE directory mount (not a read-only
+      # single file) so inner can persist its own OAuth token refresh. A
+      # read-only mount lets inner's refresh rotate the shared refresh token
+      # server-side without saving it, stranding the host on an invalidated
+      # token. boot.sh seeds it via `token-sync.sh pull`; dispatch.sh carries
+      # any refresh home via `push`.
+      - ${REPO_ROOT}/tools/sandbox/.cache/claude-home:/home/agent/.claude
+      - ${REPO_ROOT}/tools/sandbox/.cache/claude.json:/home/agent/.claude.json:ro
+    environment:
+      - HOST_GIT_NAME
+      - HOST_GIT_EMAIL
+      # The worktree's real host path. Commands that hand paths to the host
+      # Colima daemon must run from here so the bind mounts resolve on the VM.
+      - REPO_ROOT=${REPO_ROOT}
+      # Lets AGENTS.md / the outer gate distinguish inner from outer and avoid
+      # recursive dispatch.
+      - NETFLIX_JOBS_SANDBOX_INNER=1
+      # Prevent accidental git/editor prompts if inner forgets -m/-F.
+      - GIT_EDITOR=/bin/false
+      - VISUAL=/bin/false
+      - EDITOR=/bin/false
+    stdin_open: true
+    tty: true
+    command: ["sleep", "infinity"]
+
+# Per-worktree (project-name scoped) volumes holding the container's own linux
+# node_modules, kept separate from the Mac's darwin install. Populated by a
+# one-time pnpm install inside the container; persist across container recreate.
+volumes:
+  nm_root:
+  nm_web:
+  nm_ingestor:

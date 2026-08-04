@@ -1,0 +1,9 @@
+# Optional overlay: mounts a sibling repo read-only as reference material.
+#
+# Layered in by boot.sh only when REFERENCE_ROOT exists on the host, so the base
+# compose file stays valid on machines that don't have it. Read-only on purpose
+# — inner may read patterns (schema, ATS client) out of it, never write to it.
+services:
+  sandbox:
+    volumes:
+      - ${REFERENCE_ROOT}:/reference/easytopjobs:ro
