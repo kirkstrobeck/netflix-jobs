@@ -1,10 +1,24 @@
 import {
   buildOrbPath,
+  HEIGHT_EXTRA_MAX,
   mix,
+  OPACITY_MAX,
+  OPACITY_MIN,
+  ORB_COUNT,
+  TOP_FLOOR,
+  TOP_FLUSH_EVERY_N,
+  TOP_MAX_MIX_MIN,
+  VISIBLE_SPHERE_MAX,
+  WIDTH_PCT_MAX,
+  WIDTH_PCT_MIN,
+  WIDTH_REM_MAX,
+  WIDTH_REM_MIN,
+  Y_SPAN_MAX,
+  Y_SPAN_MIN,
   type OrbStop,
 } from "@/app/foo/end-glow-math";
 
-export const END_ORB_COUNT = 50;
+export const END_ORB_COUNT = ORB_COUNT;
 
 export type EndOrb = {
   width: string;
@@ -41,51 +55,50 @@ function easingFor(i: number): string {
 
 function sizeNorm(widthRem: number, widthPct: number, usePct: boolean): number {
   if (usePct) {
-    return clamp01((widthPct - 54.42) / (128.31 - 54.42));
+    return clamp01((widthPct - WIDTH_PCT_MIN) / (WIDTH_PCT_MAX - WIDTH_PCT_MIN));
   }
-  return clamp01((widthRem - 3.401) / (8.618 - 3.401));
+  return clamp01((widthRem - WIDTH_REM_MIN) / (WIDTH_REM_MAX - WIDTH_REM_MIN));
 }
 
 export function buildEndOrbs(): EndOrb[] {
   const peaks = uniquify(
-    Array.from({ length: END_ORB_COUNT }, (_, i) => mix(i, 0.05, 0.5, 11)),
+    Array.from({ length: ORB_COUNT }, (_, i) =>
+      mix(i, OPACITY_MIN, OPACITY_MAX, 11),
+    ),
     3,
   );
-  // Vertical band: top edge moves within [topMin, topMax], never past 100.
   const topMaxes = uniquify(
-    Array.from({ length: END_ORB_COUNT }, (_, i) => {
-      if (i % 6 === 0) {
+    Array.from({ length: ORB_COUNT }, (_, i) => {
+      if (i % TOP_FLUSH_EVERY_N === 0) {
         return 100;
       }
-      return mix(i, 55, 100, 15);
+      return mix(i, TOP_MAX_MIX_MIN, 100, 15);
     }),
     1,
-  ).map((t, i) => (i % 6 === 0 ? 100 : Math.min(100, t)));
+  ).map((t, i) => (i % TOP_FLUSH_EVERY_N === 0 ? 100 : Math.min(100, t)));
   const topMins = topMaxes.map((hi, i) => {
-    const span = mix(i, 27, 60, 16);
-    return +Math.max(25, hi - span).toFixed(1);
+    const span = mix(i, Y_SPAN_MIN, Y_SPAN_MAX, 16);
+    return +Math.max(TOP_FLOOR, hi - span).toFixed(1);
   });
-  // Height from the highest top so ≤35% of the sphere is ever visible
-  // (the rest hangs below the div). Taller = even less showing.
   const heights = topMaxes.map((hi, i) => {
-    const for35 = hi / 0.35;
-    return Math.round(mix(i, for35, for35 * 1.2, 1));
+    const forCap = hi / VISIBLE_SPHERE_MAX;
+    return Math.round(mix(i, forCap, forCap * HEIGHT_EXTRA_MAX, 1));
   });
   const widthPcts = uniquify(
-    Array.from({ length: END_ORB_COUNT }, (_, i) =>
-      Math.round(mix(i, 54.42, 128.31, 2)),
+    Array.from({ length: ORB_COUNT }, (_, i) =>
+      Math.round(mix(i, WIDTH_PCT_MIN, WIDTH_PCT_MAX, 2)),
     ),
     0,
   );
   const widthRems = uniquify(
-    Array.from({ length: END_ORB_COUNT }, (_, i) => mix(i, 3.401, 8.618, 3)),
+    Array.from({ length: ORB_COUNT }, (_, i) =>
+      mix(i, WIDTH_REM_MIN, WIDTH_REM_MAX, 3),
+    ),
     2,
   );
-  const easings = Array.from({ length: END_ORB_COUNT }, (_, i) =>
-    easingFor(i),
-  );
+  const easings = Array.from({ length: ORB_COUNT }, (_, i) => easingFor(i));
 
-  return Array.from({ length: END_ORB_COUNT }, (_, i) => {
+  return Array.from({ length: ORB_COUNT }, (_, i) => {
     const size = sizeNorm(widthRems[i], widthPcts[i], i % 5 === 0);
     const path = buildOrbPath(
       i,

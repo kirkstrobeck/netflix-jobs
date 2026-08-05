@@ -8,9 +8,11 @@ export default function Base() {
     <div className="end-glow" aria-hidden="true">
       <style>{END_GLOW_CSS}</style>
       <div className="end-glow__wash" />
-      {Array.from({ length: END_ORB_COUNT }, (_, i) => (
-        <div key={i} className={`end-glow__orb end-glow__orb--${i}`} />
-      ))}
+      <div className="end-glow__orbs">
+        {Array.from({ length: END_ORB_COUNT }, (_, i) => (
+          <div key={i} className={`end-glow__orb end-glow__orb--${i}`} />
+        ))}
+      </div>
     </div>
   );
 }

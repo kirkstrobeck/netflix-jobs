@@ -1,41 +1,39 @@
-function bez1d(t: number, a: number, b: number): number {
-  const u = 1 - t;
-  return 3 * u * u * t * a + 3 * u * t * t * b + t * t * t;
-}
-
-function refineT(
-  t: number,
-  x: number,
-  x1: number,
-  x2: number,
-  steps: number,
-): number {
-  if (steps <= 0) {
-    return t;
-  }
-  const xEst = bez1d(t, x1, x2);
-  const d = (bez1d(t + 1e-6, x1, x2) - xEst) / 1e-6;
-  if (Math.abs(d) < 1e-9) {
-    return t;
-  }
-  return refineT(t - (xEst - x) / d, x, x1, x2, steps - 1);
-}
-
-export function cubicBezier(
-  x1: number,
-  y1: number,
-  x2: number,
-  y2: number,
-  x: number,
-): number {
-  if (x <= 0) {
-    return 0;
-  }
-  if (x >= 1) {
-    return 1;
-  }
-  return bez1d(Math.min(1, Math.max(0, refineT(x, x, x1, x2, 10))), y1, y2);
-}
+/**
+ * End-glow tunables — edit these mins/maxes; path math is below.
+ * Speed: lower HOP_DURATION_*_S = faster. Min speed → SLOW; max speed → FAST.
+ */
+export const ORB_COUNT = 50;
+export const OPACITY_MIN = 0.05;
+export const OPACITY_MAX = 0.5;
+export const WIDTH_REM_MIN = 3.401;
+export const WIDTH_REM_MAX = 9.48;
+export const WIDTH_PCT_MIN = 54.42;
+export const WIDTH_PCT_MAX = 141.14;
+export const HOP_DURATION_FAST_S = 7.98;
+export const HOP_DURATION_SLOW_S = 20.52;
+export const HOP_DURATION_FLOOR_S = 0.7;
+export const LOOP_DURATION_MIN_S = 207.69;
+export const LOOP_DURATION_MAX_S = 253.85;
+export const TRAVEL_X_MIN = 3;
+export const TRAVEL_X_MAX = 14;
+export const TRAVEL_Y_MIN = 6;
+export const TRAVEL_Y_MAX = 24;
+export const WALK_X_MIN = -18;
+export const WALK_X_MAX = 118;
+export const TOP_MAX_MIX_MIN = 55;
+export const TOP_FLUSH_EVERY_N = 6;
+export const Y_SPAN_MIN = 27;
+export const Y_SPAN_MAX = 60;
+export const TOP_FLOOR = 25;
+export const VISIBLE_SPHERE_MAX = 0.35;
+export const HEIGHT_EXTRA_MAX = 1.2;
+export const FLIP_ODDS_MIN = 0.28;
+export const FLIP_ODDS_MAX = 0.58;
+export const ORBS_BLUR_PX = 0;
+export const WASH_BEZIER_X1 = 0.12;
+export const WASH_BEZIER_Y1 = 0.72;
+export const WASH_BEZIER_X2 = 0.22;
+export const WASH_BEZIER_Y2 = 1;
 
 export function mix(i: number, a: number, b: number, salt: number): number {
   const t = ((i * 17 + salt * 13) % 97) / 96;
@@ -50,34 +48,28 @@ export type OrbStop = {
   opacity: number;
 };
 
-const LOOP_S = 300;
-
 function clamp(n: number, lo: number, hi: number): number {
   return Math.min(hi, Math.max(lo, n));
 }
 
 function hopDuration(i: number, size: number, travel: number): number {
-  const base = mix(i, 4, 36.4, 4) / 0.75 / 0.7 / 0.75;
-  const sized = base * ((1.9 - size * 1.4) / 1.2);
-  const full = Math.max(sized, 22 + (1 - size) * 30);
-  // +25% min speed ×3, then +20%; prior +25%/+25% on fast end.
-  const slowMax = 90 / 1.25 / 1.25 / 1.25 / 1.2;
-  const fastMin = Math.min(
-    slowMax,
-    ((22 / 1.25 / 1.15) * (1 / 0.6) * (1 / 0.7)) / 1.25 / 1.25,
-  );
-  const t = clamp((full - 22) / (90 - 22), 0, 1);
+  const s = clamp(size, 0, 1);
+  const base =
+    HOP_DURATION_FAST_S + (1 - s) * (HOP_DURATION_SLOW_S - HOP_DURATION_FAST_S);
   return Math.max(
-    3.2 / 1.25 / 1.25,
-    (fastMin + t * (slowMax - fastMin)) * (travel / 100),
+    HOP_DURATION_FLOOR_S,
+    base * mix(i, 0.92, 1.08, 4) * (travel / 100),
   );
 }
 
-/** Irregular runs — sometimes keep going, sometimes snap back (not LRLR). */
 function nextDir(i: number, leg: number, axis: number, prev: 1 | -1): 1 | -1 {
-  const flipOdds = mix(i * 31 + axis * 17, 0.28, 0.58, 40 + (leg % 11));
-  const roll = mix(i * 97 + leg * 53 + axis * 71, 0, 1, 100 + leg + axis * 3);
-  if (roll < flipOdds) {
+  const flip = mix(
+    i * 31 + axis * 17,
+    FLIP_ODDS_MIN,
+    FLIP_ODDS_MAX,
+    40 + (leg % 11),
+  );
+  if (mix(i * 97 + leg * 53 + axis * 71, 0, 1, 100 + leg + axis * 3) < flip) {
     return prev === 1 ? -1 : 1;
   }
   return prev;
@@ -128,18 +120,12 @@ function step(
   if (acc.time >= target) {
     return acc;
   }
-  const travelX = +mix(i * 7 + acc.leg * 13, 3, 14, 12 + (acc.leg % 9)).toFixed(2);
-  const travelY = +mix(i * 11 + acc.leg * 19, 6, 24, 16 + (acc.leg % 8)).toFixed(2);
-  const x = nudge(acc.left, nextDir(i, acc.leg, 0, acc.dirX), travelX, -18, 118);
+  const travelX = +mix(i * 7 + acc.leg * 13, TRAVEL_X_MIN, TRAVEL_X_MAX, 12).toFixed(2);
+  const travelY = +mix(i * 11 + acc.leg * 19, TRAVEL_Y_MIN, TRAVEL_Y_MAX, 16).toFixed(2);
+  const x = nudge(acc.left, nextDir(i, acc.leg, 0, acc.dirX), travelX, WALK_X_MIN, WALK_X_MAX);
   const y = nudge(acc.top, nextDir(i, acc.leg, 1, acc.dirY), travelY, topMin, topMax);
   const dur = hopDuration(i, size, Math.max(travelX, travelY));
   const pct = (s: number) => +((s / target) * 100).toFixed(2);
-  const stop: OrbStop = {
-    at: pct(acc.time + dur),
-    left: x.to,
-    bottom: +(y.to - height).toFixed(2),
-    opacity: flameOpacity(i, acc.leg, peak),
-  };
   return step(i, size, peak, height, topMin, topMax, target, {
     time: acc.time + dur,
     leg: acc.leg + 1,
@@ -147,11 +133,18 @@ function step(
     top: y.to,
     dirX: x.dir,
     dirY: y.dir,
-    stops: [...acc.stops, stop],
+    stops: [
+      ...acc.stops,
+      {
+        at: pct(acc.time + dur),
+        left: x.to,
+        bottom: +(y.to - height).toFixed(2),
+        opacity: flameOpacity(i, acc.leg, peak),
+      },
+    ],
   });
 }
 
-/** Continuous flame walk: short steps, messy flips, ~5 minutes. */
 export function buildOrbPath(
   i: number,
   size: number,
@@ -160,7 +153,7 @@ export function buildOrbPath(
   topMin: number,
   topMax: number,
 ): { duration: number; stops: OrbStop[] } {
-  const target = mix(i, LOOP_S * 0.9, LOOP_S * 1.1, 4);
+  const target = mix(i, LOOP_DURATION_MIN_S, LOOP_DURATION_MAX_S, 4);
   const startLeft = +mix(i, -5, 105, 6).toFixed(2);
   const startTop = +mix(i, topMin, topMax, 15).toFixed(2);
   const dirX: 1 | -1 = mix(i, 0, 1, 50) >= 0.5 ? 1 : -1;
