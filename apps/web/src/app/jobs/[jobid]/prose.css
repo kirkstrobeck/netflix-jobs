@@ -96,6 +96,23 @@
   text-underline-offset: 0.2em;
 }
 
+/* 480 of the 481 crawled descriptions wrap their link text as
+   <a><span><u>here</u></span></a> -- the sanitizer keeps span and u, stripping
+   only their attributes. The <u> was painting its own currentColor underline on
+   top of the anchor's red one, so those links rendered two lines in two colours
+   at two offsets.
+
+   Dropping the <u>'s own decoration leaves exactly one line, the anchor's: a
+   text-decoration set on an ancestor is drawn across its inline descendants and
+   cannot be switched off by them, so `none` here removes the <u>'s line without
+   touching the link's. That is also why this does not restate the colour --
+   the single surviving underline is the anchor's, so it stays in the link red
+   and keeps the hover transition. A <u> outside a link is untouched by this
+   selector and keeps the rule above. */
+.job-prose a u {
+  text-decoration: none;
+}
+
 .job-prose a {
   color: #fff;
   text-decoration: underline;
@@ -106,7 +123,7 @@
 }
 
 .job-prose a:hover {
-  text-decoration-color: #e50914;
+  text-decoration-color: var(--accent);
 }
 
 .job-prose blockquote {

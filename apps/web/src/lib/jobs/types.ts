@@ -31,9 +31,12 @@ export type Job = {
 // invariant worth asserting; the exact run lengths are a fact about today's
 // crawl, not a rule.
 //
-// What this must reject is input that can never name a posting, because that
-// answers a different 404: FUCK-OFF (punctuation), hello (no digits), the empty
-// segment, and 790298014263 (the old position_id -- digits with no letters).
+// This no longer selects between two 404 pages -- there is only one now. Its
+// remaining job is to spare the database a round trip for input that can never
+// name a posting: FUCK-OFF (punctuation), hello (no digits), the empty segment,
+// and 790298014263 (the old position_id -- digits with no letters). Rejecting
+// here and returning no row are the same outcome for the visitor, so a false
+// negative would silently 404 a real job; that is why the shape stays loose.
 export function isJobId(value: string): boolean {
   return /^[A-Za-z]+[0-9]+$/.test(value);
 }

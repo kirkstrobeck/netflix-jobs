@@ -1,43 +1,24 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-import { isJobId } from "@/lib/jobs/types";
-
-// Two jobs, both pure string work over the path:
+// Canonicalize the request path so each page has one address instead of one per
+// casing. Canonical is: static route segments lowercase, and the job code
+// UPPERCASE -- AJRT30201, JR41912 -- because that is the form Netflix prints on
+// the posting and the form all 481 rows are stored in.
 //
-// 1. Canonicalize casing. Static route segments lowercase, and the job code
-//    UPPERCASE -- AJRT30201, JR41912 -- because that is the form Netflix prints
-//    on the posting and the form all 481 rows are stored in. An earlier version
-//    lowercased the WHOLE path, which was only defensible while the id was
-//    position_id, a bigint with no letters to lose.
+// An earlier version lowercased the WHOLE path. That was only defensible while
+// the id was position_id, a bigint with no letters to lose. Against an
+// alphanumeric code it destroys the key, so the code segment is deliberately the
+// one part that is not cased down.
 //
-// 2. Split the two 404s apart. A path whose code segment cannot be a job code at
-//    all is rewritten to /jobs/invalid, whose not-found says nothing was ever
-//    posted there. Well-formed-but-absent codes fall through to /jobs/[jobid],
-//    whose not-found says the role closed. Choosing between those messages has
-//    to happen before rendering, because a not-found boundary is per segment and
-//    takes no props.
-//
-// No database round trip happens here, and isJobId is a pure regex with no state
-// -- the docs' warning about shared modules in a proxy is about globals and
-// singletons, not about duplicating a predicate until the two copies disagree.
+// Casing is now the only thing this file does. It used to also sniff the shape of
+// the code segment and rewrite malformed ones to a second 404 route; that split
+// is gone, and every miss -- absent code or junk alike -- falls through to the
+// single 404 on /jobs/[jobid]. No database round trip happens here either.
 const JOBS_SEGMENT = "jobs";
-const INVALID_JOB_PATH = "/jobs/invalid";
 
-// split("/") on "/jobs/AJRT30201" yields ["", "jobs", "AJRT30201"], so a job code
-// is index 2 of exactly three segments under a "jobs" root. Anything deeper is
-// not a job URL and is left to the router's own 404.
-function jobCodeSegment(segments: string[]): string | null {
-  const looksLikeJobUrl =
-    segments.length === 3 && segments[1]?.toLowerCase() === JOBS_SEGMENT;
-
-  if (looksLikeJobUrl) {
-    return segments[2];
-  }
-
-  return null;
-}
-
+// split("/") on "/jobs/AJRT30201" yields ["", "jobs", "AJRT30201"], so the code
+// is index 2 under a "jobs" root. Every other segment is static.
 function canonicalSegment(segment: string, index: number, segments: string[]): string {
   if (index === 2 && segments[1]?.toLowerCase() === JOBS_SEGMENT) {
     return segment.toUpperCase();
@@ -46,7 +27,9 @@ function canonicalSegment(segment: string, index: number, segments: string[]): s
   return segment.toLowerCase();
 }
 
-function canonicalPath(segments: string[]): string {
+function canonicalPath(pathname: string): string {
+  const segments = pathname.split("/");
+
   return segments
     .map((segment, index) => canonicalSegment(segment, index, segments))
     .join("/");
@@ -54,18 +37,7 @@ function canonicalPath(segments: string[]): string {
 
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const segments = pathname.split("/");
-  const jobCode = jobCodeSegment(segments);
-
-  // Malformed input is never canonicalized first. Redirecting /jobs/fuck-off to
-  // /jobs/FUCK-OFF only to 404 it would spend a round trip dressing up a string
-  // that can never name a posting, so it goes straight to the honest 404. The
-  // rewrite keeps the typed URL in the address bar and the status at 404.
-  if (jobCode !== null && !isJobId(jobCode)) {
-    return NextResponse.rewrite(new URL(INVALID_JOB_PATH, request.url));
-  }
-
-  const canonical = canonicalPath(segments);
+  const canonical = canonicalPath(pathname);
 
   // The overwhelmingly common case: already canonical, so do nothing.
   if (canonical === pathname) {
