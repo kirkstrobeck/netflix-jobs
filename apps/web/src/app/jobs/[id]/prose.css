@@ -1,0 +1,124 @@
+/* Typography for the sanitized description. Selectors are descendant-based
+   because the markup comes from the database, not from JSX. */
+
+.job-prose {
+  /* ~68ch keeps the measure in the comfortable 65-75ch band. */
+  max-inline-size: 68ch;
+  color: #e8e8e8;
+  font-size: clamp(1.0625rem, 1rem + 0.2vw, 1.1875rem);
+  line-height: 1.75;
+  /* Long unbroken URLs in the copy must not force a horizontal scrollbar. */
+  overflow-wrap: anywhere;
+}
+
+.job-prose > :first-child {
+  margin-block-start: 0;
+}
+
+.job-prose > :last-child {
+  margin-block-end: 0;
+}
+
+.job-prose p {
+  margin-block: 1.25em;
+}
+
+/* The crawl leaves hundreds of <p></p> spacers behind. Collapsing them is what
+   keeps the vertical rhythm even instead of randomly gapped. */
+.job-prose p:empty {
+  display: none;
+}
+
+.job-prose h3,
+.job-prose h4,
+.job-prose h5,
+.job-prose h6 {
+  color: #fff;
+  font-weight: 700;
+  letter-spacing: -0.012em;
+  text-wrap: balance;
+}
+
+.job-prose h3 {
+  margin-block: 2.5em 0.75em;
+  font-size: 1.375em;
+  line-height: 1.25;
+}
+
+.job-prose h4 {
+  margin-block: 2em 0.65em;
+  font-size: 1.125em;
+  line-height: 1.35;
+}
+
+.job-prose h5,
+.job-prose h6 {
+  margin-block: 1.75em 0.5em;
+  font-size: 1em;
+}
+
+.job-prose ul,
+.job-prose ol {
+  margin-block: 1.25em;
+  padding-inline-start: 1.5em;
+}
+
+.job-prose ul {
+  list-style: disc;
+}
+
+.job-prose ol {
+  list-style: decimal;
+}
+
+.job-prose li {
+  margin-block: 0.5em;
+  padding-inline-start: 0.25em;
+}
+
+.job-prose li::marker {
+  color: #e50914;
+}
+
+.job-prose b,
+.job-prose strong {
+  color: #fff;
+  font-weight: 700;
+}
+
+.job-prose i,
+.job-prose em {
+  font-style: italic;
+}
+
+.job-prose u {
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.job-prose a {
+  color: #fff;
+  text-decoration: underline;
+  text-decoration-color: rgba(229, 9, 20, 0.9);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 0.22em;
+  transition: text-decoration-color 150ms ease;
+}
+
+.job-prose a:hover {
+  text-decoration-color: #e50914;
+}
+
+.job-prose blockquote {
+  margin-block: 1.75em;
+  margin-inline: 0;
+  padding-inline-start: 1.25em;
+  border-inline-start: 2px solid #e50914;
+  color: #f5f5f5;
+}
+
+.job-prose hr {
+  margin-block: 2.5em;
+  border: 0;
+  border-block-start: 1px solid rgba(255, 255, 255, 0.14);
+}

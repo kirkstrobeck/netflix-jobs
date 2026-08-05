@@ -1,0 +1,111 @@
+/* The masthead block: eyebrow, title, fact row, primary call to action. */
+
+.job-hero {
+  padding-block: clamp(2.5rem, 6vw, 4.5rem) clamp(2rem, 4vw, 3rem);
+  border-block-end: 1px solid var(--hairline);
+}
+
+.eyebrow {
+  margin: 0 0 1.25rem;
+  color: var(--ink-muted);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.job-title {
+  margin: 0;
+  max-inline-size: 22ch;
+  font-size: clamp(2rem, 1.2rem + 3.6vw, 3.5rem);
+  font-weight: 700;
+  line-height: 1.06;
+  letter-spacing: -0.022em;
+  text-wrap: balance;
+}
+
+.job-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.5rem;
+  margin: 1.75rem 0 0;
+  padding: 0;
+  list-style: none;
+  color: var(--ink-muted);
+  font-size: 1rem;
+}
+
+.job-facts__item {
+  position: relative;
+}
+
+/* Separator dots are drawn, not typed, so they never wrap onto a line alone. */
+.job-facts__item + .job-facts__item::before {
+  content: "";
+  position: absolute;
+  inset-inline-start: -0.8125rem;
+  inset-block-start: 0.55em;
+  inline-size: 3px;
+  block-size: 3px;
+  border-radius: 50%;
+  background: var(--ink-faint);
+}
+
+.job-facts__empty {
+  color: var(--ink-faint);
+}
+
+.apply-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  /* 48px clears the 44px minimum hit target. */
+  min-block-size: 3rem;
+  margin-block-start: 2.25rem;
+  padding: 0.75rem 2rem;
+  border-radius: 3px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 700;
+  text-decoration: none;
+  /* Compositor-only properties, so hover and press stay off the main thread. */
+  transition: opacity 150ms ease, transform 150ms ease;
+}
+
+.apply-button:hover {
+  opacity: 0.88;
+}
+
+.apply-button:active {
+  transform: scale(0.985);
+}
+
+.job-body {
+  display: grid;
+  gap: clamp(2.5rem, 5vw, 4rem);
+  padding-block: clamp(2.5rem, 5vw, 4rem) 6rem;
+}
+
+@media (min-width: 64rem) {
+  .job-body {
+    grid-template-columns: minmax(0, 1fr) 19rem;
+    align-items: start;
+  }
+}
+
+.section-heading {
+  margin: 0 0 1.5rem;
+  font-size: clamp(1.5rem, 1.25rem + 0.9vw, 1.875rem);
+  font-weight: 700;
+  letter-spacing: -0.012em;
+}
+
+.section-heading--small {
+  margin-block-end: 1.25rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+}
