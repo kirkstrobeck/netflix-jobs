@@ -1,0 +1,113 @@
+/* The ambient band, confined to the footer. */
+
+.job-footer {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  overflow: hidden;
+  /* Reserved before the video exists. The media layer is absolutely positioned
+     and so contributes nothing to layout: the band is this tall from first paint
+     whether the video loads, fails, or is blocked, which is why there is no
+     shift to measure. The source is 1824x1080 (1.689:1); honouring that
+     intrinsic ratio would make the band ~850px tall on a desktop viewport, so
+     the video is cropped with object-fit instead of driving the height. */
+  min-block-size: 24rem;
+  margin-block-start: 5rem;
+  /* Painted before the poster or video decodes, so there is no flash. */
+  background: var(--surface);
+  border-block-start: 1px solid var(--hairline);
+}
+
+.job-footer__media {
+  position: absolute;
+  inset: 0;
+  /* Decorative and inert: it can never swallow a click meant for the content. */
+  pointer-events: none;
+  /* The poster doubles as the reduced-motion still and as the pre-decode paint. */
+  background-color: var(--surface);
+  background-image: url("/video/ambient-light-poster.dc7199e6.jpg");
+  background-position: center;
+  background-size: cover;
+}
+
+.job-footer__video {
+  position: absolute;
+  inset: 0;
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: cover;
+}
+
+/* Readability beats motion. Fully opaque at the seam so the band joins the page
+   invisibly and no job content ever sits over moving pixels, then never lighter
+   than 0.86 anywhere text lands.
+
+   Measured against a pure white frame -- the brightest one that could possibly
+   exist, since actual frames cannot be sampled here -- 0.86 leaves a composite
+   of #2b2525, giving --ink 13.78:1 and --ink-muted 7.16:1. Both clear WCAG AA
+   4.5:1 with room, so no real frame can undercut it. Raising these stops is
+   safe; lowering any of them below 0.86 is not. */
+.job-footer__scrim {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    var(--surface) 0%,
+    rgba(8, 2, 2, 0.94) 16%,
+    rgba(8, 2, 2, 0.88) 48%,
+    rgba(8, 2, 2, 0.86) 100%
+  );
+}
+
+/* No client JS: the still frame stays as a background-image on the media layer,
+   and the moving picture is simply not rendered. */
+@media (prefers-reduced-motion: reduce) {
+  .job-footer__video {
+    display: none;
+  }
+}
+
+.job-footer__content {
+  position: relative;
+  inline-size: 100%;
+  display: grid;
+  gap: 2.25rem;
+  padding-block: 4rem 3rem;
+}
+
+/* Body copy, not fine print: full --ink, a measure that stays readable, and the
+   same accent rule the prose uses for pulled-out text. */
+.job-footer__notice {
+  max-inline-size: 62ch;
+  margin: 0;
+  padding-inline-start: 1.25rem;
+  border-inline-start: 2px solid var(--accent);
+  color: var(--ink);
+  font-size: 1.0625rem;
+  line-height: 1.65;
+  text-wrap: pretty;
+}
+
+.job-footer__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.875rem 2rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.job-footer__link {
+  color: var(--ink);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  text-decoration: underline;
+  text-decoration-color: rgba(229, 9, 20, 0.9);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 0.22em;
+  transition: text-decoration-color 150ms ease;
+}
+
+.job-footer__link:hover {
+  text-decoration-color: var(--accent);
+}

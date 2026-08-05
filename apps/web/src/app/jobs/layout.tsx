@@ -1,5 +1,6 @@
 import localFont from "next/font/local";
 
+import { SiteFooter } from "@/app/jobs/site-footer";
 import { SiteHeader } from "@/app/jobs/site-header";
 
 import "@/app/jobs/job-shell.css";
@@ -47,6 +48,11 @@ export default function JobsLayout({ children }: { children: React.ReactNode }) 
       <main className="shell job-main" id="job-main">
         {children}
       </main>
+
+      {/* After </main>, so the ambient band is strictly below every piece of job
+          content. .job-page carries the opaque --surface behind the article, so
+          nothing from the posting can sit over moving pixels. */}
+      <SiteFooter />
     </div>
   );
 }
