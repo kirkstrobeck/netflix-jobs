@@ -1,23 +1,20 @@
-import Link from "next/link";
+import { JobMissing } from "@/app/jobs/job-missing";
 
-import "@/app/jobs/[jobid]/job-hero.css";
-import "@/app/jobs/[jobid]/job-details.css";
-
+// State 1 of 2: the address is a well-formed job code -- JR99999, ZZZZ00000 --
+// that no active row matches. A code of that shape plausibly WAS a posting that
+// has since been filled or pulled, so saying the role closed is a fair claim.
+//
 // Rendered through notFound(), so this ships with a real 404 status rather than
 // a 200 page that merely says "not found". The masthead and font come from the
 // /jobs layout, which wraps this the same way it wraps a real job.
+//
+// Malformed input never reaches this file: proxy.ts rewrites it to /jobs/invalid
+// so that case can state what is actually true about it, instead of being folded
+// in here behind a "or never existed at this address" hedge.
 export default function JobNotFound() {
   return (
-    <div className="job-missing">
-      <p className="eyebrow">Error 404</p>
-      <h1 className="job-title">This role is no longer open</h1>
-      <p className="job-missing__body">
-        The job you are looking for has been filled, closed, or never existed at
-        this address.
-      </p>
-      <Link className="apply-button" href="/">
-        Back to Netflix Jobs
-      </Link>
-    </div>
+    <JobMissing headline="This role is no longer open">
+      The job you are looking for has been filled or closed.
+    </JobMissing>
   );
 }

@@ -19,13 +19,21 @@ export type Job = {
   posting_date: string | null;
 };
 
-// The URL key is display_job_id, the code Netflix prints on the posting. Across
-// all 481 rows it is ASCII alphanumeric and uppercase, but the shape is NOT the
-// uniform "4 letters + 5 digits" that AJRT30201 suggests: 480 rows are JR#####
-// (two letters) and exactly one is AJRT30201. Anchoring on either specific shape
-// would 404 the other, so this guard only rejects what can never be a code --
-// punctuation, path junk, and unbounded input -- and lets the database decide
-// whether a well-formed code actually exists.
+// The URL key is display_job_id, the code Netflix prints on the posting: ASCII
+// letters followed by digits.
+//
+// Measured over all 481 rows, the letter run is 2-4 long and the digit run is
+// always exactly 5. Those bounds are deliberately NOT encoded here. The shape is
+// not the uniform "4 letters + 5 digits" that AJRT30201 suggests -- 480 rows are
+// JR##### and exactly one is AJRT30201 -- so pinning the letter count to either
+// observation would 404 the other group, and pinning the digit count would break
+// on the first six-digit code Netflix issues. Letters-then-digits is the
+// invariant worth asserting; the exact run lengths are a fact about today's
+// crawl, not a rule.
+//
+// What this must reject is input that can never name a posting, because that
+// answers a different 404: FUCK-OFF (punctuation), hello (no digits), the empty
+// segment, and 790298014263 (the old position_id -- digits with no letters).
 export function isJobId(value: string): boolean {
-  return /^[A-Za-z0-9]{2,32}$/.test(value);
+  return /^[A-Za-z]+[0-9]+$/.test(value);
 }
