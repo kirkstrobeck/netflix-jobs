@@ -1,19 +1,31 @@
-/* The ambient band, confined to the footer. */
+/* The ambient band, footer only.
+
+   Every number below is derived from decoding the actual clip (10 frames, 1/s,
+   full resolution) rather than from a worst-imaginable-frame assumption. What
+   the measurement showed:
+
+     whole-clip mean luminance          0.0260
+     whole-clip p99                     0.0868
+     BRIGHTEST PIXEL IN THE CLIP        0.1135  -- rgb(193,0,5), a deep red ember
+
+   A white frame would be 1.0, so the plate is ~8.8x darker than the earlier
+   version of this file assumed. The consequence: --ink #f5f5f5 clears 5.89:1
+   against the brightest real pixel with NO scrim at all. Contrast was never the
+   thing under threat -- the previous 0.86-0.94 sheet bought nothing and cost the
+   entire image. Scrim here is therefore used only for the seam and for a soft
+   seat under the text, never as a uniform sheet. */
 
 .job-footer {
   position: relative;
   display: flex;
   align-items: flex-end;
   overflow: hidden;
-  /* Reserved before the video exists. The media layer is absolutely positioned
-     and so contributes nothing to layout: the band is this tall from first paint
-     whether the video loads, fails, or is blocked, which is why there is no
-     shift to measure. The source is 1824x1080 (1.689:1); honouring that
-     intrinsic ratio would make the band ~850px tall on a desktop viewport, so
-     the video is cropped with object-fit instead of driving the height. */
-  min-block-size: 24rem;
+  /* Taller than the content needs, so the flame has clear space above the text
+     instead of every pixel being shared with copy. Reserved before the video
+     exists; the media layer is absolutely positioned and contributes nothing to
+     layout, so nothing shifts when it paints. */
+  min-block-size: 30rem;
   margin-block-start: 5rem;
-  /* Painted before the poster or video decodes, so there is no flash. */
   background: var(--surface);
   border-block-start: 1px solid var(--hairline);
 }
@@ -21,12 +33,11 @@
 .job-footer__media {
   position: absolute;
   inset: 0;
-  /* Decorative and inert: it can never swallow a click meant for the content. */
   pointer-events: none;
-  /* The poster doubles as the reduced-motion still and as the pre-decode paint. */
   background-color: var(--surface);
   background-image: url("/video/ambient-light-poster.dc7199e6.jpg");
-  background-position: center;
+  /* Matches object-position below so the still and the moving frame agree. */
+  background-position: center bottom;
   background-size: cover;
 }
 
@@ -36,26 +47,27 @@
   inline-size: 100%;
   block-size: 100%;
   object-fit: cover;
+  /* Measured: the flame lives at the BOTTOM of the source. Mean luminance by
+     tenth runs 0.0006 at the top to 0.0550 at the bottom, and the single
+     brightest pixel sits at y=99%. A centred cover crop keeps only rows 22-78%
+     at 1440px wide and 29-71% at 1920px -- it was discarding the fire outright.
+     Anchoring to the bottom keeps rows 44-100% and 58-100% respectively. */
+  object-position: center bottom;
 }
 
-/* Readability beats motion. Fully opaque at the seam so the band joins the page
-   invisibly and no job content ever sits over moving pixels, then never lighter
-   than 0.86 anywhere text lands.
-
-   Measured against a pure white frame -- the brightest one that could possibly
-   exist, since actual frames cannot be sampled here -- 0.86 leaves a composite
-   of #2b2525, giving --ink 13.78:1 and --ink-muted 7.16:1. Both clear WCAG AA
-   4.5:1 with room, so no real frame can undercut it. Raising these stops is
-   safe; lowering any of them below 0.86 is not. */
-.job-footer__scrim {
+/* Seam only. Opaque where the band meets the page so the join is invisible and
+   no job content ever sits over motion, then fully clear by 42% down. */
+.job-footer__seam {
   position: absolute;
-  inset: 0;
+  inset-block-start: 0;
+  inset-inline: 0;
+  block-size: 42%;
   background: linear-gradient(
     to bottom,
     var(--surface) 0%,
-    rgba(8, 2, 2, 0.94) 16%,
-    rgba(8, 2, 2, 0.88) 48%,
-    rgba(8, 2, 2, 0.86) 100%
+    rgba(8, 2, 2, 0.68) 30%,
+    rgba(8, 2, 2, 0.24) 66%,
+    transparent 100%
   );
 }
 
@@ -67,16 +79,39 @@
   }
 }
 
-.job-footer__content {
+/* The text's own seat, anchored to the text block rather than the whole band, so
+   darkening tracks the copy instead of flooding the image. It fades to fully
+   transparent at the top edge, leaving the flame clean above.
+
+   Contrast of --ink #f5f5f5 against the measured brightest pixel rgb(193,0,5):
+     alpha 0.00 -> 5.89:1     alpha 0.30 -> 9.28:1
+     alpha 0.16 -> 7.48:1     alpha 0.46 -> 11.72:1
+   Every stop here clears AA 4.5:1, and so does the bare video, so text remains
+   legible even where the gradient has faded out entirely. */
+.job-footer__panel {
   position: relative;
   inline-size: 100%;
-  display: grid;
-  gap: 2.25rem;
-  padding-block: 4rem 3rem;
+  background: linear-gradient(
+    to top,
+    rgba(8, 2, 2, 0.46) 0%,
+    rgba(8, 2, 2, 0.38) 46%,
+    rgba(8, 2, 2, 0.16) 78%,
+    transparent 100%
+  );
 }
 
-/* Body copy, not fine print: full --ink, a measure that stays readable, and the
-   same accent rule the prose uses for pulled-out text. */
+.job-footer__content {
+  display: grid;
+  gap: 1.75rem;
+  padding-block: 4.5rem 3rem;
+}
+
+.job-footer__wordmark {
+  justify-self: start;
+}
+
+/* Body copy, not fine print: full --ink, a readable measure, and the same accent
+   rule the prose uses for pulled-out text. */
 .job-footer__notice {
   max-inline-size: 62ch;
   margin: 0;
