@@ -1,17 +1,18 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
-import { JobDescription } from "@/app/jobs/[id]/job-description";
-import { JobDetails } from "@/app/jobs/[id]/job-details";
-import { JobHeader } from "@/app/jobs/[id]/job-header";
+import { JobDescription } from "@/app/jobs/[jobid]/job-description";
+import { JobDetails } from "@/app/jobs/[jobid]/job-details";
+import { JobHeader } from "@/app/jobs/[jobid]/job-header";
 import { getJob } from "@/lib/jobs/get-job";
 import { listRecentJobIds } from "@/lib/jobs/job-ids";
 
-import "@/app/jobs/[id]/job-hero.css";
-import "@/app/jobs/[id]/job-details.css";
-import "@/app/jobs/[id]/prose.css";
+import "@/app/jobs/[jobid]/job-hero.css";
+import "@/app/jobs/[jobid]/job-details.css";
+import "@/app/jobs/[jobid]/prose.css";
 
-type JobPageProps = { params: Promise<{ id: string }> };
+// The key must match the [jobid] route segment.
+type JobPageProps = { params: Promise<{ jobid: string }> };
 
 // Required to return at least one param under `cacheComponents`. It also takes
 // `params` out of the runtime-API set, which is what lets this page await it
@@ -19,12 +20,12 @@ type JobPageProps = { params: Promise<{ id: string }> };
 export async function generateStaticParams() {
   const ids = await listRecentJobIds();
 
-  return ids.map((id) => ({ id }));
+  return ids.map((jobId) => ({ jobid: jobId }));
 }
 
 export async function generateMetadata({ params }: JobPageProps): Promise<Metadata> {
-  const { id } = await params;
-  const job = await getJob(id);
+  const { jobid: jobId } = await params;
+  const job = await getJob(jobId);
 
   if (!job) {
     return { title: "Job not found — Netflix Jobs" };
@@ -40,8 +41,8 @@ export async function generateMetadata({ params }: JobPageProps): Promise<Metada
 }
 
 export default async function JobPage({ params }: JobPageProps) {
-  const { id } = await params;
-  const job = await getJob(id);
+  const { jobid: jobId } = await params;
+  const job = await getJob(jobId);
 
   if (!job) {
     notFound();

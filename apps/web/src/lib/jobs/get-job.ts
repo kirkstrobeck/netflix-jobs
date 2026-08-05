@@ -26,17 +26,17 @@ const COLUMNS = [
 // Cached so the page is prerenderable: with `cacheComponents`, an uncached await
 // here would make the whole route block on the request instead of streaming a
 // static shell. The board is crawled on a schedule, so hours-old data is correct.
-export async function getJob(id: string): Promise<Job | null> {
+export async function getJob(jobId: string): Promise<Job | null> {
   "use cache";
   cacheLife("hours");
-  cacheTag("jobs", `job:${id}`);
+  cacheTag("jobs", `job:${jobId}`);
 
-  if (!isJobId(id)) {
+  if (!isJobId(jobId)) {
     return null;
   }
 
   const rows = await restGet<Job[]>(
-    `jobs?select=${COLUMNS}&position_id=eq.${id}&limit=1`,
+    `jobs?select=${COLUMNS}&position_id=eq.${jobId}&limit=1`,
   );
 
   return rows[0] ?? null;

@@ -1,7 +1,7 @@
 import Link from "next/link";
 
-import "@/app/jobs/[id]/job-hero.css";
-import "@/app/jobs/[id]/job-details.css";
+import "@/app/jobs/[jobid]/job-hero.css";
+import "@/app/jobs/[jobid]/job-details.css";
 
 // Rendered through notFound(), so this ships with a real 404 status rather than
 // a 200 page that merely says "not found". The masthead and font come from the
