@@ -30,8 +30,14 @@ export async function generateMetadata({ params }: JobPageProps): Promise<Metada
   const { jobid: jobId } = await params;
   const job = await getJob(jobId);
 
+  // notFound(), not a "Job not found" title. Throwing here takes the same branch
+  // the page takes, so the tab title comes from the not-found boundary's own
+  // <title>. The title this used to return was never rendered: once the page
+  // calls notFound(), Next discards the page's metadata and fell back to the
+  // layout's "Careers at Netflix", so the string was dead code that read as if
+  // it worked.
   if (!job) {
-    return { title: "Job not found — Netflix Jobs" };
+    notFound();
   }
 
   const description = job.description_text.slice(0, 155).trim();
