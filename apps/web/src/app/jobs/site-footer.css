@@ -20,11 +20,21 @@
   display: flex;
   align-items: flex-end;
   overflow: hidden;
-  /* Taller than the content needs, so the flame has clear space above the text
-     instead of every pixel being shared with copy. Reserved before the video
-     exists; the media layer is absolutely positioned and contributes nothing to
-     layout, so nothing shifts when it paints. */
-  min-block-size: 30rem;
+  /* Height IS the effect. The home page runs this plate over a min-h-svh box and
+     the long gentle ramp people like is simply the plate's own gradient given a
+     full viewport to spread across. Squeezed into 30rem it read first as a slab
+     and then, once masked, as a thin strip -- both were height problems wearing
+     a curve problem's clothes.
+
+     svh, not vh or dvh, to match the home page's min-h-svh: the small-viewport
+     unit is the one that does not resize as a mobile URL bar hides, so a band at
+     the very bottom of the page cannot jitter mid-scroll.
+
+     max() keeps a floor for short landscape viewports so the ramp always has
+     room. This is a minimum, not a fixed height, so the band still grows if the
+     content needs more; the media layer is absolutely positioned and contributes
+     nothing to layout, so nothing shifts when the video paints. */
+  min-block-size: max(30rem, 100svh);
   margin-block-start: 5rem;
   background: var(--surface);
   border-block-start: 1px solid var(--hairline);
@@ -40,54 +50,29 @@
      reduced-motion still shows the same full-frame ramp as the video. */
   background-size: 100% 100%;
 
-  /* The plate is faded out by masking the layer itself rather than painting
-     black over it, so there is one effect instead of two fighting.
+}
 
-     Shape, not just strength. An earlier version darkened only the top 42% and
-     left everything below fully exposed, which put the plate's own ramp across
-     the whole lower half: measured painted mean was 0.0334 at mid-band and
-     0.0749 at the base, a ratio of 2 -- a slab, not a glow. This is a quadratic
-     ease-in that is flat zero until 62% and then accelerates, so the same
-     measurement now reads 0.0010 at mid-band and 0.0749 at the base, a ratio of
-     75. Ten stops, because two stops over this distance band visibly on a dark
-     red.
+/* The home page's overlay, replicated stop for stop from app/page.tsx (read for
+   reference, never imported -- it is the user's file). Together with the box
+   height above, this is the entire reference treatment.
 
-     Mask alpha 0 at the top means the plate is simply not painted there and the
-     footer's own opaque --surface shows through, which is what keeps the join to
-     the page invisible -- the separate seam overlay this replaces is gone.
-
-     Prefixed as well as standard: Next targets Chrome 111+, and unprefixed
-     mask-image only shipped in Chrome 120. */
-  -webkit-mask-image: linear-gradient(
+   No mask, no bespoke curve. Two previous attempts reshaped this gradient -- a
+   0.86 flat scrim, then a quadratic mask -- and both were solving the wrong
+   variable. The plate's own ramp is the design; what it needs is height to run
+   over, not a different shape. This also serves as the top seam: 0.82 black over
+   plate rows that are already ~0.0006 lands within 0.001 luminance of --surface,
+   so the join needs nothing further. */
+.job-footer__media::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
     to bottom,
-    rgba(0, 0, 0, 0) 0%,
-    rgba(0, 0, 0, 0) 62%,
-    rgba(0, 0, 0, 0.016) 66.8%,
-    rgba(0, 0, 0, 0.063) 71.5%,
-    rgba(0, 0, 0, 0.141) 76.3%,
-    rgba(0, 0, 0, 0.25) 81%,
-    rgba(0, 0, 0, 0.391) 85.8%,
-    rgba(0, 0, 0, 0.563) 90.5%,
-    rgba(0, 0, 0, 0.766) 95.3%,
-    rgb(0, 0, 0) 100%
+    rgba(0, 0, 0, 0.82) 0%,
+    rgba(0, 0, 0, 0.7) 52%,
+    rgba(0, 0, 0, 0.24) 84%,
+    transparent 100%
   );
-  mask-image: linear-gradient(
-    to bottom,
-    rgba(0, 0, 0, 0) 0%,
-    rgba(0, 0, 0, 0) 62%,
-    rgba(0, 0, 0, 0.016) 66.8%,
-    rgba(0, 0, 0, 0.063) 71.5%,
-    rgba(0, 0, 0, 0.141) 76.3%,
-    rgba(0, 0, 0, 0.25) 81%,
-    rgba(0, 0, 0, 0.391) 85.8%,
-    rgba(0, 0, 0, 0.563) 90.5%,
-    rgba(0, 0, 0, 0.766) 95.3%,
-    rgb(0, 0, 0) 100%
-  );
-  -webkit-mask-size: 100% 100%;
-  mask-size: 100% 100%;
-  -webkit-mask-repeat: no-repeat;
-  mask-repeat: no-repeat;
 }
 
 .job-footer__video {
