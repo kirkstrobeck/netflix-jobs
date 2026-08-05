@@ -40,17 +40,6 @@
   overflow-wrap: anywhere;
 }
 
-.detail-list__link {
-  display: inline-block;
-  margin-block-start: 1.75rem;
-  color: var(--ink);
-  font-size: 0.9375rem;
-  text-decoration: underline;
-  text-decoration-color: var(--accent);
-  text-decoration-thickness: 2px;
-  text-underline-offset: 0.25em;
-}
-
 .job-missing {
   padding-block: clamp(4rem, 12vw, 8rem) 8rem;
   max-inline-size: 44ch;

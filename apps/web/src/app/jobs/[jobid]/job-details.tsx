@@ -37,15 +37,6 @@ export function JobDetails({ job }: { job: Job }) {
           </div>
         ))}
       </dl>
-
-      <a
-        className="detail-list__link"
-        href={job.canonical_url}
-        rel="noopener noreferrer"
-        target="_blank"
-      >
-        View on the Netflix careers site
-      </a>
     </aside>
   );
 }
