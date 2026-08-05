@@ -36,28 +36,44 @@ ensure_image() {
 
 prepare_cache() {
   mkdir -p "$CACHE_DIR/claude-home"
-  if [ ! -f "$CACHE_DIR/claude.json" ]; then
-    printf '%s\n' '{"hasCompletedOnboarding": true}' >"$CACHE_DIR/claude.json"
-  fi
   # Refresh the container's copy of ~/.claude.json from the host's live file.
   # The host rewrites it constantly, so a naive copy can catch a torn write;
   # retry until jq validates, and keep the last good copy if it never does.
   refresh_claude_json
+  ensure_valid_claude_json
   bash "$SCRIPT_DIR/token-sync.sh" pull >&2 || true
 }
 
 refresh_claude_json() {
-  local src="$HOME/.claude.json" attempt=0
+  local src="$HOME/.claude.json" tmp="$CACHE_DIR/claude.json.tmp" attempt=0
   [ -f "$src" ] || return 0
   while [ "$attempt" -lt 6 ]; do
-    if jq -e . "$src" >"$CACHE_DIR/claude.json.tmp" 2>/dev/null; then
-      mv -f "$CACHE_DIR/claude.json.tmp" "$CACHE_DIR/claude.json"
+    if jq -e . "$src" >"$tmp" 2>/dev/null; then
+      # Copy ONTO the existing file rather than renaming over it. This path is
+      # bind-mounted into the sandbox as a single file, and Docker binds the
+      # inode, not the name — a rename hands the host a new inode while the
+      # running container reads the old one forever. That is how a corrupted
+      # config survived every reboot: boot.sh kept repairing a file the
+      # container could no longer see.
+      cat "$tmp" >"$CACHE_DIR/claude.json"
+      rm -f "$tmp"
       return 0
     fi
     attempt=$((attempt + 1))
     sleep 0.2
   done
-  rm -f "$CACHE_DIR/claude.json.tmp"
+  rm -f "$tmp"
+}
+
+# Last line of defence. A corrupt config makes inner exit before it runs a
+# single tool, and it cannot repair the file itself — the mount is read-only.
+# Reseed in place so a bad copy can never brick dispatch.
+ensure_valid_claude_json() {
+  if jq -e . "$CACHE_DIR/claude.json" >/dev/null 2>&1; then
+    return 0
+  fi
+  echo "Cached claude.json is missing or invalid; reseeding." >&2
+  printf '%s\n' '{"hasCompletedOnboarding": true}' >"$CACHE_DIR/claude.json"
 }
 
 container_state() {
