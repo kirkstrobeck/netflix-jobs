@@ -11,7 +11,10 @@ import "@/app/jobs/[jobid]/job-hero.css";
 import "@/app/jobs/[jobid]/job-details.css";
 import "@/app/jobs/[jobid]/prose.css";
 
-// The key must match the [jobid] route segment.
+// The key must match the [jobid] route segment. `jobid` is the Netflix job code
+// from jobs.display_job_id (AJRT30201, JR41912) -- the id printed on the posting
+// -- not the position_id bigint, which stays the primary key but never appears
+// in a URL.
 type JobPageProps = { params: Promise<{ jobid: string }> };
 
 // Required to return at least one param under `cacheComponents`. It also takes

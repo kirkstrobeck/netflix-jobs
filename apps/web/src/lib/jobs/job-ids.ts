@@ -15,9 +15,14 @@ export async function listRecentJobIds(): Promise<string[]> {
   cacheLife("hours");
   cacheTag("jobs");
 
-  const rows = await restGet<Array<{ position_id: number }>>(
-    `jobs?select=position_id&is_active=eq.true&order=posting_date.desc.nullslast&limit=${SAMPLE_SIZE}`,
+  const rows = await restGet<Array<{ display_job_id: string | null }>>(
+    `jobs?select=display_job_id&is_active=eq.true&display_job_id=not.is.null&order=posting_date.desc.nullslast&limit=${SAMPLE_SIZE}`,
   );
 
-  return rows.map((row) => String(row.position_id));
+  // The column is nullable in the schema even though all 481 current rows have
+  // it, and a null here would prerender /jobs/null. The filter above asks the
+  // database to exclude them; this narrows the type to match.
+  return rows
+    .map((row) => row.display_job_id)
+    .filter((jobId): jobId is string => jobId !== null);
 }

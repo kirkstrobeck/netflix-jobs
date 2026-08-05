@@ -26,17 +26,26 @@ const COLUMNS = [
 // Cached so the page is prerenderable: with `cacheComponents`, an uncached await
 // here would make the whole route block on the request instead of streaming a
 // static shell. The board is crawled on a schedule, so hours-old data is correct.
+//
+// Lookup goes through the job_by_display_id RPC rather than a column filter
+// because PostgREST cannot express `upper(col) = upper($1)`. See
+// supabase/migrations/20260805120000_job_display_id_lookup.sql. The match is
+// case-insensitive at the database, so this never has to trust the caller's
+// casing -- which matters because getJob is also reached by the prerender, not
+// only by requests the proxy has already canonicalized.
 export async function getJob(jobId: string): Promise<Job | null> {
   "use cache";
   cacheLife("hours");
-  cacheTag("jobs", `job:${jobId}`);
+  // Tagged on the canonical uppercase form so one revalidateTag flushes every
+  // casing of the same job rather than leaving stale mixed-case entries behind.
+  cacheTag("jobs", `job:${jobId.toUpperCase()}`);
 
   if (!isJobId(jobId)) {
     return null;
   }
 
   const rows = await restGet<Job[]>(
-    `jobs?select=${COLUMNS}&position_id=eq.${jobId}&limit=1`,
+    `rpc/job_by_display_id?p_display_id=${encodeURIComponent(jobId)}&select=${COLUMNS}&limit=1`,
   );
 
   return rows[0] ?? null;

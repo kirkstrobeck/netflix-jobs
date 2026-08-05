@@ -19,8 +19,13 @@ export type Job = {
   posting_date: string | null;
 };
 
-// position_id is a bigint primary key. A value of any other shape is not a job id, and asking
-// PostgREST about it earns a 400 rather than an empty result.
+// The URL key is display_job_id, the code Netflix prints on the posting. Across
+// all 481 rows it is ASCII alphanumeric and uppercase, but the shape is NOT the
+// uniform "4 letters + 5 digits" that AJRT30201 suggests: 480 rows are JR#####
+// (two letters) and exactly one is AJRT30201. Anchoring on either specific shape
+// would 404 the other, so this guard only rejects what can never be a code --
+// punctuation, path junk, and unbounded input -- and lets the database decide
+// whether a well-formed code actually exists.
 export function isJobId(value: string): boolean {
-  return /^\d{1,19}$/.test(value);
+  return /^[A-Za-z0-9]{2,32}$/.test(value);
 }

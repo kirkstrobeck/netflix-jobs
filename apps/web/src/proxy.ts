@@ -1,19 +1,47 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-// Canonicalize the path to lowercase so /Jobs/... and /JOBS/... resolve to the
-// single lowercase address instead of becoming duplicate content.
+// Canonicalize the request path so each page has one address instead of one per
+// casing. Canonical is: static route segments lowercase, and the job code
+// UPPERCASE -- AJRT30201, JR41912 -- because that is the form Netflix prints on
+// the posting and the form all 481 rows are stored in.
 //
-// Lowercasing the WHOLE path is safe here because the only dynamic segment is a
-// job id, and position_id is a bigint primary key: all 481 rows are 12 digits
-// with zero non-digit characters, so no id can carry case to lose. If ids ever
-// gain letters, this must narrow to the static prefix segments only.
+// The previous version lowercased the WHOLE path. That was only defensible while
+// the id was position_id, a bigint with no letters to lose. Against an
+// alphanumeric code it destroys the key, so the code segment is now deliberately
+// the one part that is not cased down.
+//
+// This stays pure string work: the proxy runs ahead of the app, possibly on a
+// CDN, and the docs are explicit that it should not lean on shared modules. No
+// database round trip happens here -- an unknown code redirects to its uppercase
+// form and the page renders the 404.
+const JOBS_SEGMENT = "jobs";
+
+// split("/") on "/jobs/AJRT30201" yields ["", "jobs", "AJRT30201"], so the code
+// is index 2 under a "jobs" root. Every other segment is static.
+function canonicalSegment(segment: string, index: number, segments: string[]): string {
+  const isJobCode = index === 2 && segments[1]?.toLowerCase() === JOBS_SEGMENT;
+
+  if (isJobCode) {
+    return segment.toUpperCase();
+  }
+
+  return segment.toLowerCase();
+}
+
+function canonicalPath(pathname: string): string {
+  const segments = pathname.split("/");
+
+  return segments
+    .map((segment, index) => canonicalSegment(segment, index, segments))
+    .join("/");
+}
+
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const canonical = pathname.toLowerCase();
+  const canonical = canonicalPath(pathname);
 
-  // The overwhelmingly common case: already canonical, so do nothing. This is a
-  // string compare and no allocation before the early return.
+  // The overwhelmingly common case: already canonical, so do nothing.
   if (canonical === pathname) {
     return NextResponse.next();
   }
@@ -24,7 +52,7 @@ export function proxy(request: NextRequest) {
   url.pathname = canonical;
 
   // 308, not 307/302: permanent and method-preserving, so caches and crawlers
-  // settle on the lowercase URL.
+  // settle on the canonical URL.
   return NextResponse.redirect(url, 308);
 }
 
