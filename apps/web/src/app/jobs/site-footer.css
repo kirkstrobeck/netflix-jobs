@@ -39,6 +39,55 @@
   /* 100% 100% is the background-size equivalent of object-fit: fill, so the
      reduced-motion still shows the same full-frame ramp as the video. */
   background-size: 100% 100%;
+
+  /* The plate is faded out by masking the layer itself rather than painting
+     black over it, so there is one effect instead of two fighting.
+
+     Shape, not just strength. An earlier version darkened only the top 42% and
+     left everything below fully exposed, which put the plate's own ramp across
+     the whole lower half: measured painted mean was 0.0334 at mid-band and
+     0.0749 at the base, a ratio of 2 -- a slab, not a glow. This is a quadratic
+     ease-in that is flat zero until 62% and then accelerates, so the same
+     measurement now reads 0.0010 at mid-band and 0.0749 at the base, a ratio of
+     75. Ten stops, because two stops over this distance band visibly on a dark
+     red.
+
+     Mask alpha 0 at the top means the plate is simply not painted there and the
+     footer's own opaque --surface shows through, which is what keeps the join to
+     the page invisible -- the separate seam overlay this replaces is gone.
+
+     Prefixed as well as standard: Next targets Chrome 111+, and unprefixed
+     mask-image only shipped in Chrome 120. */
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0) 0%,
+    rgba(0, 0, 0, 0) 62%,
+    rgba(0, 0, 0, 0.016) 66.8%,
+    rgba(0, 0, 0, 0.063) 71.5%,
+    rgba(0, 0, 0, 0.141) 76.3%,
+    rgba(0, 0, 0, 0.25) 81%,
+    rgba(0, 0, 0, 0.391) 85.8%,
+    rgba(0, 0, 0, 0.563) 90.5%,
+    rgba(0, 0, 0, 0.766) 95.3%,
+    rgb(0, 0, 0) 100%
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0) 0%,
+    rgba(0, 0, 0, 0) 62%,
+    rgba(0, 0, 0, 0.016) 66.8%,
+    rgba(0, 0, 0, 0.063) 71.5%,
+    rgba(0, 0, 0, 0.141) 76.3%,
+    rgba(0, 0, 0, 0.25) 81%,
+    rgba(0, 0, 0, 0.391) 85.8%,
+    rgba(0, 0, 0, 0.563) 90.5%,
+    rgba(0, 0, 0, 0.766) 95.3%,
+    rgb(0, 0, 0) 100%
+  );
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
 }
 
 .job-footer__video {
@@ -59,22 +108,6 @@
      1824x1080 plate into a wide short band is fine: it is abstract light, not
      a photograph. */
   object-fit: fill;
-}
-
-/* Seam only. Opaque where the band meets the page so the join is invisible and
-   no job content ever sits over motion, then fully clear by 42% down. */
-.job-footer__seam {
-  position: absolute;
-  inset-block-start: 0;
-  inset-inline: 0;
-  block-size: 42%;
-  background: linear-gradient(
-    to bottom,
-    var(--surface) 0%,
-    rgba(8, 2, 2, 0.68) 30%,
-    rgba(8, 2, 2, 0.24) 66%,
-    transparent 100%
-  );
 }
 
 /* No client JS: the still frame stays as a background-image on the media layer,

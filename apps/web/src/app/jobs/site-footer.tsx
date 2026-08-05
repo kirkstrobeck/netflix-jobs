@@ -56,10 +56,6 @@ export function SiteFooter() {
           <source src={WEBM} type="video/webm" />
           <source src={MP4} type="video/mp4" />
         </video>
-
-        {/* Only the top edge is darkened, so the join to the page is invisible
-            while the rest of the band stays clear of the flame. */}
-        <div className="job-footer__seam" />
       </div>
 
       <div className="shell job-footer__content">
