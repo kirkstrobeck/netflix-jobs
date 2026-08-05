@@ -62,44 +62,42 @@ export function SiteFooter() {
         <div className="job-footer__seam" />
       </div>
 
-      <div className="job-footer__panel">
-        <div className="shell job-footer__content">
-          <h2 className="visually-hidden">Footer</h2>
+      <div className="shell job-footer__content">
+        <h2 className="visually-hidden">Footer</h2>
 
-          {/* Their job page footer carries a Netflix Jobs logo. This reuses the
-              masthead's text wordmark instead of hotlinking their CDN image:
-              nothing to download and nothing to reserve space for. */}
-          <Link className="wordmark job-footer__wordmark" href="/">
-            Netflix
-            <span className="wordmark__suffix">Jobs</span>
-          </Link>
+        {/* Their job page footer carries a Netflix Jobs logo. This reuses the
+            masthead's text wordmark instead of hotlinking their CDN image:
+            nothing to download and nothing to reserve space for. */}
+        <Link className="wordmark job-footer__wordmark" href="/">
+          Netflix
+          <span className="wordmark__suffix">Jobs</span>
+        </Link>
 
-          {/* Netflix sets this in grey fine print. It is an accommodation offer,
-              so here it gets body-copy size and the accent rule the prose uses. */}
-          <p className="job-footer__notice">
-            Inclusion is a Netflix value and we strive to host a meaningful
-            interview experience for all candidates. If you want an
-            accommodation/adjustment for a disability or any other reason during
-            the hiring process, please send a request to your recruiting partner.
-          </p>
+        {/* Netflix sets this in grey fine print. It is an accommodation offer,
+            so here it gets body-copy size and the accent rule the prose uses. */}
+        <p className="job-footer__notice">
+          Inclusion is a Netflix value and we strive to host a meaningful
+          interview experience for all candidates. If you want an
+          accommodation/adjustment for a disability or any other reason during
+          the hiring process, please send a request to your recruiting partner.
+        </p>
 
-          <nav aria-label="Footer">
-            <ul className="job-footer__links">
-              {LINKS.map((link) => (
-                <li key={link.href}>
-                  <a
-                    className="job-footer__link"
-                    href={link.href}
-                    rel="noopener noreferrer"
-                    target="_blank"
-                  >
-                    {link.label}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </nav>
-        </div>
+        <nav aria-label="Footer">
+          <ul className="job-footer__links">
+            {LINKS.map((link) => (
+              <li key={link.href}>
+                <a
+                  className="job-footer__link"
+                  href={link.href}
+                  rel="noopener noreferrer"
+                  target="_blank"
+                >
+                  {link.label}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </nav>
       </div>
     </footer>
   );

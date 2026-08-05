@@ -36,9 +36,9 @@
   pointer-events: none;
   background-color: var(--surface);
   background-image: url("/video/ambient-light-poster.dc7199e6.jpg");
-  /* Matches object-position below so the still and the moving frame agree. */
-  background-position: center bottom;
-  background-size: cover;
+  /* 100% 100% is the background-size equivalent of object-fit: fill, so the
+     reduced-motion still shows the same full-frame ramp as the video. */
+  background-size: 100% 100%;
 }
 
 .job-footer__video {
@@ -46,13 +46,19 @@
   inset: 0;
   inline-size: 100%;
   block-size: 100%;
-  object-fit: cover;
-  /* Measured: the flame lives at the BOTTOM of the source. Mean luminance by
-     tenth runs 0.0006 at the top to 0.0550 at the bottom, and the single
-     brightest pixel sits at y=99%. A centred cover crop keeps only rows 22-78%
-     at 1440px wide and 29-71% at 1920px -- it was discarding the fire outright.
-     Anchoring to the bottom keeps rows 44-100% and 58-100% respectively. */
-  object-position: center bottom;
+  /* fill, exactly as the home page does it (object-fill there). The ENTIRE frame
+     is shown, squashed into the band, aspect ratio deliberately not preserved.
+     That is the whole effect: the source carries a vertical luminance ramp from
+     0.0006 in its top tenth to 0.0550 in its bottom tenth, and showing the full
+     height is what makes that ramp read as a gentle fade.
+
+     Not cover. cover + object-position: center bottom zoomed into the bottom
+     ~42% of the plate, magnifying the ember zone into a flat red slab and
+     discarding the ramp -- the opposite of the intent. No object-position
+     either; it is meaningless once the whole frame is on screen. Squashing a
+     1824x1080 plate into a wide short band is fine: it is abstract light, not
+     a photograph. */
+  object-fit: fill;
 }
 
 /* Seam only. Opaque where the band meets the page so the join is invisible and
@@ -79,28 +85,16 @@
   }
 }
 
-/* The text's own seat, anchored to the text block rather than the whole band, so
-   darkening tracks the copy instead of flooding the image. It fades to fully
-   transparent at the top edge, leaving the flame clean above.
-
-   Contrast of --ink #f5f5f5 against the measured brightest pixel rgb(193,0,5):
-     alpha 0.00 -> 5.89:1     alpha 0.30 -> 9.28:1
-     alpha 0.16 -> 7.48:1     alpha 0.46 -> 11.72:1
-   Every stop here clears AA 4.5:1, and so does the bare video, so text remains
-   legible even where the gradient has faded out entirely. */
-.job-footer__panel {
+/* No bottom gradient. There was one here darkening 0.16 -> 0.46 toward the base
+   of the band, which was cancelling the exact thing the plate is for: the bottom
+   is where it should be reddest. It was never buying readability either --
+   measured, --ink clears 5.89:1 against the brightest pixel in the whole clip
+   with no scrim at all, and 9.15:1 against the worst pixel that actually lands
+   in the text's zone. It was only buying margin already in hand. The seam above
+   is the only darkening left. */
+.job-footer__content {
   position: relative;
   inline-size: 100%;
-  background: linear-gradient(
-    to top,
-    rgba(8, 2, 2, 0.46) 0%,
-    rgba(8, 2, 2, 0.38) 46%,
-    rgba(8, 2, 2, 0.16) 78%,
-    transparent 100%
-  );
-}
-
-.job-footer__content {
   display: grid;
   gap: 1.75rem;
   padding-block: 4.5rem 3rem;
