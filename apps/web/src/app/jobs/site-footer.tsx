@@ -1,18 +1,8 @@
 import Link from "next/link";
 
-import "@/app/jobs/site-footer.css";
+import { Glow } from "@/app/_glow/glow";
 
-// Deliberately NOT importing app/ambient-video.tsx. That file is the home page's
-// own in-progress work and is a client component built around a different need
-// (matchMedia listeners, replay-on-ended). This footer needs a plain server
-// rendered <video>, so the markup is duplicated rather than coupling this route
-// to a file that is actively being rewritten.
-//
-// Filenames carry a content hash: these are served immutable for a year, so
-// re-encoding an asset requires a new hash or returning visitors keep the old file.
-const POSTER = "/video/ambient-light-poster.dc7199e6.jpg";
-const WEBM = "/video/ambient-light-footer.15f477f8.webm";
-const MP4 = "/video/ambient-light-footer.fa761cec.mp4";
+import "@/app/jobs/site-footer.css";
 
 // Netflix runs two different footers. jobs.netflix.com carries the accommodation
 // notice plus five links; the Eightfold-hosted job detail pages carry a Netflix
@@ -36,27 +26,17 @@ const LINKS = [
   },
 ];
 
-// No "use client": autoplay/muted/loop/playsinline are declarative, so the band
-// works from the server HTML with no hydration. Reduced motion is CSS-only.
+// No "use client": <Glow /> is a server component emitting static markup and one
+// <style> tag, so the band works from the server HTML with no hydration and no
+// media to download. Reduced motion is CSS-only.
+//
+// Layer order is DOM order -- glow, scrim, content -- and every layer is
+// positioned with z-index: auto, so nothing here needs a z-index.
 export function SiteFooter() {
   return (
     <footer className="job-footer">
-      <div aria-hidden="true" className="job-footer__media">
-        <video
-          aria-hidden="true"
-          autoPlay
-          className="job-footer__video"
-          loop
-          muted
-          playsInline
-          poster={POSTER}
-          preload="metadata"
-          tabIndex={-1}
-        >
-          <source src={WEBM} type="video/webm" />
-          <source src={MP4} type="video/mp4" />
-        </video>
-      </div>
+      <Glow />
+      <div aria-hidden="true" className="job-footer__scrim" />
 
       <div className="shell job-footer__content">
         <h2 className="visually-hidden">Footer</h2>

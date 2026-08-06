@@ -1,30 +1,20 @@
 /* The ambient band, footer only.
 
-   Every number below is derived from decoding the actual clip (10 frames, 1/s,
-   full resolution) rather than from a worst-imaginable-frame assumption. What
-   the measurement showed:
-
-     whole-clip mean luminance          0.0260
-     whole-clip p99                     0.0868
-     BRIGHTEST PIXEL IN THE CLIP        0.1135  -- rgb(193,0,5), a deep red ember
-
-   A white frame would be 1.0, so the plate is ~8.8x darker than the earlier
-   version of this file assumed. The consequence: --ink #f5f5f5 clears 5.89:1
-   against the brightest real pixel with NO scrim at all. Contrast was never the
-   thing under threat -- the previous 0.86-0.94 sheet bought nothing and cost the
-   entire image. Scrim here is therefore used only for the seam and for a soft
-   seat under the text, never as a uniform sheet. */
+   The light here is <Glow /> (app/_glow), not the ambient video that used to
+   sit in this band. Same intent, no media: a red wash that ramps up from the
+   bottom edge with drifting orbs walking through it, all of it generated CSS.
+   The .job-footer__video / __media rules that used to live here are gone, and
+   with them the poster still, the two encodes, and the reduced-motion swap. */
 
 .job-footer {
   position: relative;
   display: flex;
   align-items: flex-end;
   overflow: hidden;
-  /* Height IS the effect. The home page runs this plate over a min-h-svh box and
-     the long gentle ramp people like is simply the plate's own gradient given a
-     full viewport to spread across. Squeezed into 30rem it read first as a slab
-     and then, once masked, as a thin strip -- both were height problems wearing
-     a curve problem's clothes.
+  /* Height IS the effect. The wash is a long eased ramp; squeezed into 30rem it
+     read first as a slab and then, once masked, as a thin strip -- both were
+     height problems wearing a curve problem's clothes. It needs a viewport to
+     spread across, and the orbs need room to walk.
 
      svh, not vh or dvh, to match the home page's min-h-svh: the small-viewport
      unit is the one that does not resize as a mobile URL bar hides, so a band at
@@ -32,84 +22,52 @@
 
      max() keeps a floor for short landscape viewports so the ramp always has
      room. This is a minimum, not a fixed height, so the band still grows if the
-     content needs more; the media layer is absolutely positioned and contributes
-     nothing to layout, so nothing shifts when the video paints. */
+     content needs more; the glow is absolutely positioned and contributes
+     nothing to layout, so nothing shifts when it paints.
+
+     position: relative is what makes the glow land here -- .glow is
+     position: absolute / inset: 0 and fills its nearest positioned ancestor.
+     overflow: hidden clips the orbs that walk past the band edges. */
   min-block-size: max(30rem, 100svh);
   margin-block-start: 5rem;
   background: var(--surface);
   border-block-start: 1px solid var(--hairline);
 }
 
-.job-footer__media {
+/* The one thing the video never needed. That clip's brightest pixel measured
+   0.1135 luminance, so --ink cleared 5.89:1 over it with no scrim at all. The
+   glow is not a dark plate: its wash reaches FULLY OPAQUE #e50914 at the bottom
+   edge, and orbs stack the same red on top of it, so the worst frame this band
+   can paint under the text is flat --accent. job-shell.css already records what
+   that means -- "--accent is 4.3:1, so it is only ever a background or a
+   non-text accent" -- and 4.4:1 by my own measure fails AA for the 17px notice
+   and the 15px links.
+
+   0.14 black is what closes it. Over flat #e50914 that lands on rgb(197,8,17),
+   luminance 0.1207, and --ink #f5f5f5 clears 5.64:1 -- above AA, and within a
+   whisker of the 5.89:1 the video used to give. It is a veil, not the 0.86
+   sheet an earlier version of this file wore: 14% of black over a band that is
+   already near-black everywhere except its bottom fifth costs nothing visible,
+   because black over black is black. The cost is only where the red is.
+
+   The stops are in rem, not %, deliberately. The text zone is a fixed number of
+   rem tall (its height comes from the copy, not the band), so a percentage would
+   slide off the notice on a tall viewport and off the wordmark on a short one.
+   38rem covers the content box even when the notice wraps hard on a phone; the
+   fade to nothing by 48rem keeps the veil from reaching the top seam, where it
+   would darken --surface against the page above it and show as an edge. */
+.job-footer__scrim {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background-color: var(--surface);
-  background-image: url("/video/ambient-light-poster.dc7199e6.jpg");
-  /* 100% 100% is the background-size equivalent of object-fit: fill, so the
-     reduced-motion still shows the same full-frame ramp as the video. */
-  background-size: 100% 100%;
-
-}
-
-/* The home page's overlay, replicated stop for stop from app/page.tsx (read for
-   reference, never imported -- it is the user's file). Together with the box
-   height above, this is the entire reference treatment.
-
-   No mask, no bespoke curve. Two previous attempts reshaped this gradient -- a
-   0.86 flat scrim, then a quadratic mask -- and both were solving the wrong
-   variable. The plate's own ramp is the design; what it needs is height to run
-   over, not a different shape. This also serves as the top seam: 0.82 black over
-   plate rows that are already ~0.0006 lands within 0.001 luminance of --surface,
-   so the join needs nothing further. */
-.job-footer__media::after {
-  content: "";
-  position: absolute;
-  inset: 0;
   background: linear-gradient(
-    to bottom,
-    rgba(0, 0, 0, 0.82) 0%,
-    rgba(0, 0, 0, 0.7) 52%,
-    rgba(0, 0, 0, 0.24) 84%,
-    transparent 100%
+    to top,
+    rgb(0 0 0 / 0.14) 0,
+    rgb(0 0 0 / 0.14) 38rem,
+    rgb(0 0 0 / 0) 48rem
   );
 }
 
-.job-footer__video {
-  position: absolute;
-  inset: 0;
-  inline-size: 100%;
-  block-size: 100%;
-  /* fill, exactly as the home page does it (object-fill there). The ENTIRE frame
-     is shown, squashed into the band, aspect ratio deliberately not preserved.
-     That is the whole effect: the source carries a vertical luminance ramp from
-     0.0006 in its top tenth to 0.0550 in its bottom tenth, and showing the full
-     height is what makes that ramp read as a gentle fade.
-
-     Not cover. cover + object-position: center bottom zoomed into the bottom
-     ~42% of the plate, magnifying the ember zone into a flat red slab and
-     discarding the ramp -- the opposite of the intent. No object-position
-     either; it is meaningless once the whole frame is on screen. Squashing a
-     1824x1080 plate into a wide short band is fine: it is abstract light, not
-     a photograph. */
-  object-fit: fill;
-}
-
-/* No client JS: the still frame stays as a background-image on the media layer,
-   and the moving picture is simply not rendered. */
-@media (prefers-reduced-motion: reduce) {
-  .job-footer__video {
-    display: none;
-  }
-}
-
-/* No bottom gradient. There was one here darkening 0.16 -> 0.46 toward the base
-   of the band, which was cancelling the exact thing the plate is for: the bottom
-   is where it should be reddest. It was never buying readability either --
-   measured, --ink clears 5.89:1 against the brightest pixel in the whole clip
-   with no scrim at all, and 9.15:1 against the worst pixel that actually lands
-   in the text's zone. It was only buying margin already in hand. The seam above
-   is the only darkening left. */
 .job-footer__content {
   position: relative;
   inline-size: 100%;
@@ -118,8 +76,17 @@
   padding-block: 4.5rem 3rem;
 }
 
+/* .wordmark paints "Netflix" in --accent. Over the old dark plate that was a red
+   mark on near-black, 4.3:1. Over the glow it is #e50914 on #e50914 -- the mark
+   does not dim, it disappears entirely whenever an orb drifts behind it, and no
+   amount of scrim recovers it (to hold even the 3:1 large-text floor the band
+   behind it would have to be darkened past the point where the glow reads at
+   all). So the footer wordmark is --ink: 5.64:1 against the worst frame, and the
+   two-tone is carried by the size and tracking difference that is already there.
+   The masthead keeps its red -- it sits on flat --surface, where 4.3:1 holds. */
 .job-footer__wordmark {
   justify-self: start;
+  color: var(--ink);
 }
 
 /* Body copy, not fine print: full --ink, a readable measure, and the same accent
@@ -144,17 +111,27 @@
   list-style: none;
 }
 
+/* These links are --ink on --ink body copy: the underline is the only thing that
+   marks them as links, which makes it meaningful non-text UI and puts it under
+   the 3:1 bar rather than the decorative one. It used to be red at 0.9, which
+   over the glow is red on red -- it vanishes exactly where the band is brightest
+   and takes the affordance with it. White at 0.7 measures 3.24:1 against the
+   worst frame (and 10.8:1 over the dark upper band), hover takes it to full
+   --ink. The notice's accent rule above keeps its red: it is decoration, it
+   conveys nothing, and nothing breaks when an orb drifts past and swallows it
+   for a few seconds. A link losing the only mark that says it is a link does
+   break, which is why that one had to change and this one did not. */
 .job-footer__link {
   color: var(--ink);
   font-size: 0.9375rem;
   font-weight: 500;
   text-decoration: underline;
-  text-decoration-color: rgba(229, 9, 20, 0.9);
+  text-decoration-color: rgb(245 245 245 / 0.7);
   text-decoration-thickness: 2px;
   text-underline-offset: 0.22em;
   transition: text-decoration-color 150ms ease;
 }
 
 .job-footer__link:hover {
-  text-decoration-color: var(--accent);
+  text-decoration-color: var(--ink);
 }
