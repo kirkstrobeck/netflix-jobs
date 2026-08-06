@@ -32,7 +32,6 @@
   min-block-size: fit-content;
   margin-block-start: 5rem;
   background: var(--surface);
-  border-block-start: 1px solid var(--hairline);
 }
 
 /* The one thing the video never needed. That clip's brightest pixel measured
