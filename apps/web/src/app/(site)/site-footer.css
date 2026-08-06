@@ -94,17 +94,34 @@
   padding-block: 4.5rem 3rem;
 }
 
-/* .wordmark paints "Netflix" in --accent. Over the old dark plate that was a red
-   mark on near-black, 4.3:1. Over the glow it is #e50914 on #e50914 -- the mark
-   does not dim, it disappears entirely whenever an orb drifts behind it, and no
-   amount of scrim recovers it (to hold even the 3:1 large-text floor the band
-   behind it would have to be darkened past the point where the glow reads at
-   all). So the footer wordmark is --ink: 5.64:1 against the worst frame, and the
-   two-tone is carried by the size and tracking difference that is already there.
-   The masthead keeps its red -- it sits on flat --surface, where 4.3:1 holds. */
+/* The wordmark is Netflix's official mark, and the official mark is #e50914.
+   It is that here too -- the same file the masthead loads.
+
+   This rule used to carry a long argument for a WHITE mark in the footer, and
+   that argument was measured at the wrong height. It took the worst pixel the
+   band can paint -- flat opaque #e50914 at the BOTTOM edge -- and applied it to
+   the wordmark. The bottom edge is where the links sit. The wordmark is the
+   first item in the content grid, ~18.5rem up a 25rem band, and the wash is a
+   percentage ramp: at 74% of the band its alpha is ~0.012. Composited over
+   --surface and under the 0.14 scrim that is rgb(9,2,2), against which #e50914
+   measures 4.29:1 -- the masthead's own 4.30:1, to a rounding error.
+
+   The one case that is genuinely worse is an orb. Orbs are the same red, walk to
+   TOP_CEILING 92cqh, and peak at OPACITY_MAX 0.575, so one drifting directly
+   behind the mark takes the backdrop to rgb(117,5,11) and the mark to 2.46:1 --
+   under the 3:1 non-text floor, for the seconds it takes to pass. A logotype is
+   exempt from 1.4.11, and the "Jobs" suffix beside it is real text that stays
+   --ink and holds 10.8:1 even in that frame, so the link never loses its
+   accessible name. If that transient is ever worth closing, the lever is orb
+   opacity near the top of the band in _glow/glow-tunables.ts -- not this rule,
+   and not the colour of the mark.
+
+   The tone is baked into the SVG rather than set here because the mark is
+   delivered through next/image, which renders an <img>: `color` does not cross
+   into a replaced element, so a currentColor fill would resolve against the
+   image's own initial color and come out black. */
 .job-footer__wordmark {
   justify-self: start;
-  color: var(--ink);
 }
 
 /* Body copy, not fine print: full --ink, a readable measure, and the same accent

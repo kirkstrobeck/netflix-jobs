@@ -1,6 +1,5 @@
-import Link from "next/link";
-
 import { Glow } from "@/app/_glow/glow";
+import { Wordmark } from "@/app/(site)/wordmark";
 
 import "@/app/(site)/site-footer.css";
 
@@ -45,13 +44,15 @@ export function SiteFooter() {
       <div className="shell job-footer__content">
         <h2 className="visually-hidden">Footer</h2>
 
-        {/* Their job page footer carries a Netflix Jobs logo. This reuses the
-            masthead's text wordmark instead of hotlinking their CDN image:
-            nothing to download and nothing to reserve space for. */}
-        <Link className="wordmark job-footer__wordmark" href="/">
-          Netflix
-          <span className="wordmark__suffix">Jobs</span>
-        </Link>
+        {/* Their job page footer carries a Netflix Jobs logo, and so does this
+            one -- our own copy of the mark, not a hotlink to their CDN.
+
+            The same red as the masthead. This band's bottom edge does paint
+            opaque #e50914, but the wordmark does not sit at the bottom edge --
+            site-footer.css carries the measurement.
+
+            Lazy, unlike the masthead's: this is below the fold on every page. */}
+        <Wordmark className="wordmark job-footer__wordmark" loading="lazy" />
 
         {/* Netflix sets this in grey fine print. It is an accommodation offer,
             so here it gets body-copy size and the accent rule the prose uses. */}

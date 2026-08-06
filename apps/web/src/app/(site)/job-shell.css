@@ -88,16 +88,42 @@
   min-block-size: 4.5rem;
 }
 
+/* Half of this rule used to style the word "Netflix" set in type. That word is
+   now an <img> -- a replaced element -- so `color`, `font-size` and
+   `letter-spacing` no longer reach it, and .wordmark__suffix already overrides
+   all three for the only text left in the box. They are gone rather than left
+   sitting here looking load-bearing.
+
+   font-weight and text-transform stay: those two the suffix does NOT set, and it
+   inherits them, which is what makes "Jobs" render as bold JOBS.
+
+   align-items: baseline survives the swap on purpose. A replaced element's
+   baseline is the bottom of its margin box, so the mark's bottom edge lands on
+   the suffix's baseline -- the same relationship the two words had when both
+   were text. */
 .wordmark {
   display: inline-flex;
   align-items: baseline;
   gap: 0.625rem;
-  color: var(--accent);
-  font-size: 1.375rem;
   font-weight: 700;
-  letter-spacing: 0.18em;
   text-transform: uppercase;
   text-decoration: none;
+}
+
+/* The rendered height; next/image's width/height attributes only declare the
+   aspect ratio. 1.375rem against the ~0.99rem cap height of the uppercase text
+   this replaced: the mark reads as artwork rather than as a word, which 1.125rem
+   only just managed. One rule drives BOTH instances, so the masthead and the
+   footer cannot drift apart.
+
+   It cannot reflow the header. .site-header__inner is a 4.5rem min-block-size
+   flex row and 1.375rem is 22px inside 72px, so the row's height comes from that
+   floor either way; the mark grew 4px into space the masthead already reserved.
+   inline-size: auto is what keeps the 1427x383 ratio intact -- the docs warn
+   that pinning one axis without freeing the other distorts the image. */
+.wordmark__mark {
+  block-size: 1.375rem;
+  inline-size: auto;
 }
 
 .wordmark__suffix {
