@@ -9,8 +9,14 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 # shellcheck source=common.sh
 source "$SCRIPT_DIR/common.sh"
 
-AGENT_STACK="claude-v1"
+AGENT_STACK="claude-v2"
 STACK_LABEL="com.netflix-jobs.sandbox.agent-stack"
+
+# shellcheck source=colima-inotify.sh
+source "$SCRIPT_DIR/colima-inotify.sh"
+
+# shellcheck source=dev-fs.sh
+source "$SCRIPT_DIR/dev-fs.sh"
 
 ensure_colima() {
   if ! command -v colima >/dev/null 2>&1; then
@@ -20,7 +26,8 @@ ensure_colima() {
     return 0
   fi
   echo "Starting Colima..." >&2
-  colima start >&2
+  # shellcheck disable=SC2046
+  colima start $(colima_start_flags) >&2
 }
 
 # Rebuild when the image is missing or was built from a different agent stack.
@@ -110,6 +117,13 @@ container_is_current() {
     *) return 1 ;;
   esac
 
+  # .next must be a named volume (not the Mac bind mount) or Turbopack's
+  # cache floods Colima inotify and source saves stop invalidating.
+  case "$mounts" in
+    *"/workspace/apps/web/.next"*) ;;
+    *) return 1 ;;
+  esac
+
   if [ ! -d "$REFERENCE_ROOT" ]; then
     return 0
   fi
@@ -157,32 +171,14 @@ ensure_container() {
   compose_up
 }
 
-# The node_modules volumes are created root-owned on first use; inner runs as
-# the host UID and could not write into them. Derived from the container's own
-# mount table rather than a hardcoded list, so adding a workspace package to
-# docker-compose.yml is the only edit that change ever needs.
-node_modules_mounts() {
-  docker inspect -f '{{range .Mounts}}{{.Destination}}
-{{end}}' "$SANDBOX_NAME" 2>/dev/null | grep '/node_modules$' || true
-}
-
-fix_volume_ownership() {
-  local targets=()
-  while IFS= read -r dest; do
-    [ -n "$dest" ] && targets+=("$dest")
-  done < <(node_modules_mounts)
-  [ "${#targets[@]}" -gt 0 ] || return 0
-
-  docker exec -u 0 "$SANDBOX_NAME" sh -c \
-    "mkdir -p $(printf '%q ' "${targets[@]}") 2>/dev/null; chown $(id -u):$(id -g) $(printf '%q ' "${targets[@]}") 2>/dev/null || true" \
-    >/dev/null 2>&1 || true
-}
-
 ensure_colima
 sandbox_require_docker
+stop_colima_inotify
 ensure_image
 prepare_cache
 ensure_container
 fix_volume_ownership
+stop_dev_watch_helpers
+ensure_mac_save_bridge
 
 printf '%s\n' "$SANDBOX_NAME"

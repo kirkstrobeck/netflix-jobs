@@ -1,7 +1,7 @@
 FROM node:24.17.0-bookworm-slim
 
 ENV DEBIAN_FRONTEND=noninteractive
-LABEL com.netflix-jobs.sandbox.agent-stack="claude-v1"
+LABEL com.netflix-jobs.sandbox.agent-stack="claude-v2"
 
 ARG HOST_UID=501
 ARG HOST_GID=20
@@ -17,6 +17,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
       unzip \
       less \
       gosu \
+      inotify-tools \
       postgresql-client \
     && rm -rf /var/lib/apt/lists/*
 

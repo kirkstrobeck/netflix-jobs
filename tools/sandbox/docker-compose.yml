@@ -40,6 +40,11 @@ services:
       - nm_root:/workspace/node_modules
       - nm_web:${REPO_ROOT}/apps/web/node_modules
       - nm_web:/workspace/apps/web/node_modules
+      # Keep .next off the Mac bind mount. Turbopack's cache floods Colima's
+      # mount-inotify daemon (and is slow over virtiofs); a named volume is
+      # local to the VM so source-file events stay timely.
+      - nm_web_next:${REPO_ROOT}/apps/web/.next
+      - nm_web_next:/workspace/apps/web/.next
       - nm_ingestor:${REPO_ROOT}/packages/ingestor/node_modules
       - nm_ingestor:/workspace/packages/ingestor/node_modules
       # Cached copy of host Claude state, refreshed by boot.sh, so inner never
@@ -76,4 +81,5 @@ services:
 volumes:
   nm_root:
   nm_web:
+  nm_web_next:
   nm_ingestor:
