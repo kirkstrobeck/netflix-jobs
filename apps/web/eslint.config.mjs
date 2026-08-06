@@ -10,7 +10,11 @@ const eslintConfig = defineConfig([
   // bites: `pnpm test:coverage` is a committed script, so running it leaves
   // instrumented HTML that the next `pnpm lint` walks into and stalls on.
   globalIgnores([
-    ".next/**",
+    // .next* rather than .next: a rescued build directory gets a suffix
+    // (.next.bak-oom is one sitting in this tree right now), and the plain
+    // .next/** glob does not cover it -- so 544 errors and 8,078 warnings of
+    // minified vendor chunks come back as if they were ours.
+    ".next*/**",
     "out/**",
     "build/**",
     "coverage/**",
