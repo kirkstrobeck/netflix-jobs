@@ -2,7 +2,7 @@ import Link from "next/link";
 
 import { Glow } from "@/app/_glow/glow";
 
-import "@/app/jobs/site-footer.css";
+import "@/app/(site)/site-footer.css";
 
 // Netflix runs two different footers. jobs.netflix.com carries the accommodation
 // notice plus five links; the Eightfold-hosted job detail pages carry a Netflix

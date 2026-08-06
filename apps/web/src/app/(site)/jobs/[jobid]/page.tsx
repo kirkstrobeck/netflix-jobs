@@ -1,15 +1,15 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
-import { JobDescription } from "@/app/jobs/[jobid]/job-description";
-import { JobDetails } from "@/app/jobs/[jobid]/job-details";
-import { JobHeader } from "@/app/jobs/[jobid]/job-header";
+import { JobDescription } from "@/app/(site)/jobs/[jobid]/job-description";
+import { JobDetails } from "@/app/(site)/jobs/[jobid]/job-details";
+import { JobHeader } from "@/app/(site)/jobs/[jobid]/job-header";
 import { getJob } from "@/lib/jobs/get-job";
 import { listRecentJobIds } from "@/lib/jobs/job-ids";
 
-import "@/app/jobs/[jobid]/job-hero.css";
-import "@/app/jobs/[jobid]/job-details.css";
-import "@/app/jobs/[jobid]/prose.css";
+import "@/app/(site)/jobs/[jobid]/job-hero.css";
+import "@/app/(site)/jobs/[jobid]/job-details.css";
+import "@/app/(site)/jobs/[jobid]/prose.css";
 
 // The key must match the [jobid] route segment. `jobid` is the Netflix job code
 // from jobs.display_job_id (AJRT30201, JR41912) -- the id printed on the posting

@@ -1,7 +1,7 @@
 import Link from "next/link";
 
-import "@/app/jobs/[jobid]/job-hero.css";
-import "@/app/jobs/[jobid]/job-details.css";
+import "@/app/(site)/jobs/[jobid]/job-hero.css";
+import "@/app/(site)/jobs/[jobid]/job-details.css";
 
 // The only 404 a job URL can produce. Every miss lands here -- a well-formed code
 // with no open posting (JR41911), and junk that could never be a code

@@ -1,9 +1,9 @@
 import localFont from "next/font/local";
 
-import { SiteFooter } from "@/app/jobs/site-footer";
-import { SiteHeader } from "@/app/jobs/site-header";
+import { SiteFooter } from "@/app/(site)/site-footer";
+import { SiteHeader } from "@/app/(site)/site-header";
 
-import "@/app/jobs/job-shell.css";
+import "@/app/(site)/job-shell.css";
 
 // Netflix Sans already shipped in public/fonts but nothing declared it. Loading it
 // through next/font/local (rather than a hand-written @font-face) is what keeps the
@@ -13,8 +13,8 @@ import "@/app/jobs/job-shell.css";
 //
 // It is declared in this layout, not a shared module, because next/font only emits
 // a <link rel="preload"> for fonts whose localFont() call sits in a page or layout
-// file. Keeping it here also scopes the font to /jobs, leaving the root layout —
-// and the home page — untouched.
+// file. Here rather than the root layout so it still stops at the (site) boundary:
+// /foo is a bare prototype route and has no business preloading three webfonts.
 const netflixSans = localFont({
   src: [
     {
@@ -40,18 +40,25 @@ const netflixSans = localFont({
   preload: true,
 });
 
-export default function JobsLayout({ children }: { children: React.ReactNode }) {
+// The standard shell: masthead, content, ambient footer band. It wraps the home
+// page and every job posting, which is the whole point of the (site) group --
+// the group adds no URL segment, so /jobs/JR41912 stays /jobs/JR41912 while the
+// home page picks up the same chrome instead of hand-rolling its own.
+//
+// The glow lives inside <SiteFooter />, never here and never in a page. Anything
+// that wants it gets it by being in this layout; that is the only way in.
+export default function SiteLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className={`${netflixSans.className} job-page`}>
       <SiteHeader />
 
-      <main className="shell job-main" id="job-main">
+      <main className="shell site-main" id="site-main">
         {children}
       </main>
 
-      {/* After </main>, so the ambient band is strictly below every piece of job
+      {/* After </main>, so the ambient band is strictly below every piece of page
           content. .job-page carries the opaque --surface behind the article, so
-          nothing from the posting can sit over moving pixels. */}
+          nothing above can sit over moving pixels. */}
       <SiteFooter />
     </div>
   );

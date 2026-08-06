@@ -1,4 +1,4 @@
-import { ApplyButton } from "@/app/jobs/[jobid]/apply-button";
+import { ApplyButton } from "@/app/(site)/jobs/[jobid]/apply-button";
 import { formatLocations } from "@/lib/format/location";
 import { formatPostedDate } from "@/lib/format/posted-date";
 import type { Job } from "@/lib/jobs/types";

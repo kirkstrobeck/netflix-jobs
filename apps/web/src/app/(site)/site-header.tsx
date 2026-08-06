@@ -5,8 +5,11 @@ import Link from "next/link";
 export function SiteHeader() {
   return (
     <header className="site-header">
-      <a className="skip-link" href="#job-main">
-        Skip to job details
+      {/* "Skip to job details" while this header only ever sat above a posting.
+          It sits above the home page too now, where that label described a page
+          the link does not go to. */}
+      <a className="skip-link" href="#site-main">
+        Skip to main content
       </a>
       <div className="shell site-header__inner">
         <Link className="wordmark" href="/">
