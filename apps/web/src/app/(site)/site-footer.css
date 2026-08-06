@@ -11,24 +11,25 @@
   display: flex;
   align-items: flex-end;
   overflow: hidden;
-  /* Height IS the effect. The wash is a long eased ramp; squeezed into 30rem it
-     read first as a slab and then, once masked, as a thin strip -- both were
-     height problems wearing a curve problem's clothes. It needs a viewport to
-     spread across, and the orbs need room to walk.
+  /* 500px, flat -- not the max(30rem, 100svh) viewport band this was. The glow
+     costs nothing to rescale: .glow is inset: 0, its wash stops are percentages,
+     and the orbs walk in cqw/cqh, so every part of the effect re-fits the box
+     from the box's own size. Only the scrim had absolute stops, and those are
+     retuned below.
 
-     svh, not vh or dvh, to match the home page's min-h-svh: the small-viewport
-     unit is the one that does not resize as a mobile URL bar hides, so a band at
-     the very bottom of the page cannot jitter mid-scroll.
-
-     max() keeps a floor for short landscape viewports so the ramp always has
-     room. This is a minimum, not a fixed height, so the band still grows if the
-     content needs more; the glow is absolutely positioned and contributes
-     nothing to layout, so nothing shifts when it paints.
+     min-block-size is a floor against clipping, not a second opinion on the
+     height. overflow: hidden is here to clip orbs walking past the band edges,
+     and it would clip footer text just as happily: on a narrow phone the notice
+     wraps to nine lines and the four links stack to four rows, which overruns
+     500px and would silently eat the link list. fit-content lets the band grow
+     in exactly that case and is inert at every width where the content fits --
+     so this is 500px tall wherever 500px can hold it, and never a footer with
+     its links cropped off.
 
      position: relative is what makes the glow land here -- .glow is
-     position: absolute / inset: 0 and fills its nearest positioned ancestor.
-     overflow: hidden clips the orbs that walk past the band edges. */
-  min-block-size: max(30rem, 100svh);
+     position: absolute / inset: 0 and fills its nearest positioned ancestor. */
+  block-size: 500px;
+  min-block-size: fit-content;
   margin-block-start: 5rem;
   background: var(--surface);
   border-block-start: 1px solid var(--hairline);
@@ -50,12 +51,23 @@
    already near-black everywhere except its bottom fifth costs nothing visible,
    because black over black is black. The cost is only where the red is.
 
-   The stops are in rem, not %, deliberately. The text zone is a fixed number of
-   rem tall (its height comes from the copy, not the band), so a percentage would
-   slide off the notice on a tall viewport and off the wordmark on a short one.
-   38rem covers the content box even when the notice wraps hard on a phone; the
-   fade to nothing by 48rem keeps the veil from reaching the top seam, where it
-   would darken --surface against the page above it and show as an edge. */
+   0.14 is unchanged by the band going to 500px, because it was never derived
+   from the band's height -- it is measured against the worst pixel the wash can
+   paint, flat opaque #e50914 at the bottom edge, which is still exactly what
+   sits under the links. If anything the veil earns its keep harder now: the
+   wash's stops are percentages, so compressing ~900px of band into 500px pulls
+   the red UP the box, and every line of footer text sits over more of it than it
+   did before. Shorter band, same floor, same 5.64:1.
+
+   The stops did have to move, and they are the one thing here that the height
+   change touched. They are lengths, so in a 500px box the old 38rem/48rem pair
+   never reaches its fade -- the whole band would render at a flat 0.14,
+   including the top seam, which is the exact edge the fade exists to prevent.
+   Rem is still the right unit for the same reason as before (the text zone's
+   height comes from the copy, not the band). Only the numbers are new: solid to
+   20rem clears the content box, and the fade finishes by 29rem, which leaves the
+   top 2.25rem of the 31.25rem band untinted so --surface still meets the page
+   above it without a seam. */
 .job-footer__scrim {
   position: absolute;
   inset: 0;
@@ -63,8 +75,8 @@
   background: linear-gradient(
     to top,
     rgb(0 0 0 / 0.14) 0,
-    rgb(0 0 0 / 0.14) 38rem,
-    rgb(0 0 0 / 0) 48rem
+    rgb(0 0 0 / 0.14) 20rem,
+    rgb(0 0 0 / 0) 29rem
   );
 }
 
@@ -111,27 +123,47 @@
   list-style: none;
 }
 
-/* These links are --ink on --ink body copy: the underline is the only thing that
-   marks them as links, which makes it meaningful non-text UI and puts it under
-   the 3:1 bar rather than the decorative one. It used to be red at 0.9, which
-   over the glow is red on red -- it vanishes exactly where the band is brightest
-   and takes the affordance with it. White at 0.7 measures 3.24:1 against the
-   worst frame (and 10.8:1 over the dark upper band), hover takes it to full
-   --ink. The notice's accent rule above keeps its red: it is decoration, it
-   conveys nothing, and nothing breaks when an orb drifts past and swallows it
-   for a few seconds. A link losing the only mark that says it is a link does
-   break, which is why that one had to change and this one did not. */
+/* At rest these carry no underline; it comes back on hover and on focus.
+
+   The underline used to be load-bearing, and the note here used to say so: an
+   underline is the only thing marking a link inside a block of body copy, which
+   made it meaningful non-text UI held to 3:1 rather than decoration. That
+   argument was about links in prose. These four are not in prose -- they are a
+   <nav aria-label="Footer"> list, set apart from the notice by their own row,
+   their own weight, and their own size. A footer nav is a place a reader already
+   reads as links, so dropping the resting underline is not dropping the only
+   cue; it is the standard pattern for this one spot. The notice's inline prose,
+   if it ever gets a link, does not get this rule.
+
+   What did NOT change is the colour. Red at 0.9 was the original, and over the
+   glow red-on-red vanishes exactly where the band is brightest, taking the
+   affordance with it -- that is why it went white, and it stays white. Now that
+   the line only ever shows in an interaction state there is no reason to hold it
+   at 0.7 for restraint's sake, so it is full --ink: 5.64:1 against the worst
+   frame the wash can paint, 18.4:1 over the dark upper band.
+
+   :focus-visible is on the same rule as :hover so keyboard reaches every state
+   the mouse does. It is additive, not a replacement -- .job-page :focus-visible
+   already draws a 2px white outline, and this puts the underline back inside it
+   so a keyboard user sees the same link the mouse user does.
+
+   Transparent-to-white rather than none-to-underline: text-decoration-line does
+   not interpolate, so toggling it would snap. Holding the line always-present
+   and animating only its colour is what keeps the 150ms fade -- and a fully
+   transparent underline paints nothing and reserves nothing, so at rest this is
+   an unadorned link. */
 .job-footer__link {
   color: var(--ink);
   font-size: 0.9375rem;
   font-weight: 500;
   text-decoration: underline;
-  text-decoration-color: rgb(245 245 245 / 0.7);
+  text-decoration-color: transparent;
   text-decoration-thickness: 2px;
   text-underline-offset: 0.22em;
   transition: text-decoration-color 150ms ease;
 }
 
-.job-footer__link:hover {
+.job-footer__link:hover,
+.job-footer__link:focus-visible {
   text-decoration-color: var(--ink);
 }
