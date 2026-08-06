@@ -18,7 +18,8 @@ fail=0
 check() {
   local want="$1" label="$2" cmd="$3" got
   got="$(jq -nc --arg c "$cmd" '{tool_name:"Bash",tool_input:{command:$c}}' |
-    bash "$GATE" 2>/dev/null | jq -r '.hookSpecificOutput.permissionDecision' 2>/dev/null)"
+    env -u NETFLIX_JOBS_SANDBOX_INNER NETFLIX_JOBS_GATE_FORCE=1 bash "$GATE" 2>/dev/null |
+    jq -r '.hookSpecificOutput.permissionDecision' 2>/dev/null)"
 
   if [ "$got" = "$want" ]; then
     pass=$((pass + 1))
@@ -31,7 +32,9 @@ check() {
 
 # If this one passes we know the gate is actually engaging. It fails open on
 # internal error and self-bypasses inside the container, so a run that somehow
-# thinks it is in the sandbox would allow everything below.
+# thinks it is in the sandbox would allow everything below. NETFLIX_JOBS_GATE_FORCE
+# switches off the container heuristics for the duration, which is what lets this
+# suite run inside the sandbox as well as on the Mac; see gate-lib.sh.
 check deny 'git is hard-denied' 'git push'
 check deny 'toolchain is hard-denied' 'pnpm install'
 check deny 'supabase lifecycle denied' 'supabase db reset'

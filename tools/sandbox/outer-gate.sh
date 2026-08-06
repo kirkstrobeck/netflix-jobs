@@ -9,20 +9,17 @@ set -uo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 
-decide() {
-  local decision="$1" reason="$2"
-  jq -nc --arg d "$decision" --arg r "$reason" \
-    '{hookSpecificOutput:{hookEventName:"PreToolUse",permissionDecision:$d,permissionDecisionReason:$r}}'
+# No lib, no decision. Emitting nothing falls through to the normal permission
+# flow, which is the fail-open behaviour we want from a broken gate.
+if [ ! -r "$SCRIPT_DIR/gate-lib.sh" ]; then
   exit 0
-}
-
-allow() { decide allow "$1"; }
-deny()  { decide deny  "$1"; }
-
-# Inside the container this hook must not apply — inner IS the sandbox.
-if [ -n "${NETFLIX_JOBS_SANDBOX_INNER:-}" ] || [ -f /.dockerenv ] || [ -d /workspace ]; then
-  allow "inside sandbox"
 fi
+# shellcheck source=gate-lib.sh
+. "$SCRIPT_DIR/gate-lib.sh"
+
+# decide/allow/deny, DISPATCH_MSG, and the inner bypass now live in gate-lib.sh,
+# shared with outer-write-gate.sh.
+gate_bypass_if_inner
 
 payload="$(cat)"
 tool="$(printf '%s' "$payload" | jq -r '.tool_name // ""' 2>/dev/null)"
@@ -60,8 +57,6 @@ chained=0
 case "$skeleton" in
   *';'*|*'&&'*|*'||'*|*'|'*|*'`'*|*'$('*|*$'\n'*) chained=1 ;;
 esac
-
-DISPATCH_MSG='Do not run this on the host. Dispatch the work to inner Claude: bash tools/sandbox/dispatch.sh "<message>" (or --continue for follow-ups). See .claude/skills/sandbox/SKILL.md.'
 
 # Hard denials: no allow_pattern can rescue these, because a clever-looking
 # wrapper is exactly how host state gets mutated by accident.
