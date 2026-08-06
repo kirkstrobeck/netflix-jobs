@@ -16,12 +16,16 @@ import "@/app/(site)/site-footer.css";
 //
 // "Do Not Sell" is kept visible even though the job page hides it -- it is a
 // legal opt-out, and hiding it is the one thing worse than showing it.
+// Sentence case, though both of Netflix's own footers set these in Title Case.
+// Matching their wording is the point; matching their capitalisation is not.
+// "Netflix House" stays capitalised as the venue's name -- the trailing "jobs"
+// is an ordinary plural, not part of it.
 const LINKS = [
-  { label: "About Us", href: "https://about.netflix.com/en" },
+  { label: "About us", href: "https://about.netflix.com/en" },
   { label: "Privacy", href: "https://jobs.netflix.com/candidate-privacy" },
-  { label: "Netflix House Jobs", href: "https://jobs.netflixhouse.com/" },
+  { label: "Netflix House jobs", href: "https://jobs.netflixhouse.com/" },
   {
-    label: "Do Not Sell Or Share My Personal Information",
+    label: "Do not sell or share my personal information",
     href: "https://jobs.netflix.com/dnssi",
   },
 ];

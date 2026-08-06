@@ -1,42 +1,32 @@
+
 /**
- * Glow tunables — edit these mins/maxes; path math is below.
- * Speed: lower HOP_DURATION_*_S = faster. Min speed → SLOW; max speed → FAST.
+ * Path math for the glow. The mins/maxes this reads from live in
+ * ./glow-tunables — that is the file to edit to retune the effect.
+ *
+ * Re-exported here rather than left to callers to import separately: every
+ * consumer wants a tunable and a function together, and this file was a single
+ * "tunables above, math below" module until the tunables' own commentary pushed
+ * it past the 200-line limit. The split is the file length, not a new boundary.
  */
-export const ORB_COUNT = 100;
-export const OPACITY_MIN = 0.05;
-export const OPACITY_MAX = 0.575;
-export const WIDTH_REM_MIN = 3.401;
-export const WIDTH_REM_MAX = 9.48;
-export const WIDTH_PCT_MIN = 54.42;
-export const WIDTH_PCT_MAX = 141.14;
-export const HOP_DURATION_FAST_S = 7.98;
-export const HOP_DURATION_SLOW_S = 20.52;
-export const HOP_DURATION_FLOOR_S = 0.7;
-export const LOOP_DURATION_MIN_S = 207.69;
-export const LOOP_DURATION_MAX_S = 253.85;
-export const TRAVEL_X_MIN = 10;
-export const TRAVEL_X_MAX = 22;
-export const TRAVEL_Y_MIN = 6;
-export const TRAVEL_Y_MAX = 24;
-export const WALK_X_MIN = -18;
-export const WALK_X_MAX = 118;
-export const TOP_MAX_MIX_MIN = 55;
-export const TOP_FLUSH_EVERY_N = 6;
-export const Y_SPAN_MIN = 27;
-export const Y_SPAN_MAX = 60;
-export const TOP_FLOOR = 25;
-export const VISIBLE_SPHERE_MAX = 0.35;
-export const HEIGHT_EXTRA_MAX = 1.2;
-/** Lateral flips stay rare (technical sweeps); Y can still wander. */
-export const FLIP_ODDS_X_MIN = 0.08;
-export const FLIP_ODDS_X_MAX = 0.2;
-export const FLIP_ODDS_Y_MIN = 0.28;
-export const FLIP_ODDS_Y_MAX = 0.55;
-export const ORBS_BLUR_PX = 3;
-export const WASH_BEZIER_X1 = 0.12;
-export const WASH_BEZIER_Y1 = 0.72;
-export const WASH_BEZIER_X2 = 0.22;
-export const WASH_BEZIER_Y2 = 1;
+export * from "@/app/_glow/glow-tunables";
+
+import {
+  FLIP_ODDS_X_MAX,
+  FLIP_ODDS_X_MIN,
+  FLIP_ODDS_Y_MAX,
+  FLIP_ODDS_Y_MIN,
+  HOP_DURATION_FAST_S,
+  HOP_DURATION_FLOOR_S,
+  HOP_DURATION_SLOW_S,
+  LOOP_DURATION_MAX_S,
+  LOOP_DURATION_MIN_S,
+  TRAVEL_X_MAX,
+  TRAVEL_X_MIN,
+  TRAVEL_Y_MAX,
+  TRAVEL_Y_MIN,
+  WALK_X_MAX,
+  WALK_X_MIN,
+} from "@/app/_glow/glow-tunables";
 
 export function mix(i: number, a: number, b: number, salt: number): number {
   const t = ((i * 17 + salt * 13) % 97) / 96;
@@ -75,6 +65,14 @@ function nextDir(i: number, leg: number, axis: number, prev: 1 | -1): 1 | -1 {
   return prev;
 }
 
+// The bounce is clamped, not just reversed. Reversing alone is only safe while
+// the band is at least two hops wide: from a position near one edge, `from -
+// dir * travel` can overshoot the OTHER edge, and once a walk is outside its
+// band every subsequent hop is out of range too, so the reversal keeps pushing
+// it further out instead of pulling it back. That is how orbs bounded to
+// [28.4, 55.4] were reaching 165cqh and getting sliced by the band's top edge.
+// Y bands here can be as narrow as 27cqh against hops of up to TRAVEL_Y_MAX, so
+// clamping the bounce back into [lo, hi] is what actually holds the ceiling.
 function nudge(
   from: number,
   dir: 1 | -1,
@@ -86,7 +84,10 @@ function nudge(
   if (raw >= lo && raw <= hi) {
     return { to: +raw.toFixed(2), dir };
   }
-  return { to: +(from - dir * travel).toFixed(2), dir: dir === 1 ? -1 : 1 };
+  return {
+    to: +clamp(from - dir * travel, lo, hi).toFixed(2),
+    dir: dir === 1 ? -1 : 1,
+  };
 }
 
 type Acc = {

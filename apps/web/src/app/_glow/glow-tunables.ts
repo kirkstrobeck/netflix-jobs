@@ -1,0 +1,54 @@
+/**
+ * Glow tunables — edit these mins/maxes to retune the effect. The path math
+ * that reads them is in ./glow-math, which also re-exports this whole module,
+ * so importing from either one gets you the same names.
+ *
+ * Speed: lower HOP_DURATION_*_S = faster. Min speed → SLOW; max speed → FAST.
+ */
+export const ORB_COUNT = 100;
+export const OPACITY_MIN = 0.05;
+export const OPACITY_MAX = 0.575;
+export const WIDTH_REM_MIN = 3.401;
+export const WIDTH_REM_MAX = 9.48;
+export const WIDTH_PCT_MIN = 54.42;
+export const WIDTH_PCT_MAX = 141.14;
+export const HOP_DURATION_FAST_S = 7.98;
+export const HOP_DURATION_SLOW_S = 20.52;
+export const HOP_DURATION_FLOOR_S = 0.7;
+export const LOOP_DURATION_MIN_S = 207.69;
+export const LOOP_DURATION_MAX_S = 253.85;
+export const TRAVEL_X_MIN = 10;
+export const TRAVEL_X_MAX = 22;
+export const TRAVEL_Y_MIN = 6;
+export const TRAVEL_Y_MAX = 24;
+export const WALK_X_MIN = -18;
+export const WALK_X_MAX = 118;
+export const TOP_MAX_MIX_MIN = 55;
+export const TOP_FLUSH_EVERY_N = 6;
+export const Y_SPAN_MIN = 27;
+export const Y_SPAN_MAX = 60;
+export const TOP_FLOOR = 25;
+/**
+ * Ceiling on an orb's vertical travel, in cqh: the highest its box top edge may
+ * reach. Below 100 on purpose. An orb is a radial gradient clipped to a
+ * border-radius: 50% ellipse, so it paints nothing above its own box -- but
+ * .glow has overflow: hidden and .glow__orbs carries filter: blur(ORBS_BLUR_PX),
+ * and the blur spreads alpha past the box before that clip applies. An orb
+ * allowed all the way to 100 gets that spill sliced off by the band's top edge
+ * as a hard horizontal line. 92 leaves 8cqh -- 32px at the 400px band -- which
+ * is far more than the 3px blur needs, so the orb fades out on its own terms
+ * instead of being cut off.
+ */
+export const TOP_CEILING = 92;
+export const VISIBLE_SPHERE_MAX = 0.35;
+export const HEIGHT_EXTRA_MAX = 1.2;
+/** Lateral flips stay rare (technical sweeps); Y can still wander. */
+export const FLIP_ODDS_X_MIN = 0.08;
+export const FLIP_ODDS_X_MAX = 0.2;
+export const FLIP_ODDS_Y_MIN = 0.28;
+export const FLIP_ODDS_Y_MAX = 0.55;
+export const ORBS_BLUR_PX = 3;
+export const WASH_BEZIER_X1 = 0.12;
+export const WASH_BEZIER_Y1 = 0.72;
+export const WASH_BEZIER_X2 = 0.22;
+export const WASH_BEZIER_Y2 = 1;

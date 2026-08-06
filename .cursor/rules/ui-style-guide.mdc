@@ -1,0 +1,84 @@
+---
+description: UI style guide — interaction state timing, sentence case for all titles
+alwaysApply: true
+---
+
+# UI Style Guide
+
+Conventions for anything a user sees or touches. These are not preferences; a
+change that breaks one of them is a bug.
+
+## Interaction states appear instantly and fade out gently
+
+**Never put a transition on the way IN to a hover or focus state. Only on the
+way out.**
+
+A fade-in on hover reads as a slow UI. The pointer is already there and the
+interface is still catching up, and no duration is short enough to feel
+deliberate — it just feels like lag. The way out is different: the pointer has
+left, nobody is waiting on it, and a gentle fade keeps the change from snapping.
+
+The mechanism is that an element transitions using the `transition` declared on
+the state it is moving **to**. So the two directions live in two different rules,
+and which rule owns which direction is the opposite of most people's first
+guess:
+
+- The **base rule** is the state you return to, so it owns **hover-OFF**. Put the
+  gentle duration here.
+- The **state rule** (`:hover`, `:focus-visible`) is the state you move to, so it
+  owns **hover-ON**. Set `transition-duration: 0s` here.
+
+Worked example, the footer link underline:
+
+```css
+.job-footer__link {
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  /* Hover-OFF only: gentle on the way out. */
+  transition: text-decoration-color 150ms ease;
+}
+
+.job-footer__link:hover,
+.job-footer__link:focus-visible {
+  text-decoration-color: var(--ink);
+  /* Hover-ON: instant, never a fade. */
+  transition-duration: 0s;
+}
+```
+
+Applies to every interaction state — colour, underline, background, border,
+opacity, outline, transform. Pair `:hover` with `:focus-visible` on the same rule
+so a keyboard reaches every state the mouse does.
+
+Two things this rule does **not** cover: entrance animations for content arriving
+on the page, and state that takes real time (a pending request). Those are not
+interaction states.
+
+## Sentence case for all titles
+
+**Every title is sentence case. Not Title Case.**
+
+This covers all of it — page headings, section headings, buttons, labels, nav
+items, link text, form legends, table headers, empty states, error messages,
+tooltips, `aria-label`s, page `<title>`s, and metadata.
+
+Capitalise the first word. Capitalise nothing else unless it is a proper noun.
+
+| Write this | Not this |
+| --- | --- |
+| Apply for this job | Apply For This Job |
+| About us | About Us |
+| Do not sell or share my personal information | Do Not Sell Or Share My Personal Information |
+| Netflix House jobs | Netflix House Jobs |
+| Posted date | Posted Date |
+
+Proper nouns keep their capitals: Netflix, Netflix House, Netflix Jobs. In
+"Netflix House jobs" the venue is the proper noun and "jobs" is an ordinary
+plural, so only the name is capitalised.
+
+Acronyms stay uppercase (US, FAQ, API). Sentence case is about capitalisation
+only — it does not add terminal punctuation, so headings and buttons still take
+no full stop.
+
+When mirroring a third party's copy, the third party's Title Case is not a
+reason to keep it. Match their wording, use our capitalisation.

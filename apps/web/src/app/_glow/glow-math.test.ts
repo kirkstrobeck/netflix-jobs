@@ -43,6 +43,37 @@ describe("buildOrbPath", () => {
     expect(path.stops.length).toBeGreaterThan(5);
   });
 
+  // Regression: the bounce used to reverse without clamping, so a walk that
+  // overshot one edge could land past the opposite one -- and every hop after
+  // that was out of range too, pushing it further out rather than back. Orbs
+  // bounded to [28.4, 55.4] were reaching 165cqh and being clipped by the band.
+  it("never leaves its vertical band, even when a hop is wider than the band", () => {
+    // 27cqh is the narrowest band build-orbs can produce, against hops of up to
+    // TRAVEL_Y_MAX (24) -- under two hops wide, which is where it used to break.
+    const cases = [
+      { topMin: 28.4, topMax: 55.4 },
+      { topMin: 40, topMax: 45 },
+      { topMin: 73, topMax: 92 },
+    ];
+
+    // The stop stores `bottom` as (top - height) rounded to 2dp, so adding
+    // height back reintroduces a float tail: an orb clamped exactly to 55.4
+    // reconstructs as 55.400000000000006. Hence the epsilon -- it is measurement
+    // noise from this reconstruction, not slack in the clamp.
+    const EPSILON = 0.001;
+
+    cases.forEach(({ topMin, topMax }) => {
+      Array.from({ length: 25 }, (_, i) => {
+        const height = 200 + i;
+        const path = buildOrbPath(i, (i % 10) / 10, 0.4, height, topMin, topMax);
+        const tops = path.stops.map((s) => s.bottom + height);
+
+        expect(Math.max(...tops)).toBeLessThanOrEqual(topMax + EPSILON);
+        expect(Math.min(...tops)).toBeGreaterThanOrEqual(topMin - EPSILON);
+      });
+    });
+  });
+
   it("covers opposite initial directions across seeds", () => {
     const lefts = Array.from({ length: 20 }, (_, i) =>
       buildOrbPath(i, 0.2, 0.3, 150, 35, 80).stops[1].left,

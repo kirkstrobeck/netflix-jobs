@@ -5,6 +5,7 @@ import {
   OPACITY_MAX,
   OPACITY_MIN,
   ORB_COUNT,
+  TOP_CEILING,
   TOP_FLOOR,
   TOP_FLUSH_EVERY_N,
   TOP_MAX_MIX_MIN,
@@ -54,15 +55,19 @@ export function buildOrbs(): Orb[] {
     ),
     3,
   );
+  // Every TOP_FLUSH_EVERY_N-th orb rides the ceiling; the rest mix up to it.
+  // The ceiling is TOP_CEILING, not 100 -- see the note on the constant.
   const topMaxes = uniquify(
     Array.from({ length: ORB_COUNT }, (_, i) => {
       if (i % TOP_FLUSH_EVERY_N === 0) {
-        return 100;
+        return TOP_CEILING;
       }
-      return mix(i, TOP_MAX_MIX_MIN, 100, 15);
+      return mix(i, TOP_MAX_MIX_MIN, TOP_CEILING, 15);
     }),
     1,
-  ).map((t, i) => (i % TOP_FLUSH_EVERY_N === 0 ? 100 : Math.min(100, t)));
+  ).map((t, i) =>
+    i % TOP_FLUSH_EVERY_N === 0 ? TOP_CEILING : Math.min(TOP_CEILING, t),
+  );
   const topMins = topMaxes.map((hi, i) => {
     const span = mix(i, Y_SPAN_MIN, Y_SPAN_MAX, 16);
     return +Math.max(TOP_FLOOR, hi - span).toFixed(1);

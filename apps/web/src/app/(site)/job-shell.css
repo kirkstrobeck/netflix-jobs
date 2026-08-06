@@ -12,9 +12,32 @@
   --accent: #e50914;
   --gutter: clamp(1.25rem, 4vw, 3rem);
 
+  /* Footer locked to the bottom of the viewport on short pages.
+
+     The shell is a single-column grid over its three children -- masthead, main,
+     ambient band -- and main takes the 1fr, so any viewport height the content
+     does not use is absorbed by the middle row instead of falling below the
+     footer. On a page taller than the viewport the 1fr row is already larger
+     than its share and the grid just grows; the footer sits after the content,
+     as it did before.
+
+     Deliberately not position: fixed. Fixed would pin the band to the viewport
+     on EVERY page, so on a long posting it would sit on top of the article the
+     whole way down instead of waiting at the end of it.
+
+     svh, not vh: on mobile the URL bar makes vh the LARGEST the viewport gets,
+     so 100vh guarantees a scrollbar on a page that would otherwise fit. svh is
+     the smallest, which is the one that makes "fits on screen" true.
+
+     .job-footer's own margin-block-start: 5rem is unaffected -- it lands between
+     main and the footer, so it stays breathing room above the band and never
+     becomes a strip of page background beneath it. The gap the user could see
+     was below the footer, and that is the free space this 1fr now eats. */
+  display: grid;
+  grid-template-rows: auto 1fr auto;
   background: var(--surface);
   color: var(--ink);
-  min-height: 100svh;
+  min-block-size: 100svh;
   font-synthesis-weight: none;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;

@@ -11,7 +11,7 @@
   display: flex;
   align-items: flex-end;
   overflow: hidden;
-  /* 500px, flat -- not the max(30rem, 100svh) viewport band this was. The glow
+  /* 400px, flat -- not the max(30rem, 100svh) viewport band this was. The glow
      costs nothing to rescale: .glow is inset: 0, its wash stops are percentages,
      and the orbs walk in cqw/cqh, so every part of the effect re-fits the box
      from the box's own size. Only the scrim had absolute stops, and those are
@@ -21,14 +21,16 @@
      height. overflow: hidden is here to clip orbs walking past the band edges,
      and it would clip footer text just as happily: on a narrow phone the notice
      wraps to nine lines and the four links stack to four rows, which overruns
-     500px and would silently eat the link list. fit-content lets the band grow
+     400px and would silently eat the link list. fit-content lets the band grow
      in exactly that case and is inert at every width where the content fits --
-     so this is 500px tall wherever 500px can hold it, and never a footer with
-     its links cropped off.
+     so this is 400px tall wherever 400px can hold it, and never a footer with
+     its links cropped off. At 400px the margin is thinner than it was at 500px:
+     the content box measures ~23rem against a 25rem band, so fit-content starts
+     doing real work a breakpoint earlier than it used to.
 
      position: relative is what makes the glow land here -- .glow is
      position: absolute / inset: 0 and fills its nearest positioned ancestor. */
-  block-size: 500px;
+  block-size: 400px;
   min-block-size: fit-content;
   margin-block-start: 5rem;
   background: var(--surface);
@@ -50,22 +52,27 @@
    already near-black everywhere except its bottom fifth costs nothing visible,
    because black over black is black. The cost is only where the red is.
 
-   0.14 is unchanged by the band going to 500px, because it was never derived
+   0.14 is unchanged by the band going to 400px, because it was never derived
    from the band's height -- it is measured against the worst pixel the wash can
    paint, flat opaque #e50914 at the bottom edge, which is still exactly what
    sits under the links. If anything the veil earns its keep harder now: the
-   wash's stops are percentages, so compressing ~900px of band into 500px pulls
+   wash's stops are percentages, so compressing ~900px of band into 400px pulls
    the red UP the box, and every line of footer text sits over more of it than it
    did before. Shorter band, same floor, same 5.64:1.
 
    The stops did have to move, and they are the one thing here that the height
-   change touched. They are lengths, so in a 500px box the old 38rem/48rem pair
-   never reaches its fade -- the whole band would render at a flat 0.14,
-   including the top seam, which is the exact edge the fade exists to prevent.
-   Rem is still the right unit for the same reason as before (the text zone's
-   height comes from the copy, not the band). Only the numbers are new: solid to
-   20rem clears the content box, and the fade finishes by 29rem, which leaves the
-   top 2.25rem of the 31.25rem band untinted so --surface still meets the page
+   change touched. They are lengths, so a stop past the band's own height never
+   reaches its fade -- the whole band would render at a flat 0.14, including the
+   top seam, which is the exact edge the fade exists to prevent. Rem is still the
+   right unit for the same reason as before: the text zone's height comes from
+   the copy, not the band, so it does not shrink when the band does.
+
+   The band is 25rem. Measured up from the bottom edge, the content box stacks
+   3rem of padding, the link row, a 1.75rem gap, the notice, another 1.75rem gap
+   and the wordmark -- about 18.5rem of actual text, with the remaining 4.5rem of
+   the content box being top padding that has nothing in it to protect. So:
+   solid to 19rem covers every line including the wordmark, the fade finishes by
+   23rem, and the top 2rem of the band stays untinted so --surface meets the page
    above it without a seam. */
 .job-footer__scrim {
   position: absolute;
@@ -74,8 +81,8 @@
   background: linear-gradient(
     to top,
     rgb(0 0 0 / 0.14) 0,
-    rgb(0 0 0 / 0.14) 20rem,
-    rgb(0 0 0 / 0) 29rem
+    rgb(0 0 0 / 0.14) 19rem,
+    rgb(0 0 0 / 0) 23rem
   );
 }
 
@@ -148,9 +155,17 @@
 
    Transparent-to-white rather than none-to-underline: text-decoration-line does
    not interpolate, so toggling it would snap. Holding the line always-present
-   and animating only its colour is what keeps the 150ms fade -- and a fully
+   and animating only its colour is what keeps the fade -- and a fully
    transparent underline paints nothing and reserves nothing, so at rest this is
-   an unadorned link. */
+   an unadorned link.
+
+   The transition is asymmetric, and which rule owns which direction is the whole
+   trick. An element animates using the transition declared on the state it is
+   moving TO, so the base rule below is the hover-OFF direction and the :hover
+   rule is the hover-ON direction. Entry is 0s -- the underline is simply there
+   the instant the pointer lands, because a fade-in on hover is the thing that
+   makes an interface feel slow. Exit keeps 150ms, which costs nothing: the
+   pointer has already left, so the gentle fade is not in anyone's way. */
 .job-footer__link {
   color: var(--ink);
   font-size: 0.9375rem;
@@ -159,10 +174,13 @@
   text-decoration-color: transparent;
   text-decoration-thickness: 2px;
   text-underline-offset: 0.22em;
+  /* Hover-OFF only. See the note above. */
   transition: text-decoration-color 150ms ease;
 }
 
 .job-footer__link:hover,
 .job-footer__link:focus-visible {
   text-decoration-color: var(--ink);
+  /* Hover-ON: instant, never a fade. */
+  transition-duration: 0s;
 }
