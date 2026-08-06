@@ -5,7 +5,7 @@ node_modules/
 .pnpm-store/
 
 # testing
-/coverage
+coverage/
 
 # next.js
 .next/

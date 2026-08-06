@@ -5,6 +5,12 @@
   "type": "module",
   "description": "Mirrors the Netflix Eightfold careers board into local Supabase.",
   "scripts": {
-    "ingest": "node bin/ingest.ts"
+    "ingest": "node bin/ingest.ts",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage"
+  },
+  "devDependencies": {
+    "@vitest/coverage-v8": "^4.1.10",
+    "vitest": "^4.1.10"
   }
 }
