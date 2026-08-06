@@ -2,9 +2,9 @@
  * End-glow tunables — edit these mins/maxes; path math is below.
  * Speed: lower HOP_DURATION_*_S = faster. Min speed → SLOW; max speed → FAST.
  */
-export const ORB_COUNT = 50;
+export const ORB_COUNT = 70;
 export const OPACITY_MIN = 0.05;
-export const OPACITY_MAX = 0.5;
+export const OPACITY_MAX = 0.575;
 export const WIDTH_REM_MIN = 3.401;
 export const WIDTH_REM_MAX = 9.48;
 export const WIDTH_PCT_MIN = 54.42;
@@ -14,8 +14,8 @@ export const HOP_DURATION_SLOW_S = 20.52;
 export const HOP_DURATION_FLOOR_S = 0.7;
 export const LOOP_DURATION_MIN_S = 207.69;
 export const LOOP_DURATION_MAX_S = 253.85;
-export const TRAVEL_X_MIN = 3;
-export const TRAVEL_X_MAX = 14;
+export const TRAVEL_X_MIN = 10;
+export const TRAVEL_X_MAX = 22;
 export const TRAVEL_Y_MIN = 6;
 export const TRAVEL_Y_MAX = 24;
 export const WALK_X_MIN = -18;
@@ -27,9 +27,12 @@ export const Y_SPAN_MAX = 60;
 export const TOP_FLOOR = 25;
 export const VISIBLE_SPHERE_MAX = 0.35;
 export const HEIGHT_EXTRA_MAX = 1.2;
-export const FLIP_ODDS_MIN = 0.28;
-export const FLIP_ODDS_MAX = 0.58;
-export const ORBS_BLUR_PX = 0;
+/** Lateral flips stay rare (technical sweeps); Y can still wander. */
+export const FLIP_ODDS_X_MIN = 0.08;
+export const FLIP_ODDS_X_MAX = 0.2;
+export const FLIP_ODDS_Y_MIN = 0.28;
+export const FLIP_ODDS_Y_MAX = 0.55;
+export const ORBS_BLUR_PX = 3;
 export const WASH_BEZIER_X1 = 0.12;
 export const WASH_BEZIER_Y1 = 0.72;
 export const WASH_BEZIER_X2 = 0.22;
@@ -63,12 +66,9 @@ function hopDuration(i: number, size: number, travel: number): number {
 }
 
 function nextDir(i: number, leg: number, axis: number, prev: 1 | -1): 1 | -1 {
-  const flip = mix(
-    i * 31 + axis * 17,
-    FLIP_ODDS_MIN,
-    FLIP_ODDS_MAX,
-    40 + (leg % 11),
-  );
+  const lo = axis === 0 ? FLIP_ODDS_X_MIN : FLIP_ODDS_Y_MIN;
+  const hi = axis === 0 ? FLIP_ODDS_X_MAX : FLIP_ODDS_Y_MAX;
+  const flip = mix(i * 31 + axis * 17, lo, hi, 40 + (leg % 11));
   if (mix(i * 97 + leg * 53 + axis * 71, 0, 1, 100 + leg + axis * 3) < flip) {
     return prev === 1 ? -1 : 1;
   }
