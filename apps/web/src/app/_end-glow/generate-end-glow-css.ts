@@ -1,11 +1,11 @@
-import { buildEndOrbs } from "@/app/foo/build-end-orbs";
+import { buildEndOrbs } from "@/app/_end-glow/build-end-orbs";
 import {
   ORBS_BLUR_PX,
   WASH_BEZIER_X1,
   WASH_BEZIER_X2,
   WASH_BEZIER_Y1,
   WASH_BEZIER_Y2,
-} from "@/app/foo/end-glow-math";
+} from "@/app/_end-glow/end-glow-math";
 
 function bez1d(t: number, a: number, b: number): number {
   const u = 1 - t;

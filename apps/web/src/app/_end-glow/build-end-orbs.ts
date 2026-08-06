@@ -16,7 +16,7 @@ import {
   Y_SPAN_MAX,
   Y_SPAN_MIN,
   type OrbStop,
-} from "@/app/foo/end-glow-math";
+} from "@/app/_end-glow/end-glow-math";
 
 export const END_ORB_COUNT = ORB_COUNT;
 
