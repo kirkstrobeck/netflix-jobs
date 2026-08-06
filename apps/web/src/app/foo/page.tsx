@@ -1,5 +1,5 @@
-import { EndGlow } from "@/app/_end-glow/end-glow";
+import { Glow } from "@/app/_glow/glow";
 
 export default function Base() {
-  return <EndGlow />;
+  return <Glow />;
 }

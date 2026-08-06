@@ -16,11 +16,10 @@ import {
   Y_SPAN_MAX,
   Y_SPAN_MIN,
   type OrbStop,
-} from "@/app/_end-glow/end-glow-math";
+} from "@/app/_glow/glow-math";
+import { uniquify } from "@/app/_glow/uniquify";
 
-export const END_ORB_COUNT = ORB_COUNT;
-
-export type EndOrb = {
+export type Orb = {
   width: string;
   height: number;
   duration: number;
@@ -29,19 +28,7 @@ export type EndOrb = {
   stops: OrbStop[];
 };
 
-function uniquify(values: number[], digits: number): number[] {
-  return values.reduce<number[]>((acc, raw) => {
-    const step = 10 ** -digits;
-    const fmt = (n: number) => n.toFixed(digits);
-    const used = new Set(acc.map(fmt));
-    const next = Array.from({ length: 80 }, (_, k) =>
-      +(raw + k * step).toFixed(digits),
-    ).find((n) => !used.has(fmt(n)));
-    return [...acc, next ?? raw];
-  }, []);
-}
-
-function clamp01(n: number): number {
+export function clamp01(n: number): number {
   return Math.min(1, Math.max(0, n));
 }
 
@@ -60,7 +47,7 @@ function sizeNorm(widthRem: number, widthPct: number, usePct: boolean): number {
   return clamp01((widthRem - WIDTH_REM_MIN) / (WIDTH_REM_MAX - WIDTH_REM_MIN));
 }
 
-export function buildEndOrbs(): EndOrb[] {
+export function buildOrbs(): Orb[] {
   const peaks = uniquify(
     Array.from({ length: ORB_COUNT }, (_, i) =>
       mix(i, OPACITY_MIN, OPACITY_MAX, 11),

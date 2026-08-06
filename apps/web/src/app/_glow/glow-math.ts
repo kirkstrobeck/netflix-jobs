@@ -1,8 +1,8 @@
 /**
- * End-glow tunables — edit these mins/maxes; path math is below.
+ * Glow tunables — edit these mins/maxes; path math is below.
  * Speed: lower HOP_DURATION_*_S = faster. Min speed → SLOW; max speed → FAST.
  */
-export const ORB_COUNT = 70;
+export const ORB_COUNT = 100;
 export const OPACITY_MIN = 0.05;
 export const OPACITY_MAX = 0.575;
 export const WIDTH_REM_MIN = 3.401;
@@ -55,7 +55,7 @@ function clamp(n: number, lo: number, hi: number): number {
   return Math.min(hi, Math.max(lo, n));
 }
 
-function hopDuration(i: number, size: number, travel: number): number {
+export function hopDuration(i: number, size: number, travel: number): number {
   const s = clamp(size, 0, 1);
   const base =
     HOP_DURATION_FAST_S + (1 - s) * (HOP_DURATION_SLOW_S - HOP_DURATION_FAST_S);
@@ -173,8 +173,7 @@ export function buildOrbPath(
     dirY,
     stops: [first],
   });
-  const last = acc.stops[acc.stops.length - 1];
-  const scale = last?.at || 100;
+  const scale = acc.stops[acc.stops.length - 1].at;
   const normalized = acc.stops.map((s) => ({
     ...s,
     at: +((s.at / scale) * 100).toFixed(2),

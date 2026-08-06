@@ -1,43 +1,12 @@
-import { buildEndOrbs } from "@/app/_end-glow/build-end-orbs";
+import { buildOrbs } from "@/app/_glow/build-orbs";
+import { cubicBezier } from "@/app/_glow/cubic-bezier";
 import {
   ORBS_BLUR_PX,
   WASH_BEZIER_X1,
   WASH_BEZIER_X2,
   WASH_BEZIER_Y1,
   WASH_BEZIER_Y2,
-} from "@/app/_end-glow/end-glow-math";
-
-function bez1d(t: number, a: number, b: number): number {
-  const u = 1 - t;
-  return 3 * u * u * t * a + 3 * u * t * t * b + t * t * t;
-}
-
-function cubicBezier(
-  x1: number,
-  y1: number,
-  x2: number,
-  y2: number,
-  x: number,
-): number {
-  if (x <= 0) {
-    return 0;
-  }
-  if (x >= 1) {
-    return 1;
-  }
-  const refine = (t: number, steps: number): number => {
-    if (steps <= 0) {
-      return t;
-    }
-    const xEst = bez1d(t, x1, x2);
-    const d = (bez1d(t + 1e-6, x1, x2) - xEst) / 1e-6;
-    if (Math.abs(d) < 1e-9) {
-      return t;
-    }
-    return refine(t - (xEst - x) / d, steps - 1);
-  };
-  return bez1d(Math.min(1, Math.max(0, refine(x, 10))), y1, y2);
-}
+} from "@/app/_glow/glow-math";
 
 function easedRedWash(): string {
   const stops = Array.from({ length: 49 }, (_, i) => {
@@ -61,7 +30,7 @@ function orbTransform(left: number, bottom: number): string {
 }
 
 function orbKeyframes(
-  orb: ReturnType<typeof buildEndOrbs>[number],
+  orb: ReturnType<typeof buildOrbs>[number],
   i: number,
 ): string {
   const body = orb.stops
@@ -70,39 +39,46 @@ function orbKeyframes(
         `  ${stop.at}% { transform: ${orbTransform(stop.left, stop.bottom)}; opacity: ${stop.opacity}; }`,
     )
     .join("\n");
-  return `@keyframes end-orb-${i} {
+  return `@keyframes glow-orb-${i} {
 ${body}
 }`;
 }
 
-export function generateEndGlowCss(): string {
-  const orbs = buildEndOrbs();
+export function generateGlowCss(): string {
+  const orbs = buildOrbs();
   const keyframes = orbs.map((orb, i) => orbKeyframes(orb, i)).join("\n");
   const rules = orbs
     .map(
       (orb, i) =>
-        `.end-glow__orb--${i} { width: ${orb.width}; height: ${orb.height}%; animation: end-orb-${i} ${orb.duration}s linear ${orb.delay}s infinite alternate; }`,
+        `.glow__orb--${i} { width: ${orb.width}; height: ${orb.height}%; animation: glow-orb-${i} ${orb.duration}s linear ${orb.delay}s infinite alternate; }`,
     )
     .join("\n");
 
   return `
-.end-glow {
+/* absolute, not fixed: the glow fills its nearest positioned ancestor, so it
+   works as a page-sized backdrop AND as the light inside a footer band. It is
+   the caller's job to make that ancestor position: relative.
+
+   overflow: hidden is load-bearing, not tidiness. Orbs are up to 3.4x the box
+   tall and walk from -18% to 118% across it; unclipped they would spill past a
+   band and, in a document flow, lengthen the page with phantom scroll. */
+.glow {
   pointer-events: none;
-  position: fixed;
+  position: absolute;
   inset: 0;
-  overflow: visible;
+  overflow: hidden;
 }
-.end-glow__wash {
+.glow__wash {
   position: absolute;
   inset: 0;
   background: ${easedRedWash()};
 }
-.end-glow__orbs {
+.glow__orbs {
   position: absolute;
   inset: 0;
   container-type: size;${ORBS_BLUR_PX > 0 ? `\n  filter: blur(${ORBS_BLUR_PX}px);` : ""}
 }
-.end-glow__orb {
+.glow__orb {
   position: absolute;
   left: 0;
   bottom: 0;
@@ -113,7 +89,7 @@ export function generateEndGlowCss(): string {
 ${keyframes}
 ${rules}
 @media (prefers-reduced-motion: reduce) {
-  .end-glow__orb { animation: none !important; opacity: 0; }
+  .glow__orb { animation: none !important; opacity: 0; }
 }
 `.trim();
 }
