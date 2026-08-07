@@ -1,0 +1,28 @@
+---
+description: Production performance bar — 60 FPS, instant UI, full caching, all devices
+alwaysApply: true
+---
+
+# Production Performance Bar
+
+This site ships to production. Treat every change as live-path code.
+
+## Hard requirements
+
+- **60 FPS minimum** for UI, navigation, and interaction. No jank, layout thrashing, or main-thread blocking work on the critical path.
+- **Instant UI, navigation, and loading.** Prefer static shells, streaming, prefetch, and optimistic UI. Avoid full-page spinners and waterfalls.
+- **Cache everything** that can be cached: HTML shells, data (`use cache` / `cacheLife` / `cacheTag`), fonts, images, static assets, and CDN responses. Default to long-lived immutable cache for hashed assets.
+- **Universal compatibility** across desktop, tablet, mobile, and every viewport in between. Touch and pointer both work. No horizontal overflow. No desktop-only assumptions.
+
+## Implementation rules
+
+- Prefer Server Components; keep client JS minimal and purposeful.
+- Enable and use Next.js Cache Components (`cacheComponents`, `use cache`) for cacheable work.
+- Use `next/image`, `next/font` (local when possible), and `next/link` with prefetch.
+- Animations: compositor-friendly only (`transform` / `opacity`). Respect `prefers-reduced-motion`.
+- Never ship uncapped network or parse work on first paint. Measure before adding weight.
+- Responsive by default: fluid layout, readable type, ≥44px touch targets where interactive.
+
+## When reviewing or writing code
+
+If a change risks dropping below 60 FPS, delaying first paint/navigation, skipping cache, or breaking a viewport — fix it before merging.

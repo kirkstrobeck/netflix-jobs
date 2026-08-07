@@ -1,0 +1,29 @@
+---
+description: Accessibility bar — WCAG contrast, keyboard, screen readers, inclusive UI
+alwaysApply: true
+---
+
+# Accessibility Bar
+
+This site ships to production. Accessibility is required, not optional.
+
+## Hard requirements
+
+- **WCAG 2.2 AA minimum** for all user-facing UI (prefer AAA where practical).
+- **Color contrast compliant** for text, icons-as-text, and meaningful non-text UI (controls, focus, borders that convey state).
+- **Keyboard complete**: every interactive control reachable and operable by keyboard alone, with a visible `:focus-visible` indicator.
+- **Screen-reader clear**: semantic HTML first; correct names, roles, and states; decorative images `alt=""`; informative images have meaningful `alt`.
+- **Inclusive motion & input**: honor `prefers-reduced-motion`; do not rely on color alone; support zoom to 200% without loss of content or function.
+
+## Implementation rules
+
+- Use native elements (`button`, `a`, `label`, headings, lists, landmarks) before ARIA.
+- Never remove focus outlines without an equal-or-better visible replacement.
+- Form fields need associated labels; errors must be announced and linked to fields.
+- Hit targets ≥44×44px; avoid hover-only affordances.
+- Live updates use appropriate `aria-live` / status patterns; do not trap focus except in true modal dialogs with Escape to dismiss.
+- Test mentally for keyboard tab order, contrast, and name/role/value before finishing a UI change.
+
+## When reviewing or writing code
+
+If a change weakens contrast, breaks keyboard use, hides content from assistive tech, or fails AA — fix it before merging.
