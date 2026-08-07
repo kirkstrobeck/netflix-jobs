@@ -10,10 +10,12 @@ export default defineConfig({
   },
   test: {
     environment: "jsdom",
+    setupFiles: ["./vitest.setup.ts"],
     include: ["src/**/*.test.{ts,tsx}"],
+    css: false,
     coverage: {
       provider: "v8",
-      include: ["src/app/_glow/**/*.{ts,tsx}"],
+      include: ["src/**/*.{ts,tsx}"],
       exclude: ["src/**/*.test.{ts,tsx}"],
       thresholds: {
         lines: 100,

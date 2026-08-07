@@ -6,6 +6,8 @@
     "build": "turbo build",
     "dev": "turbo dev",
     "lint": "turbo lint",
+    "test": "pnpm --filter web test && pnpm --filter @netflix-jobs/ingestor test",
+    "test:coverage": "pnpm --filter web test:coverage && pnpm --filter @netflix-jobs/ingestor test:coverage",
     "db:forward": "node tools/supabase-port-forward.mjs",
     "db:start": "supabase start",
     "db:stop": "supabase stop",
