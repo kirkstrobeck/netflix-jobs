@@ -35,10 +35,23 @@ fix_volume_ownership() {
 # the loop survived killing the in-container amplifier -- which is what placed
 # the bridge (and Colima's chmod injection) inside it.
 #
-# Next polls instead now; see watchOptions.pollIntervalMs in apps/web/
-# next.config.ts. Polling needs no event to cross the mount, so none of this has
-# to exist. These stay as stops, not starts, so that booting a workspace that
-# ran the old boot.sh clears the strays rather than inheriting them.
+# tools/sandbox/mac-save-bridge.mjs replaced both -- see ensure_mac_save_bridge
+# below, which is the only thing here that starts anything. It is NOT Next
+# polling. watchOptions.pollIntervalMs was the obvious fix and was measured and
+# rejected: Turbopack polls from `turbopack.root`, the monorepo root, so a pass
+# stats 20,713 files instead of the 71 under apps/web/src, and the same edit to
+# the same file took 15,400ms against the native watcher's 91ms. next.config.ts
+# carries a comment where the setting would go, recording exactly that, and no
+# pollIntervalMs -- do not add one back.
+#
+# So the native watcher stays, and the bridge only feeds it: it polls src alone
+# from INSIDE the container and rewrites the changed file in place, which is what
+# produces the guest inotify event virtiofs will not carry. The cycle the two
+# helpers above fell into is broken by the bridge recording the mtime its own
+# rewrite produces, so it cannot mistake its own write for a change.
+#
+# These stay as stops, not starts, so that booting a workspace that ran the old
+# boot.sh clears the strays rather than inheriting them.
 stop_dev_watch_helpers() {
   pkill -f 'host-fs-bridge\.mjs' >/dev/null 2>&1 || true
   rm -f "$CACHE_DIR/host-fs-bridge.pid"

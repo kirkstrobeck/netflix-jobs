@@ -9,9 +9,12 @@
 # with contents, the two sustained an event storm with no one typing: 34 inotify
 # events in a 15s window on an untouched file.
 #
-# Next polls the tree instead (watchOptions.pollIntervalMs in apps/web/
-# next.config.ts), which needs no event to cross the mount at all, so there is
-# nothing left for the injection to buy.
+# tools/sandbox/mac-save-bridge.mjs manufactures that event instead, from inside
+# the guest, where the rewrite cannot propagate back out to macOS and start the
+# cycle again -- so there is nothing left for the injection to buy. It is not
+# watchOptions.pollIntervalMs: that knob was measured and rejected (Turbopack
+# polls from the monorepo root, 15,400ms vs the native watcher's 91ms), and
+# next.config.ts deliberately carries no such setting.
 
 colima_start_flags() {
   printf '%s\n' --vm-type vz --mount-type virtiofs
