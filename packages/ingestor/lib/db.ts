@@ -64,7 +64,7 @@ async function request(
     headers: headers(extraHeaders),
   });
   const body = await res.text();
-  if (!res.ok) throw new Error(`${init.method ?? 'GET'} ${path} -> ${res.status}: ${body}`);
+  if (!res.ok) throw new Error(`${init.method} ${path} -> ${res.status}: ${body}`);
   return body ? JSON.parse(body) : null;
 }
 

@@ -19,15 +19,21 @@ export type HttpOptions = {
   maxAttempts?: number;
 };
 
-export { configureReader, currentTransport, transportCounts } from './transport.ts';
+export { configureReader, currentTransport, transportCounts, resetTransportState } from './transport.ts';
 export type { Transport } from './transport.ts';
 
+// Ladders stop growing once they run out of rungs: past the end, every further
+// retry waits the longest delay.
+function rung(ladder: number[], index: number): number {
+  return ladder[Math.min(index, ladder.length - 1)];
+}
+
 function delayFor(err: unknown, attempt: number, rateLimitHits: number): number {
-  if (isRateLimited(err)) return RATE_LIMIT_DELAYS_MS[rateLimitHits - 1] ?? 120_000;
+  if (isRateLimited(err)) return rung(RATE_LIMIT_DELAYS_MS, rateLimitHits - 1);
   // A 403 on direct is a WAF verdict, not a transient fault: go straight to the
   // next attempt, which the transport's demotion may already have rerouted.
   if (isBlocked(err)) return 0;
-  return RETRY_DELAYS_MS[attempt - 1] ?? 45_000;
+  return rung(RETRY_DELAYS_MS, attempt - 1);
 }
 
 export async function fetchJson(

@@ -7,6 +7,8 @@
 // fail soft — a job with no description still lands, flagged by an empty
 // description_text — so one bad posting cannot abort a 481-job run.
 
+import { pathToFileURL } from 'node:url';
+
 import {
   LIST_PAGE_SIZE,
   SORT_ORDERS,
@@ -35,6 +37,14 @@ const MAX_JOBS = Number(process.env.MAX_JOBS ?? 0);
 const counts = { listed: 0, detailOk: 0, detailFailed: 0, upserted: 0, deactivated: 0 };
 const failures: string[] = [];
 
+function resetRunState(): void {
+  counts.listed = 0;
+  counts.detailOk = 0;
+  counts.detailFailed = 0;
+  counts.upserted = 0;
+  counts.deactivated = 0;
+  failures.splice(0, failures.length);
+}
 async function sweep(
   seen: Map<string, Position>,
   total: number,
@@ -114,7 +124,10 @@ async function writeRows(rows: JobRow[], runId: string): Promise<void> {
   }
 }
 
-async function main(): Promise<void> {
+export async function main(
+  exit: (code: number) => void = (code) => process.exit(code),
+): Promise<void> {
+  resetRunState();
   configureReader(READER_CONCURRENCY, READER_SPACING_MS);
   const runId = await startRun();
   console.log(`ingest run ${runId}`);
@@ -147,7 +160,11 @@ async function main(): Promise<void> {
   const elapsed = Math.round((Date.now() - started) / 1000);
   console.log(`\n${status} in ${elapsed}s`);
   console.log(JSON.stringify({ ...counts, transports, rowsInDb: await countJobs() }, null, 2));
-  process.exit(status === 'succeeded' ? 0 : 1);
+  exit(status === 'succeeded' ? 0 : 1);
 }
 
-main();
+// Only true when this file is the process entry point, which no test can be.
+/* v8 ignore next 3 */
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  void main();
+}

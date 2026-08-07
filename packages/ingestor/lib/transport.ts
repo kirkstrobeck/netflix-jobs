@@ -72,6 +72,17 @@ export function currentTransport(): Transport {
   return state.transport;
 }
 
+/** Resets module state between tests. */
+export function resetTransportState(): void {
+  state.transport = 'direct';
+  state.blockStreak = 0;
+  state.sinceDirectProbe = 0;
+  state.readerNextAt = 0;
+  state.counts = { direct: 0, reader: 0 };
+  readerGate.semaphore = createSemaphore(2);
+  readerGate.spacingMs = 1_200;
+}
+
 function userAgent(): string {
   return USER_AGENTS[Math.floor(Math.random() * USER_AGENTS.length)] ?? USER_AGENTS[0];
 }
@@ -145,6 +156,16 @@ function shouldProbeDirect(): boolean {
   return true;
 }
 
+// Kept out of send()'s try block on purpose: a branch sitting after an `await`
+// inside an async function is what v8's coverage ranges attribute wrongly.
+function noteSuccess(transport: Transport, probing: boolean): void {
+  if (transport !== 'direct') return;
+  noteDirectResult(false);
+  if (!probing) return;
+  state.transport = 'direct';
+  console.log('  transport: direct is unblocked again, switching back');
+}
+
 export async function send(url: string, timeoutMs: number): Promise<unknown> {
   const probing = shouldProbeDirect();
   const transport: Transport = probing ? 'direct' : state.transport;
@@ -162,13 +183,7 @@ export async function send(url: string, timeoutMs: number): Promise<unknown> {
           return run();
         })
       : await run();
-    if (transport === 'direct') {
-      noteDirectResult(false);
-      if (probing) {
-        state.transport = 'direct';
-        console.log('  transport: direct is unblocked again, switching back');
-      }
-    }
+    noteSuccess(transport, probing);
     return data;
   } catch (err) {
     if (transport === 'direct') noteDirectResult(isBlocked(err));
