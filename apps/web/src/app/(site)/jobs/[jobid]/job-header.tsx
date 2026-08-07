@@ -1,4 +1,5 @@
 import { ApplyButton } from "@/app/(site)/jobs/[jobid]/apply-button";
+import { PostedDate } from "@/app/(site)/jobs/[jobid]/posted-date";
 import { formatLocations } from "@/lib/format/location";
 import { formatPostedDate } from "@/lib/format/posted-date";
 import type { Job } from "@/lib/jobs/types";
@@ -25,7 +26,7 @@ export function JobHeader({ job }: { job: Job }) {
           {posted ? (
             <>
               {/* posted is only truthy when posting_date parsed, so it is a string here. */}
-              Posted <time dateTime={job.posting_date!}>{posted}</time>
+              Posted <PostedDate absolute={posted} iso={job.posting_date!} />
             </>
           ) : (
             <span className="job-facts__empty">Posted date not listed</span>
