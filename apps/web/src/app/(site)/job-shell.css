@@ -107,8 +107,13 @@
 
    Centre is also what makes the masthead work without a second rule:
    .site-header__inner centres the ANCHOR in its row, so the mark only lands on
-   the row's centre line if it is centred inside the anchor too. wordmark.test.tsx
-   pins both numbers at 0. */
+   the row's centre line if it is centred inside the anchor too.
+
+   Nothing pins those numbers in CI, and nothing can: the suite runs in jsdom
+   with css: false, which has no layout engine, so every box measures 0. The 3px
+   and 6.5px above were read off a real Chromium against the dev server by a
+   throwaway harness that is not in the repo. Re-measure the same way if this
+   rule is ever argued with. */
 .wordmark {
   display: inline-flex;
   align-items: center;
