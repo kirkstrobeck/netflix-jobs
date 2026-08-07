@@ -24,7 +24,8 @@ export function JobHeader({ job }: { job: Job }) {
         <li className="job-facts__item">
           {posted ? (
             <>
-              Posted <time dateTime={job.posting_date ?? undefined}>{posted}</time>
+              {/* posted is only truthy when posting_date parsed, so it is a string here. */}
+              Posted <time dateTime={job.posting_date!}>{posted}</time>
             </>
           ) : (
             <span className="job-facts__empty">Posted date not listed</span>

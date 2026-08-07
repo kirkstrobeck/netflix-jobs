@@ -21,6 +21,19 @@ function indexOfOpenTag(stack: Frame[], name: string): number {
   return -1;
 }
 
+// Closes every frame from `depth` upwards, innermost first. Unwrapped tags hold
+// a null output, so they leave the stack without emitting anything.
+function unwind(out: string[], stack: Frame[], depth: number): void {
+  stack
+    .splice(depth)
+    .reverse()
+    .forEach((frame) => {
+      if (frame.output) {
+        out.push(`</${frame.output}>`);
+      }
+    });
+}
+
 // Unwinds to the matching open tag, closing anything left dangling inside it. A
 // stray "</b>" with no opener is ignored rather than emitted.
 function closeTag(out: string[], stack: Frame[], name: string): void {
@@ -30,13 +43,7 @@ function closeTag(out: string[], stack: Frame[], name: string): void {
     return;
   }
 
-  while (stack.length > index) {
-    const frame = stack.pop();
-
-    if (frame?.output) {
-      out.push(`</${frame.output}>`);
-    }
-  }
+  unwind(out, stack, index);
 }
 
 function openTag(out: string[], stack: Frame[], name: string, attrs: string): void {
@@ -113,20 +120,16 @@ export function sanitizeHtml(input: string): string {
       continue;
     }
 
-    openTag(out, stack, name, match[3] ?? "");
+    // The attribute group always participates in the match, so it is never
+    // undefined — an attribute-less tag simply captures "".
+    openTag(out, stack, name, match[3]);
   }
 
   if (dropDepth === 0) {
     out.push(escapeText(input.slice(cursor)));
   }
 
-  while (stack.length > 0) {
-    const frame = stack.pop();
-
-    if (frame?.output) {
-      out.push(`</${frame.output}>`);
-    }
-  }
+  unwind(out, stack, 0);
 
   return out.join("");
 }
