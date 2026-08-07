@@ -97,13 +97,21 @@
    font-weight and text-transform stay: those two the suffix does NOT set, and it
    inherits them, which is what makes "Jobs" render as bold JOBS.
 
-   align-items: baseline survives the swap on purpose. A replaced element's
-   baseline is the bottom of its margin box, so the mark's bottom edge lands on
-   the suffix's baseline -- the same relationship the two words had when both
-   were text. */
+   align-items: center, NOT baseline. Baseline survived the type-to-<img> swap on
+   the theory that it preserved the relationship the two words had when both were
+   text, but a replaced element's baseline is the BOTTOM of its margin box, so
+   baseline pinned the mark's bottom edge to the suffix's baseline and hung the
+   suffix's descender space below it. Measured in Chromium that put the mark 3px
+   above the centre of the 72px masthead row and left "Jobs" riding 6.5px low
+   against the glyphs -- in both instances, since one rule drives both.
+
+   Centre is also what makes the masthead work without a second rule:
+   .site-header__inner centres the ANCHOR in its row, so the mark only lands on
+   the row's centre line if it is centred inside the anchor too. wordmark.test.tsx
+   pins both numbers at 0. */
 .wordmark {
   display: inline-flex;
-  align-items: baseline;
+  align-items: center;
   gap: 0.625rem;
   font-weight: 700;
   text-transform: uppercase;
