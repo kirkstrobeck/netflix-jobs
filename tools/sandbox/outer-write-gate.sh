@@ -14,6 +14,12 @@ set -uo pipefail
 # outer's own wiring, and outer has to be able to repair the thing that dispatches
 # to inner without dispatching to inner to do it.
 #
+# And outer's own state outside the repo: the auto-memory directory under
+# ~/.claude and the session scratchpad. The rule this gate enforces is that the
+# Mac's checkout and the container's checkout stay one tree; those files are in
+# no checkout at all, so denying them protects nothing and costs outer the two
+# things it is supposed to do on the host -- remember, and keep scratch notes.
+#
 # Reads the hook payload on stdin, writes a permission decision on stdout.
 # Fails OPEN on any internal error -- a broken gate must not brick the session.
 
@@ -92,6 +98,18 @@ gate_resolve() {
   printf '%s' "$full"
 }
 
+# Outer's own state, judged on the resolved path so the same traversal and
+# symlink handling that guards the repo guards these too. The literal
+# /nonexistent defaults matter: an unset HOME must not collapse the pattern to
+# "/.claude/"* and start matching things.
+gate_is_outer_state() {
+  case "$1/" in
+    "${HOME:-/nonexistent}/.claude/"*) return 0 ;;
+    /private/tmp/claude-*/*|/tmp/claude-*/*) return 0 ;;
+  esac
+  return 1
+}
+
 payload="$(cat)"
 tool="$(printf '%s' "$payload" | jq -r '.tool_name // ""' 2>/dev/null)"
 
@@ -127,6 +145,12 @@ while IFS= read -r raw; do
   [ -n "$raw" ] || continue
   resolved="$(gate_resolve "$raw" "$cwd")" || exit 0
   [ -n "$resolved" ] || exit 0
+
+  # Checked before the project-root test, which would otherwise deny these for
+  # being outside a boundary they were never inside.
+  if gate_is_outer_state "$resolved"; then
+    continue
+  fi
 
   case "$resolved/" in
     "$PROJECT_ROOT/"*) ;;

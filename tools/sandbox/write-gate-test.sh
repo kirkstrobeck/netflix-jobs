@@ -47,6 +47,20 @@ check allow 'new script under tools/sandbox' "$(write_json "$ROOT/tools/sandbox/
 check allow 'settings under .claude' "$(write_json "$ROOT/.claude/settings.json")"
 check allow 'nested under .claude' "$(write_json "$ROOT/.claude/skills/sandbox/SKILL.md")"
 
+# Outer's own state outside the repo. In no checkout, so the one-tree rule this
+# gate enforces has nothing to say about them.
+check allow 'auto-memory under ~/.claude' \
+  "$(write_json "$HOME/.claude/projects/x/memory/MEMORY.md")"
+check allow 'session scratchpad' "$(write_json /private/tmp/claude-501/x/y/scratchpad/note.md)"
+
+# The allowance is a prefix match on ~/.claude, not on .claude anywhere, and not
+# on any tmp path -- both would be trivially escapable.
+check deny 'a .claude dir elsewhere on the Mac is not outer state' \
+  "$(write_json /Users/someone-else/.claude/settings.json)"
+check deny 'an unrelated tmp path is not the scratchpad' "$(write_json /tmp/x/note.md)"
+check deny 'traversal out of ~/.claude' \
+  "$(edit_json "$HOME/.claude/../.zshrc")"
+
 # Path tricks. The prefix check is only worth anything if the path is resolved
 # first -- both directions.
 check deny 'traversal escapes the repo' "$(edit_json "$ROOT/tools/sandbox/../../../etc/passwd")"
