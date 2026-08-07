@@ -124,13 +124,13 @@
 }
 
 /* The rendered height; next/image's width/height attributes only declare the
-   aspect ratio. 1.75rem against the ~0.99rem cap height of the uppercase text
+   aspect ratio. 1.625rem against the ~0.99rem cap height of the uppercase text
    this replaced: the mark reads as artwork rather than as a word, which 1.125rem
    only just managed and 1.375rem only stated quietly. One rule drives BOTH
    instances, so the masthead and the footer cannot drift apart.
 
    It cannot reflow the header. .site-header__inner is a 4.5rem min-block-size
-   flex row and 1.75rem is 28px inside 72px, so the row's height comes from that
+   flex row and 1.625rem is 26px inside 72px, so the row's height comes from that
    floor either way; the mark grew into space the masthead already reserved, and
    .shell adds padding-inline only, so there is no block padding for it to push
    against. The suffix's own line box is smaller still (0.875rem text), so the
@@ -139,19 +139,19 @@
    It cannot reflow the footer either, but the margin there is the thinner of the
    two. .job-footer is block-size: 400px / min-block-size: fit-content with the
    content bottom-aligned, and site-footer.css measures that content box at
-   ~23rem against the 400px band -- so 6px more of wordmark spends slack the band
-   has, rather than triggering fit-content. It does push the mark 6px further up
+   ~23rem against the 400px band -- so 4px more of wordmark spends slack the band
+   has, rather than triggering fit-content. It does push the mark 4px further up
    a bottom-anchored stack, which matters only against .job-footer__scrim's solid
    zone: that runs to 19rem (304px) and the wordmark sat ~18.5rem (296px) up, so
-   at ~302px it is still inside the solid. That is now the binding constraint on
-   this number -- growing the mark again, or adding a row to the footer grid,
-   walks the wordmark out of the scrim's solid zone and the stops have to move
-   with it.
+   at ~300px it is still inside the solid, with 4px of margin rather than the 2px
+   1.75rem left. That is still the binding constraint on this number -- growing
+   the mark again, or adding a row to the footer grid, walks the wordmark out of
+   the scrim's solid zone and the stops have to move with it.
 
    inline-size: auto is what keeps the 1427x383 ratio intact -- the docs warn
    that pinning one axis without freeing the other distorts the image. */
 .wordmark__mark {
-  block-size: 1.75rem;
+  block-size: 1.625rem;
   inline-size: auto;
 }
 
