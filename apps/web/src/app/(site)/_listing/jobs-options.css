@@ -1,14 +1,12 @@
 /* Facet options and keyword chips. Split from jobs-facets.css to stay under
    the 200-line limit; same tokens, same interaction-state rule. */
 
-/* Capped and scrollable: 40 locations should not push the results column's
-   footer off the screen. The search bar above is the real way through a list
-   this long; the scroll is the fallback. */
+/* No cap and no scroll. A list this long is reached by the search box above it
+   or by "Show all" below it; a scrollbar inside a sidebar is a second place to
+   get lost in, and it was also what clipped the search input's focus ring. */
 .facet__options {
-  max-block-size: 15rem;
   margin: 0.75rem 0 0;
   padding: 0;
-  overflow-y: auto;
   list-style: none;
 }
 
@@ -47,9 +45,17 @@
   cursor: pointer;
 }
 
+/* balance, because these are short display strings, not prose: in a 19rem column
+   "Los Angeles, California, United States of America" otherwise breaks to three
+   lines with "America" stranded on the last. Balance evens them instead.
+
+   overflow-wrap is insurance for a value with no spaces in it -- the facet
+   column is fixed at 19rem and one unbreakable string would push through it. */
 .option__label {
   flex: 1;
   min-inline-size: 0;
+  overflow-wrap: break-word;
+  text-wrap: balance;
 }
 
 /* Tabular figures so the counts form a straight edge down the right of the list
@@ -97,4 +103,70 @@
 .chip__cross {
   font-size: 0.875rem;
   line-height: 1;
+}
+
+/* Selected options read as ON, not merely ticked: full --ink against the
+   --ink-muted of the rest, and the count promoted with it. This is half the
+   answer to "the counts look stale" -- the row you just clicked has to look
+   different from the rows you did not. */
+.option--on {
+  color: var(--ink);
+}
+
+.option--on .option__count {
+  color: var(--ink-muted);
+}
+
+/* The other half. Counts in a facet are deliberately blind to that facet's OWN
+   selections -- apply them and every unticked option in the list reads 0, since
+   no job is both Engineering and Marketing, which would make multi-select
+   pointless. But a number that does not move after a click looks broken, so
+   when a facet is active it says so, in place, rather than leaving the reader to
+   infer it. Shown only while that facet has a selection. */
+.facet__pinned {
+  margin: 0.5rem 0 0;
+  color: var(--ink-faint);
+  font-size: 0.75rem;
+  line-height: 1.4;
+  text-wrap: pretty;
+}
+
+/* Proof the click landed, on the facet itself: a live tally that changes every
+   time a box is ticked, sitting next to the legend that names the group. */
+.facet__tally {
+  margin-inline-start: 0.5rem;
+  color: var(--ink-muted);
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+/* "Show all 31" rather than "Show more": the count is the useful part of the
+   promise, and it is the difference between opening two more rows and opening
+   twenty-nine. Full width so it reads as the end of the list rather than a
+   button floating beside it. */
+.facet__more {
+  inline-size: 100%;
+  margin-block-start: 0.375rem;
+  padding: 0.4375rem 0.25rem;
+  border: 0;
+  border-radius: 3px;
+  background: none;
+  color: var(--ink-muted);
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  text-align: start;
+  cursor: pointer;
+  /* Hover-OFF only. */
+  transition: background-color 150ms ease, color 150ms ease;
+}
+
+.facet__more:hover,
+.facet__more:focus-visible {
+  background: var(--surface-raised);
+  color: var(--ink);
+  /* Hover-ON: instant. */
+  transition-duration: 0s;
 }

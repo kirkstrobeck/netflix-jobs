@@ -1,21 +1,21 @@
 /* The facet panel. Same tokens and the same interaction-state rule as the rest
    of the page: every state arrives instantly and only fades on the way out. */
 
+/* No scroll container anywhere in here, and no sticky.
+
+   The panel used to be sticky with max-block-size + overflow-y: auto. Two things
+   were wrong with that. The panel scrolled inside the page, which is a second
+   scrollbar to discover and get lost in -- "Show all" below is how a long facet
+   is reached now. And overflow-y: auto forced overflow-x from visible to auto
+   (the spec computes the visible axis to auto when the other one is not
+   visible), which made this a scroll container on BOTH axes and clipped the
+   3px-offset focus ring on the full-width search inputs at their left and right
+   edges -- leaving a bar above and below the field and nothing at the sides.
+   Nothing here scrolls now, so the ring draws whole. */
 .facets {
   display: grid;
   gap: 1.75rem;
   align-content: start;
-}
-
-@media (min-width: 64rem) {
-  .facets {
-    /* Clears the masthead the way .job-details does, so the panel does not sit
-       under it while the results scroll past. */
-    position: sticky;
-    inset-block-start: 2rem;
-    max-block-size: calc(100dvh - 4rem);
-    overflow-y: auto;
-  }
 }
 
 .facets__head {
@@ -82,19 +82,15 @@
   color: var(--ink);
   font: inherit;
   font-size: 0.875rem;
-  /* Focus-OFF only. */
-  transition: border-color 150ms ease;
 }
 
 .facet__search::placeholder {
   color: var(--ink-faint);
 }
 
-.facet__search:focus-visible {
-  border-color: var(--ink-muted);
-  /* Focus-ON: instant. */
-  transition-duration: 0s;
-}
+/* No :focus-visible rule of its own. The shared .job-page :focus-visible ring --
+   2px white at 3px offset -- is the whole focus state; brightening the border
+   underneath it as well only muddied the edge it sits outside of. */
 
 .facet__form {
   display: contents;

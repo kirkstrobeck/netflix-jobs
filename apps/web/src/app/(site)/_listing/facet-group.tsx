@@ -2,6 +2,7 @@
 
 import { useId, useState } from "react";
 
+import { FacetOptions } from "@/app/(site)/_listing/facet-options";
 import { useQueryNavigation } from "@/app/(site)/_listing/use-query-navigation";
 import { matchOptions, type FacetOption } from "@/lib/search/facet-counts";
 import { toggleFacet, type FacetKey, type JobQuery } from "@/lib/search/job-query";
@@ -31,10 +32,18 @@ export function FacetGroup({
   const navigate = useQueryNavigation();
   const searchId = useId();
   const visible = matchOptions(options, search);
+  const selected = query[facetKey].length;
 
   return (
     <fieldset className="facet">
-      <legend className="facet__legend">{legend}</legend>
+      <legend className="facet__legend">
+        {legend}
+        {/* A live tally beside the group's name: the one number in this facet
+            that moves on every click, so the click is never in doubt. */}
+        {selected > 0 ? (
+          <span className="facet__tally">{selected} selected</span>
+        ) : null}
+      </legend>
 
       {/* A real <label>, visually hidden rather than absent: the legend names the
           group, and this names the input inside it. */}
@@ -54,28 +63,21 @@ export function FacetGroup({
       {visible.length === 0 ? (
         <p className="facet__none">No matches</p>
       ) : (
-        <ul className="facet__options">
-          {visible.map((option) => (
-            <li key={option.value}>
-              <label className="option">
-                <input
-                  checked={option.selected}
-                  className="option__box"
-                  onChange={() => navigate(toggleFacet(query, facetKey, option.value))}
-                  type="checkbox"
-                />
-                <span className="option__label">{option.label}</span>
-                {/* aria-hidden on the count: the label already names the option,
-                    and "Engineering 96" read as one string is worse than the
-                    checkbox's own name. The number is visual shorthand. */}
-                <span aria-hidden="true" className="option__count">
-                  {option.count}
-                </span>
-              </label>
-            </li>
-          ))}
-        </ul>
+        <FacetOptions
+          legend={legend}
+          onToggle={(value) => navigate(toggleFacet(query, facetKey, value))}
+          options={visible}
+        />
       )}
+
+      {/* Only while this facet is filtering -- which is exactly when its own
+          counts stop moving and start looking broken. */}
+      {selected > 0 ? (
+        <p className="facet__pinned">
+          Counts ignore this filter so you can widen it. Every other filter is
+          applied.
+        </p>
+      ) : null}
     </fieldset>
   );
 }

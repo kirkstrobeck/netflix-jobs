@@ -26,6 +26,17 @@ export async function JobListing({ searchParams }: JobListingProps) {
   return (
     <div className="listing__body">
       <main className="listing__results">
+        {/* Inside the results column, not above the body: it names this column,
+            and being the column's first child is what puts it on the same line
+            as "Filters" at the top of the other one.
+
+            h2, not h1 -- the masthead owns the page's only h1. The "Netflix"
+            eyebrow that used to sit here went with it: a brand kicker directly
+            beneath a full-bleed Netflix-red masthead said the same thing twice. */}
+        <header className="listing-hero">
+          <h2 className="listing-title">Open roles</h2>
+        </header>
+
         <ResultList jobs={pageSlice(results, window)} />
 
         <footer className="listing__foot">

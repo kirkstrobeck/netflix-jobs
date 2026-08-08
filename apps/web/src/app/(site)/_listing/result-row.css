@@ -22,6 +22,12 @@
   border-block-start: 1px solid var(--hairline);
 }
 
+/* .listing-hero's rule sits directly above the first row now, and two hairlines
+   a pixel apart read as a mistake rather than as a heavier line. */
+.result:first-child {
+  border-block-start: 0;
+}
+
 /* The state is drawn, not painted onto the row's own box: it has to break past
    the text column into the shell gutter, and the row has no inline padding to
    give it. A flat fill would land its edges exactly on the text edges -- a box,
@@ -95,11 +101,15 @@
   }
 }
 
+/* balance, not pretty: a job title is short display text of two or three lines,
+   which is exactly what balance is for -- it evens the lines rather than only
+   rescuing the last one. Well inside the ~6-line cap browsers put on balance. */
 .result__title {
   margin: 0 0 0.75rem;
   font-size: 1.125rem;
   font-weight: 700;
   letter-spacing: -0.008em;
+  text-wrap: balance;
 }
 
 .result__link {
@@ -156,11 +166,15 @@
   transition: color 150ms ease;
 }
 
+/* pretty, not balance: a location list joined with " · " is running text of
+   unpredictable length, and balancing it would even out lines nobody reads as a
+   block. pretty is the one that stops "America" ending up alone on its own line. */
 .result__value {
   margin: 0;
   color: var(--ink-muted);
   font-size: 0.9375rem;
   line-height: 1.45;
+  text-wrap: pretty;
   /* Hover-OFF only. */
   transition: color 150ms ease;
 }

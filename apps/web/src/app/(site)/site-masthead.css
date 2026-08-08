@@ -1,0 +1,101 @@
+/* The masthead: header frame and the Netflix wordmark inside it. Split from
+   job-shell.css to stay under the 200-line limit; same tokens throughout. */
+
+.site-header {
+  position: relative;
+  border-block-end: 1px solid var(--hairline);
+}
+
+.site-header__inner {
+  display: flex;
+  align-items: center;
+  min-block-size: 4.5rem;
+}
+
+/* Half of this rule used to style the word "Netflix" set in type. That word is
+   now an <img> -- a replaced element -- so `color`, `font-size` and
+   `letter-spacing` no longer reach it, and .wordmark__suffix already overrides
+   all three for the only text left in the box. They are gone rather than left
+   sitting here looking load-bearing.
+
+   font-weight and text-transform stay: those two the suffix does NOT set, and it
+   inherits them, which is what makes "Jobs" render as bold JOBS.
+
+   align-items: center, NOT baseline. Baseline survived the type-to-<img> swap on
+   the theory that it preserved the relationship the two words had when both were
+   text, but a replaced element's baseline is the BOTTOM of its margin box, so
+   baseline pinned the mark's bottom edge to the suffix's baseline and hung the
+   suffix's descender space below it. Measured in Chromium that put the mark 3px
+   above the centre of the 72px masthead row and left "Jobs" riding 6.5px low
+   against the glyphs -- in both instances, since one rule drives both.
+
+   Centre is also what makes the masthead work without a second rule:
+   .site-header__inner centres the ANCHOR in its row, so the mark only lands on
+   the row's centre line if it is centred inside the anchor too.
+
+   Nothing pins those numbers in CI, and nothing can: the suite runs in jsdom
+   with css: false, which has no layout engine, so every box measures 0. The 3px
+   and 6.5px above were read off a real Chromium against the dev server by a
+   throwaway harness that is not in the repo. Re-measure the same way if this
+   rule is ever argued with. */
+.wordmark {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.625rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  text-decoration: none;
+}
+
+/* The rendered height; next/image's width/height attributes only declare the
+   aspect ratio. 1.625rem against the ~0.99rem cap height of the uppercase text
+   this replaced: the mark reads as artwork rather than as a word, which 1.125rem
+   only just managed and 1.375rem only stated quietly. One rule drives BOTH
+   instances, so the masthead and the footer cannot drift apart.
+
+   It cannot reflow the header. .site-header__inner is a 4.5rem min-block-size
+   flex row and 1.625rem is 26px inside 72px, so the row's height comes from that
+   floor either way; the mark grew into space the masthead already reserved, and
+   .shell adds padding-inline only, so there is no block padding for it to push
+   against. The suffix's own line box is smaller still (0.875rem text), so the
+   mark is what the anchor measures either way.
+
+   It cannot reflow the footer either, but the margin there is the thinner of the
+   two. .job-footer is block-size: 400px / min-block-size: fit-content with the
+   content bottom-aligned, and site-footer.css measures that content box at
+   ~23rem against the 400px band -- so 4px more of wordmark spends slack the band
+   has, rather than triggering fit-content. It does push the mark 4px further up
+   a bottom-anchored stack, which matters only against .job-footer__scrim's solid
+   zone: that runs to 19rem (304px) and the wordmark sat ~18.5rem (296px) up, so
+   at ~300px it is still inside the solid, with 4px of margin rather than the 2px
+   1.75rem left. That is still the binding constraint on this number -- growing
+   the mark again, or adding a row to the footer grid, walks the wordmark out of
+   the scrim's solid zone and the stops have to move with it.
+
+   inline-size: auto is what keeps the 1427x383 ratio intact -- the docs warn
+   that pinning one axis without freeing the other distorts the image. */
+.wordmark__mark {
+  block-size: 1.625rem;
+  inline-size: auto;
+}
+
+/* Masthead only, 10% off the shared 1.625rem. Scoped to .site-header rather
+   than edited into the rule above, because that rule drives BOTH instances and
+   the footer's size is load-bearing: the note above records the mark sitting
+   ~300px up a bottom-anchored stack against .job-footer__scrim's solid zone,
+   which runs to 304px. Shrinking the shared value would walk the footer
+   wordmark back down through numbers that were measured, not chosen.
+
+   Nothing reflows here either, for the reason the shared rule gives: the row's
+   height comes from .site-header__inner's 4.5rem floor, and 1.4625rem (23.4px)
+   is further inside 72px than the 26px it replaces. */
+.site-header .wordmark__mark {
+  block-size: 1.4625rem;
+}
+
+.wordmark__suffix {
+  color: var(--ink);
+  font-size: 0.875rem;
+  letter-spacing: 0.22em;
+}
+

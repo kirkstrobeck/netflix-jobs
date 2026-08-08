@@ -35,14 +35,6 @@ export default function Home({ searchParams }: HomeProps) {
     <div className="listing">
       <HomeMasthead />
 
-      {/* h2, not h1: the masthead above owns the page's only h1, and this names
-          the section under it. The "Netflix" eyebrow that used to sit here went
-          with it -- a brand kicker directly beneath a full-bleed Netflix-red
-          masthead was saying the same thing twice. */}
-      <header className="listing-hero">
-        <h2 className="listing-title">Open roles</h2>
-      </header>
-
       <Suspense fallback={<ListingSkeleton />}>
         <JobListing searchParams={searchParams} />
       </Suspense>

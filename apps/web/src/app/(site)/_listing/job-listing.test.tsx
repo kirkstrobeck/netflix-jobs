@@ -89,21 +89,29 @@ describe("JobListing", () => {
 });
 
 describe("Home", () => {
-  // The heading is outside the Suspense boundary, so it belongs to the static
-  // shell and renders without ever awaiting searchParams.
-  it("renders the static heading around the streamed listing", () => {
+  // The masthead is outside the Suspense boundary, so the h1 belongs to the
+  // static shell. "Open roles" moved inside the boundary when it moved into the
+  // results column, so it streams with the results it names.
+  it("renders the static masthead around the streamed listing", () => {
     listMock.mockResolvedValue([]);
 
-    const html = renderToStaticMarkup(
-      <Home searchParams={Promise.resolve({})} />,
-    );
+    const html = renderToStaticMarkup(<Home searchParams={Promise.resolve({})} />);
 
-    expect(html).toContain("Open roles");
-    expect(html).toContain("listing-hero");
-    // One h1 for the whole page -- the masthead's. "Open roles" is the h2 under
-    // it, and each result is an h3 under that.
+    expect(html).toContain("masthead__title");
+    // One h1 for the whole page -- the masthead's.
     expect(html.match(/<h1/g)).toHaveLength(1);
-    expect(html).toContain('<h2 class="listing-title">Open roles</h2>');
+  });
+
+  // Both columns' headers are their column's first child, which is what puts
+  // them on one grid row and lines the two labels up across the page.
+  it("heads the results column with the h2, inside the column itself", async () => {
+    const html = await renderListing({});
+
+    expect(html).toContain(
+      '<main class="listing__results"><header class="listing-hero">' +
+        '<h2 class="listing-title">Open roles</h2></header>',
+    );
+    expect(html.indexOf("listing-hero")).toBeLessThan(html.indexOf("facets__head"));
   });
 
   it("nests each result as an h3 under the listing's h2", async () => {

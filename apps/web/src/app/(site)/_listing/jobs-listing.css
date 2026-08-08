@@ -3,10 +3,17 @@
    .eyebrow and title treatment from job-hero.css, and the 64rem breakpoint the
    rest of the page changes shape at. Nothing new is invented. */
 
-/* 1rem below, matching .facets__head, so the label sits the same distance above
-   the first result's hairline as "Filters" does above its own rule. */
+/* The results column's header. It is the column's first child and .facets__head
+   is the other column's, so the two sit on the same grid row and their labels
+   land on one line -- which is the point: they name the two columns, so they
+   should read as a pair.
+
+   The padding and rule are .facets__head's exactly, and both labels are the same
+   size and weight, so the two boxes are the same height and the alignment holds
+   without either one being nudged. */
 .listing-hero {
-  padding-block: clamp(2rem, 4vw, 2.75rem) 1rem;
+  padding-block-end: 1rem;
+  border-block-end: 1px solid var(--hairline);
 }
 
 /* A label over the list, not a second headline. It used to be the page's h1 at
@@ -29,10 +36,13 @@
   text-transform: uppercase;
 }
 
+/* The block-start padding used to live on .listing-hero; it moved here when the
+   header moved into the column, so the space between masthead and body is the
+   same whichever column is taller. */
 .listing__body {
   display: grid;
   gap: clamp(2rem, 4vw, 3rem);
-  padding-block-end: 6rem;
+  padding-block: clamp(2rem, 4vw, 2.75rem) 6rem;
 }
 
 /* Same split as .job-body, so the listing and the posting share a spine. Facets
@@ -45,18 +55,30 @@
   }
 }
 
+/* No border-block-start: .listing-hero's rule is directly above it now, and two
+   hairlines a pixel apart read as a mistake.
+
+   min-block-size so the column keeps its shape when it holds one sentence. The
+   page width no longer depends on the content (see .shell), but the column would
+   still collapse to the height of a line and leave the footer riding up under
+   the masthead. 16rem is roughly three result rows -- enough that the empty
+   state sits in a column rather than on a shelf. */
 .results-empty {
+  min-block-size: 16rem;
   padding-block: 4rem 3rem;
-  border-block-start: 1px solid var(--hairline);
 }
 
+/* pretty, not balance: this is running copy, and pretty is the algorithm that
+   exists to stop a last line becoming a single stranded word. */
 .results-empty__lede {
   margin: 0 0 0.5rem;
   font-size: 1.125rem;
   font-weight: 700;
+  text-wrap: pretty;
 }
 
 .results-empty__hint {
   margin: 0;
   color: var(--ink-muted);
+  text-wrap: pretty;
 }
