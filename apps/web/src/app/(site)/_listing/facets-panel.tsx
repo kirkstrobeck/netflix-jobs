@@ -1,5 +1,5 @@
-import { FacetGroup } from "@/app/(site)/jobs/facet-group";
-import { KeywordFacet } from "@/app/(site)/jobs/keyword-facet";
+import { FacetGroup } from "@/app/(site)/_listing/facet-group";
+import { KeywordFacet } from "@/app/(site)/_listing/keyword-facet";
 import type { JobSummary } from "@/lib/jobs/job-summary";
 import { facetOptions } from "@/lib/search/facet-counts";
 import {

@@ -1,9 +1,9 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
 
-import { FacetsPanel } from "@/app/(site)/jobs/facets-panel";
-import { ListingSkeleton } from "@/app/(site)/jobs/listing-skeleton";
-import { ResultList } from "@/app/(site)/jobs/result-list";
+import { FacetsPanel } from "@/app/(site)/_listing/facets-panel";
+import { ListingSkeleton } from "@/app/(site)/_listing/listing-skeleton";
+import { ResultList } from "@/app/(site)/_listing/result-list";
 import { BOARD, summary } from "@/lib/jobs/job-summary.fixture";
 import { EMPTY_QUERY, toggleFacet } from "@/lib/search/job-query";
 import { PAGE_SIZE } from "@/lib/search/paginate";
@@ -123,7 +123,7 @@ describe("FacetsPanel", () => {
       />,
     );
 
-    expect(html).toContain('href="/jobs"');
+    expect(html).toContain('href="/"');
   });
 });
 

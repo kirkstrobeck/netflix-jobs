@@ -1,8 +1,8 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
 
-import { Pagination } from "@/app/(site)/jobs/pagination";
-import { ResultCount } from "@/app/(site)/jobs/result-count";
+import { Pagination } from "@/app/(site)/_listing/pagination";
+import { ResultCount } from "@/app/(site)/_listing/result-count";
 import { EMPTY_QUERY, type JobQuery } from "@/lib/search/job-query";
 import { paginate } from "@/lib/search/paginate";
 
@@ -34,13 +34,13 @@ describe("Pagination", () => {
     const html = markup(50, 3);
 
     expect(html).toContain('aria-current="page"');
-    expect(hrefs(html)).toContain("/jobs?page=2");
-    expect(hrefs(html)).toContain("/jobs?page=4");
+    expect(hrefs(html)).toContain("/?page=2");
+    expect(hrefs(html)).toContain("/?page=4");
   });
 
   // Page 1 is the bare URL, not ?page=1 -- the same page must not have two URLs.
   it("links back to page 1 without a page param", () => {
-    expect(hrefs(markup(50, 2))).toContain("/jobs");
+    expect(hrefs(markup(50, 2))).toContain("/");
   });
 
   // A dead <a href> is not focusable and is not announced as a link, so the
@@ -63,7 +63,7 @@ describe("Pagination", () => {
 
   it("builds its links from the clamped page, not the requested one", () => {
     // 24 results is 3 pages; page 99 clamps to 3, whose previous is 2.
-    expect(hrefs(markup(24, 99))).toContain("/jobs?page=2");
+    expect(hrefs(markup(24, 99))).toContain("/?page=2");
   });
 
   it("carries every active facet and keyword into each page link", () => {
@@ -75,7 +75,7 @@ describe("Pagination", () => {
     };
 
     expect(hrefs(markup(50, 2, query))).toContain(
-      "/jobs?team=Engineering&type=Remote&q=design&page=3",
+      "/?team=Engineering&type=Remote&q=design&page=3",
     );
   });
 

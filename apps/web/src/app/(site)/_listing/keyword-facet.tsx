@@ -2,7 +2,7 @@
 
 import { useId, useState } from "react";
 
-import { useQueryNavigation } from "@/app/(site)/jobs/use-query-navigation";
+import { useQueryNavigation } from "@/app/(site)/_listing/use-query-navigation";
 import { addKeyword, removeKeyword, type JobQuery } from "@/lib/search/job-query";
 
 // Free text, added as chips. A form rather than a bare input so Enter submits

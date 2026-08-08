@@ -1,7 +1,7 @@
-import { FacetsPanel } from "@/app/(site)/jobs/facets-panel";
-import { Pagination } from "@/app/(site)/jobs/pagination";
-import { ResultCount } from "@/app/(site)/jobs/result-count";
-import { ResultList } from "@/app/(site)/jobs/result-list";
+import { FacetsPanel } from "@/app/(site)/_listing/facets-panel";
+import { Pagination } from "@/app/(site)/_listing/pagination";
+import { ResultCount } from "@/app/(site)/_listing/result-count";
+import { ResultList } from "@/app/(site)/_listing/result-list";
 import { listJobSummaries } from "@/lib/jobs/list-jobs";
 import { filterJobs } from "@/lib/search/filter-jobs";
 import { parseJobQuery, type RawSearchParams } from "@/lib/search/job-query";

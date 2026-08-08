@@ -1,8 +1,8 @@
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { FacetGroup } from "@/app/(site)/jobs/facet-group";
-import { KeywordFacet } from "@/app/(site)/jobs/keyword-facet";
+import { FacetGroup } from "@/app/(site)/_listing/facet-group";
+import { KeywordFacet } from "@/app/(site)/_listing/keyword-facet";
 import { BOARD } from "@/lib/jobs/job-summary.fixture";
 import { facetOptions } from "@/lib/search/facet-counts";
 import { EMPTY_QUERY, toggleFacet, type JobQuery } from "@/lib/search/job-query";
@@ -42,7 +42,7 @@ describe("facet to URL", () => {
 
     fireEvent.click(checkbox(/Engineering/));
 
-    expect(push).toHaveBeenCalledWith("/jobs?team=Engineering", { scroll: false });
+    expect(push).toHaveBeenCalledWith("/?team=Engineering", { scroll: false });
   });
 
   it("navigates to the URL that clears an already-selected option", () => {
@@ -50,7 +50,7 @@ describe("facet to URL", () => {
 
     fireEvent.click(checkbox(/Engineering/));
 
-    expect(push).toHaveBeenCalledWith("/jobs", { scroll: false });
+    expect(push).toHaveBeenCalledWith("/", { scroll: false });
   });
 
   it("keeps the other facets and drops back to page 1", () => {
@@ -64,7 +64,7 @@ describe("facet to URL", () => {
 
     fireEvent.click(checkbox(/Marketing/));
 
-    expect(push).toHaveBeenCalledWith("/jobs?team=Marketing&type=Remote&q=design", {
+    expect(push).toHaveBeenCalledWith("/?team=Marketing&type=Remote&q=design", {
       scroll: false,
     });
   });
@@ -124,7 +124,7 @@ describe("keywords to URL", () => {
     });
     fireEvent.click(screen.getByRole("button", { name: "Add" }));
 
-    expect(push).toHaveBeenCalledWith("/jobs?q=design", { scroll: false });
+    expect(push).toHaveBeenCalledWith("/?q=design", { scroll: false });
   });
 
   it("ignores a blank keyword", () => {
@@ -133,7 +133,7 @@ describe("keywords to URL", () => {
     fireEvent.change(screen.getByLabelText("Keywords"), { target: { value: "   " } });
     fireEvent.click(screen.getByRole("button", { name: "Add" }));
 
-    expect(push).toHaveBeenCalledWith("/jobs", { scroll: false });
+    expect(push).toHaveBeenCalledWith("/", { scroll: false });
   });
 
   it("removes a chip through the URL, keeping the others", () => {
@@ -141,7 +141,7 @@ describe("keywords to URL", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Remove keyword: design" }));
 
-    expect(push).toHaveBeenCalledWith("/jobs?q=senior", { scroll: false });
+    expect(push).toHaveBeenCalledWith("/?q=senior", { scroll: false });
   });
 
   it("renders one chip per active keyword", () => {

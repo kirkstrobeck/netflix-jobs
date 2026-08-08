@@ -2,7 +2,7 @@
 
 import { useId, useState } from "react";
 
-import { useQueryNavigation } from "@/app/(site)/jobs/use-query-navigation";
+import { useQueryNavigation } from "@/app/(site)/_listing/use-query-navigation";
 import { matchOptions, type FacetOption } from "@/lib/search/facet-counts";
 import { toggleFacet, type FacetKey, type JobQuery } from "@/lib/search/job-query";
 

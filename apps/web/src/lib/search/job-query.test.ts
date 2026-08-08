@@ -61,13 +61,13 @@ describe("parseJobQuery", () => {
 
 describe("jobsHref", () => {
   it("is a bare path when nothing is selected", () => {
-    expect(jobsHref(EMPTY_QUERY)).toBe("/jobs");
+    expect(jobsHref(EMPTY_QUERY)).toBe("/");
   });
 
-  // /jobs and /jobs?page=1 are the same page; only one of them should exist.
+  // / and /?page=1 are the same page; only one of them should exist.
   it("leaves page 1 out but writes any later page", () => {
-    expect(jobsHref(withPage(EMPTY_QUERY, 1))).toBe("/jobs");
-    expect(jobsHref(withPage(EMPTY_QUERY, 3))).toBe("/jobs?page=3");
+    expect(jobsHref(withPage(EMPTY_QUERY, 1))).toBe("/");
+    expect(jobsHref(withPage(EMPTY_QUERY, 3))).toBe("/?page=3");
   });
 
   it("writes the same URL whatever order the values arrived in", () => {

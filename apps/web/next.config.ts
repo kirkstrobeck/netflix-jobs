@@ -33,6 +33,17 @@ const nextConfig: NextConfig = {
     minimumCacheTTL: 31536000,
   },
   headers: cacheHeaders,
+  // The listing moved from /jobs to the home page. A config redirect rather than
+  // a page that calls permanentRedirect(): it answers before any rendering, and
+  // it does not need a route that reads searchParams -- which under Cache
+  // Components would have to be wrapped in <Suspense> just to be thrown away.
+  //
+  // Query values are passed through to the destination automatically, so a
+  // shared /jobs?team=Engineering&page=3 lands on the same results at /.
+  // `permanent` is a 308, which keeps the method and tells crawlers it moved.
+  //
+  // /jobs/[jobid] is untouched: the source matches that one segment exactly.
+  redirects: async () => [{ source: "/jobs", destination: "/", permanent: true }],
 };
 
 export default nextConfig;

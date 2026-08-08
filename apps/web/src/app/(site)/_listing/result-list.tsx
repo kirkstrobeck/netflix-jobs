@@ -1,4 +1,4 @@
-import { ResultRow } from "@/app/(site)/jobs/result-row";
+import { ResultRow } from "@/app/(site)/_listing/result-row";
 import type { JobSummary } from "@/lib/jobs/job-summary";
 
 // The empty state is a real answer, not a missing list: it says what happened

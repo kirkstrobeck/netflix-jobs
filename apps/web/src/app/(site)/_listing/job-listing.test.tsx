@@ -1,8 +1,8 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
 
-import { JobListing } from "@/app/(site)/jobs/job-listing";
-import JobsPage from "@/app/(site)/jobs/page";
+import { JobListing } from "@/app/(site)/_listing/job-listing";
+import Home from "@/app/(site)/page";
 import { summary } from "@/lib/jobs/job-summary.fixture";
 import { listJobSummaries } from "@/lib/jobs/list-jobs";
 import type { RawSearchParams } from "@/lib/search/job-query";
@@ -88,14 +88,14 @@ describe("JobListing", () => {
   });
 });
 
-describe("JobsPage", () => {
+describe("Home", () => {
   // The heading is outside the Suspense boundary, so it belongs to the static
   // shell and renders without ever awaiting searchParams.
   it("renders the static heading around the streamed listing", () => {
     listMock.mockResolvedValue([]);
 
     const html = renderToStaticMarkup(
-      <JobsPage searchParams={Promise.resolve({})} />,
+      <Home searchParams={Promise.resolve({})} />,
     );
 
     expect(html).toContain("Open roles");

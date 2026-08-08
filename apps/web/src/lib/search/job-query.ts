@@ -85,7 +85,7 @@ export function toSearchParams(query: JobQuery): URLSearchParams {
   });
   query.keywords.forEach((value) => params.append(PARAM.keywords, value));
 
-  // Page 1 is the default, so it is left out. /jobs and /jobs?page=1 are the
+  // Page 1 is the default, so it is left out. / and /?page=1 are the
   // same page and should not be two URLs.
   if (query.page > 1) {
     params.set(PARAM.page, String(query.page));
@@ -94,7 +94,10 @@ export function toSearchParams(query: JobQuery): URLSearchParams {
   return params;
 }
 
-export function jobsHref(query: JobQuery, pathname = "/jobs"): string {
+// The listing is the home page, so an unfiltered listing is "/" and every facet
+// and page link hangs a query off it. /jobs is a permanent redirect here (see
+// next.config.ts), which is what keeps already-shared faceted URLs working.
+export function jobsHref(query: JobQuery, pathname = "/"): string {
   const params = toSearchParams(query).toString();
 
   if (!params) {
