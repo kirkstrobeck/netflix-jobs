@@ -65,7 +65,9 @@ describe("headline contrast at the worst frame", () => {
     const ceiling = 1 - Math.pow(1 - BAR_ALPHA, BAR_COUNT);
     const backdrop = ACCENT.map((c, i) => c * ceiling + SURFACE[i] * (1 - ceiling));
 
-    expect(ceiling).toBeCloseTo(0.7941, 4);
+    // 15 bars at 0.15 -- the retune from 0.10 raised this from 0.7941. Pinned so
+    // the number is a decision, not a drift.
+    expect(ceiling).toBeCloseTo(0.9126458, 6);
     expect(contrast(INK, backdrop)).toBeGreaterThan(4.5);
   });
 

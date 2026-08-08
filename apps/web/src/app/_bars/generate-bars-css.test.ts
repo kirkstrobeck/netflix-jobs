@@ -14,18 +14,22 @@ describe("generateBarsCss", () => {
     expect(css).toContain("prefers-reduced-motion: reduce");
   });
 
-  // The entrance and the walk live on separate elements. Sharing one element
-  // meant one animation list and one play-state governing both, which is what
-  // let the fade appear to hold a bar at a single transform.
-  it("keeps the fade and the walk on separate elements", () => {
+  // There is no entrance. Bars are at full strength on first paint, so the walk
+  // is the only animation in the effect and nothing animates opacity.
+  it("animates nothing but the walk", () => {
     const css = generateBarsCss();
-    const fade = css.match(/\.bars__bar--0 \{[^}]*\}/)?.[0] ?? "";
+    const shell = css.match(/\.bars__bar--0 \{[^}]*\}/)?.[0] ?? "";
     const walk = css.match(/\.bars__mover--0 \{[^}]*\}/)?.[0] ?? "";
 
-    expect(fade).toContain("bars-fade-in");
-    expect(fade).not.toContain("bars-bar-0");
+    // Comments stripped: the prose still says a bar "fades" as it walks off the
+    // clipped edge, which is a description of the clip, not a declaration.
+    const declarations = css.replace(/\/\*[\s\S]*?\*\//g, "");
+
+    expect(shell).toContain("width:");
+    expect(shell).not.toContain("animation");
     expect(walk).toContain("bars-bar-0");
-    expect(walk).not.toContain("bars-fade-in");
+    expect(declarations).not.toContain("fade");
+    expect(declarations).not.toContain("opacity");
   });
 
   // X only: the Y slot of every translate3d is a hard 0, so a bar can never

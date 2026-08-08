@@ -1,7 +1,5 @@
 import {
   BAR_COUNT,
-  FADE_IN_MAX_S,
-  FADE_IN_MIN_S,
   FLIP_ODDS_X_MAX,
   FLIP_ODDS_X_MIN,
   HOP_DURATION_FAST_S,
@@ -28,8 +26,6 @@ export type Bar = {
   width: number;
   duration: number;
   delay: number;
-  fadeDelay: number;
-  fadeDuration: number;
   stops: BarStop[];
 };
 
@@ -147,10 +143,6 @@ export function buildBars(): Bar[] {
       // Negative delay: every bar starts mid-walk, so the field is already in
       // motion on first paint instead of marching from a shared origin.
       delay: +(-mix(i, 0, path.duration, 5)).toFixed(2),
-      // Separate salts so a bar that waits a long time is not also the one
-      // that fades slowest -- the two should not correlate.
-      fadeDelay: +mix(i, FADE_IN_MIN_S, FADE_IN_MAX_S, 61).toFixed(2),
-      fadeDuration: +mix(i, FADE_IN_MIN_S, FADE_IN_MAX_S, 62).toFixed(2),
       stops: path.stops,
     };
   });

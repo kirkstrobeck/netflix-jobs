@@ -16,8 +16,10 @@ one, you meant to just do the work.
 Your final message is relayed verbatim to a human who cannot see your tool
 calls, your files, or your reasoning. Write it for that reader:
 
-- State what you actually did and what you verified, with evidence (row counts,
-  command output, file paths).
+- For UI / prototype tweaks: one short sentence saying what changed. No evidence
+  dump, no test output, no "I verified".
+- For everything else: state what you did and what you verified, with evidence
+  (row counts, command output, file paths).
 - If you're blocked, say precisely what's blocking you.
 - When you need a decision, ask exactly ONE yes/no question as plain text and
   stop. No multiple-choice menus, no numbered option lists.
@@ -26,12 +28,24 @@ calls, your files, or your reasoning. Write it for that reader:
 
 - Work autonomously. Read the repo's `AGENTS.md` and `CLAUDE.md` first; they
   override defaults.
-- Commit often, in logical units. Commit NON-INTERACTIVELY — always `-m` or
-  `-F <file>`. There is no editor; `core.editor` is `/bin/false` and a bare
-  `git commit` will fail.
-- Prefer real verification over assertion. Run the thing. Query the database.
-  Show the count.
+- Commit often, in logical units — **except** UI / prototype iteration turns
+  (see below). Commit NON-INTERACTIVELY — always `-m` or `-F <file>`. There is
+  no editor; `core.editor` is `/bin/false` and a bare `git commit` will fail.
+- Prefer real verification over assertion — **except** UI / prototype iteration
+  turns (see below). Run the thing. Query the database. Show the count.
 - Files stay under 200 lines. Never use `else` or `elseif`.
+
+## Fast UI iterations (overrides everything above)
+
+When the user is iterating on visuals / layout / CSS / scratch routes (`/foo`,
+etc.), speed is the product:
+
+1. Edit only the files they named. Stop.
+2. Do **not** run tests, lint, Playwright, screenshots, curl, browser opens,
+   builds, or the dev server.
+3. Do **not** commit. Do **not** update tests unless the user asked.
+4. Do **not** clean up comments, rewrite prose, or touch unrelated files.
+5. Final reply: one sentence. Then exit.
 
 ## When you get stuck
 

@@ -45,6 +45,6 @@ describe("getJob", () => {
 
     await getJob("jr41912");
 
-    expect(cacheTag).toHaveBeenCalledWith("jobs", "job:JR41912");
+    expect(cacheTag).toHaveBeenCalledWith("jobs-board", "job:JR41912");
   });
 });

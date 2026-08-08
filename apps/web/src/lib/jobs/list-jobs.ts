@@ -2,6 +2,7 @@ import "server-only";
 
 import { cacheLife, cacheTag } from "next/cache";
 
+import { JOBS_BOARD_TAG } from "@/lib/jobs/cache-tags";
 import { SUMMARY_COLUMNS, type JobSummary } from "@/lib/jobs/job-summary";
 import { restGet } from "@/lib/supabase/rest";
 
@@ -22,10 +23,15 @@ const MAX_ROWS = 2000;
 //
 // Ordered newest first at the database. The listing never re-sorts, so this is
 // the order a visitor sees, and pagination is a slice of it.
+//
+// One cache entry answers every visitor, and it is replaced when the ingestor
+// says so rather than when a clock runs out -- see the `jobs` profile in
+// next.config.ts. At steady state this is one Supabase query per crawl, not per
+// visitor and not per period.
 export async function listJobSummaries(): Promise<JobSummary[]> {
   "use cache";
-  cacheLife("hours");
-  cacheTag("jobs");
+  cacheLife("jobs");
+  cacheTag(JOBS_BOARD_TAG);
 
   return restGet<JobSummary[]>(
     `jobs?select=${SUMMARY_COLUMNS}&is_active=eq.true` +

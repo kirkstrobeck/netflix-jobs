@@ -1,0 +1,21 @@
+// The tag names, in one place, because two sides have to agree on them and they
+// are never in the same file: the readers that call cacheTag (list-jobs,
+// get-job, job-ids) and the route handler that calls revalidateTag. A typo in a
+// tag name does not fail anything -- it silently invalidates nothing -- so the
+// string is not repeated anywhere.
+
+// Everything derived from the whole board carries this. The detail fetch carries
+// it too, so one revalidation of this tag flushes the listing and every job page
+// with it: that is the tag the ingestor fires after a crawl.
+export const JOBS_BOARD_TAG = "jobs-board";
+
+// Per job, so one posting can be invalidated without dropping the other 480.
+//
+// Uppercased because display_job_id is stored uppercase and getJob is reached
+// with whatever casing the caller had -- the proxy canonicalizes /jobs/jr41912
+// to /jobs/JR41912 for visitors, but the prerender and generateMetadata call
+// getJob directly. Tagging on the canonical form means one revalidation covers
+// every casing rather than leaving stale mixed-case entries behind.
+export function jobTag(jobId: string): string {
+  return `job:${jobId.toUpperCase()}`;
+}

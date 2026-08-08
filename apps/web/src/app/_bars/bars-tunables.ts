@@ -14,24 +14,13 @@ export const WIDTH_PCT_MAX = 20;
 export const WIDTH_PCT_MIN = 2;
 /** Solid fill, no gradient. One flat alpha for every bar. */
 export const BAR_RGB = "229 9 20";
-export const BAR_ALPHA = 0.1;
+export const BAR_ALPHA = 0.15;
 /** One blur over the whole layer, not per bar. 0 disables the filter. */
 export const BARS_BLUR_PX = 2;
-/**
- * One-time entrance. Each bar draws both its delay and its fade length from
- * this range, so the field arrives staggered rather than all at once. This is
- * the ONLY opacity animation in the effect -- the walk is transform-only, and
- * a bar "enters" or "leaves" by walking onto or off the clipped edges.
- */
-export const FADE_IN_MIN_S = 1;
-export const FADE_IN_MAX_S = 3;
-/**
- * Where the entrance starts. Not 0 -- the field is already faintly present on
- * first paint and the fade brings it the rest of the way up, rather than
- * arriving out of nothing. This is a multiplier on BAR_ALPHA, not an alpha
- * itself: the fade ends at 1, which is BAR_ALPHA as declared on the background.
- */
-export const FADE_IN_FROM = 0.5;
+/* There is no entrance. Bars are at full BAR_ALPHA on first paint and stay
+   there -- nothing in the effect animates opacity, so the walk is the only
+   motion and a bar "enters" or "leaves" only by walking onto or off the clipped
+   edges. */
 /** X walk band, in cqw. Outside 0..100 so bars enter and leave the frame. */
 export const WALK_X_MIN = -18;
 export const WALK_X_MAX = 118;

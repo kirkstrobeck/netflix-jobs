@@ -1,9 +1,4 @@
-import {
-  BAR_ALPHA,
-  BAR_RGB,
-  BARS_BLUR_PX,
-  FADE_IN_FROM,
-} from "@/app/_bars/bars-tunables";
+import { BAR_ALPHA, BAR_RGB, BARS_BLUR_PX } from "@/app/_bars/bars-tunables";
 import { PAUSED_CLASS } from "@/app/_motion/pause-when-idle";
 import { buildBars } from "@/app/_bars/build-bars";
 
@@ -37,10 +32,9 @@ export function generateBarsCss(): string {
   const rules = bars
     .map(
       (bar, i) =>
-        // One animation per element, on two elements: the shell fades once, the
-        // mover inside it walks forever. Nothing about the entrance can reach
-        // the walk, because they no longer share an animation list.
-        `.bars__bar--${i} { width: ${bar.width}%; animation: bars-fade-in ${bar.fadeDuration}s linear ${bar.fadeDelay}s 1 normal forwards; }\n` +
+        // The shell only carries the width; the mover inside it is the only
+        // thing with an animation on it.
+        `.bars__bar--${i} { width: ${bar.width}%; }\n` +
         `.bars__mover--${i} { animation: bars-bar-${i} ${bar.duration}s linear ${bar.delay}s infinite alternate; }`,
     )
     .join("\n");
@@ -83,24 +77,17 @@ export function generateBarsCss(): string {
   inset: ${-BLEED_PX}px 0;
   container-type: size;${BARS_BLUR_PX > 0 ? `\n  filter: blur(${BARS_BLUR_PX}px);` : ""}
 }
-/* Each bar is two elements. The shell owns opacity and never moves; the mover
-   inside owns transform and never changes opacity. Splitting them means the
-   entrance and the walk are separate animations on separate elements, so
-   neither can hold the other at a single frame.
+/* Each bar is two elements: the shell sizes and places it and never moves, the
+   mover inside carries the walk. No opacity anywhere -- a bar is at full
+   BAR_ALPHA on first paint and stays there.
 
-   The shell sizes and places the bar: top/bottom rather than height so it spans
-   the field whatever its size, and left: 0 so the keyframe translate is the only
-   thing placing it on X.
-
-   opacity here is the pre-entrance state. The fade carries no backwards fill, so
-   during its delay the bar sits at this declared value; forwards fill holds it
-   at the end value afterwards. */
+   top/bottom rather than height so the bar spans the field whatever its size,
+   and left: 0 so the keyframe translate is the only thing placing it on X. */
 .bars__bar {
   position: absolute;
   top: 0;
   bottom: 0;
   left: 0;
-  opacity: ${FADE_IN_FROM};
 }
 /* The mover fills its shell, so the -50% in the keyframe transform still
    measures the bar's own width. The fill lives here rather than on the shell
@@ -111,29 +98,19 @@ export function generateBarsCss(): string {
   background: rgb(${BAR_RGB} / ${BAR_ALPHA});
   backface-visibility: hidden;
 }
-/* The fade runs to opacity 1, not to BAR_ALPHA: the alpha already lives in the
-   background above, so ending at BAR_ALPHA here would multiply the two and land
-   at BAR_ALPHA squared. One alpha, one place. */
-@keyframes bars-fade-in {
-  from { opacity: ${FADE_IN_FROM}; }
-  to { opacity: 1; }
-}
 ${keyframes}
 ${rules}
 /* Off-screen, or in a background tab. play-state rather than animation: none,
-   so a bar holds its position and its entrance progress and carries on from
-   there -- none would snap every bar back to its declared state and replay the
-   fade on the way back. .bars__layer keeps its blur; there is nothing to
+   so a bar holds its position and carries on from there -- none would snap every
+   bar back to its declared transform. Only the mover animates now, so it is the
+   only thing to pause. .bars__layer keeps its blur; there is nothing to
    composite while paused. */
-.bars.${PAUSED_CLASS} .bars__bar,
 .bars.${PAUSED_CLASS} .bars__mover {
   animation-play-state: paused;
 }
-/* opacity: 1 is load-bearing here, not a tweak. Killing the animations also
-   kills the entrance, and the bar's declared opacity is FADE_IN_FROM -- without
-   this the reduced-motion field would paint at half strength forever. */
+/* No opacity to restore: a bar's resting state is already full strength, so
+   stopping the walk is the whole of reduced motion. */
 @media (prefers-reduced-motion: reduce) {
-  .bars__bar { animation: none !important; opacity: 1; }
   .bars__mover { animation: none !important; }
 }
 `.trim();

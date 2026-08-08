@@ -33,10 +33,21 @@ bash tools/sandbox/dispatch.sh --continue "<message>"
 summarize it, do not pipe it through `jq`, do not rewrite it in your own voice.
 The user is talking to inner through you.
 
+## UI / prototype iterations — keep them instant
+
+For visual / CSS / scratch-route tweaks:
+
+- Dispatch the ask and relay the reply. That is the whole turn.
+- Do **not** open a browser (`open http://…`), curl the page, screenshot,
+  re-fetch HTML, or "confirm" the change yourself.
+- Do **not** add extra verification instructions that undo the speed rules in
+  `tools/sandbox/AGENT.md` unless the user asked to verify.
+- Do **not** narrate progress for a one-file edit. Wait for inner, relay.
+
 ## Long turns
 
-Real work takes minutes. When a dispatch will run long, launch it with
-`run_in_background: true` and report progress as it goes.
+Real work (ingest, migrate, install) takes minutes. When a dispatch will run
+long, launch it with `run_in_background: true` and report progress as it goes.
 
 While waiting:
 
@@ -54,10 +65,12 @@ wait it out and continue.
 ## What outer MAY run
 
 - `bash tools/sandbox/{dispatch,boot,bootstrap,tail}.sh …`
-- `jq`, `pwd`, `echo`, `open`, `lsof`, `kill <pid>`, `colima …`
+- `jq`, `pwd`, `echo`, `lsof`, `kill <pid>`, `colima …`
 - `cat`/`ls` against `.claude/` and `tools/sandbox/`
 - `docker ps|inspect|logs|info` and lifecycle on the **sandbox container only**
 - `supabase stop` / `supabase status` — teardown and inspection only
+
+Do **not** use `open` to launch browsers for UI iteration checks.
 
 Everything else — `git`, `gh`, `pnpm`, `node`, `next`, `turbo`, `psql`,
 `supabase start`, `supabase db …` — goes to inner.

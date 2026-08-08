@@ -32,13 +32,13 @@ describe("BarsStage", () => {
   });
 
   // play-state, not animation: none -- a resumed bar carries on from where it
-  // stopped instead of snapping back and replaying its entrance. Both halves of
-  // the bar have to stop, or an off-screen region keeps compositing its walk.
-  it("pauses both the fade and the walk while the region is idle", () => {
+  // stopped instead of snapping back to its declared transform. The mover is the
+  // only animated element, so it is the only thing that needs pausing.
+  it("pauses the walk while the region is idle", () => {
     const css = generateBarsCss();
 
     expect(css).toContain(
-      `.bars.${PAUSED_CLASS} .bars__bar,\n.bars.${PAUSED_CLASS} .bars__mover {\n  animation-play-state: paused;\n}`,
+      `.bars.${PAUSED_CLASS} .bars__mover {\n  animation-play-state: paused;\n}`,
     );
     expect(css).not.toContain(`.bars.${PAUSED_CLASS} .bars__layer`);
   });

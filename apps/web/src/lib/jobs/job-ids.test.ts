@@ -1,3 +1,4 @@
+import { cacheTag } from "next/cache";
 import { describe, expect, it, vi } from "vitest";
 
 import { listRecentJobIds } from "@/lib/jobs/job-ids";
@@ -27,5 +28,16 @@ describe("listRecentJobIds", () => {
 
     expect(result).toEqual(["JR41912"]);
     expect(typeof result[0]).toBe("string");
+  });
+
+  // The sample is derived from the board, so the crawl that flushes the listing
+  // has to flush this too -- otherwise generateStaticParams keeps prerendering
+  // ids from the previous crawl.
+  it("carries the board tag", async () => {
+    restGetMock.mockResolvedValue([]);
+
+    await listRecentJobIds();
+
+    expect(cacheTag).toHaveBeenCalledWith("jobs-board");
   });
 });

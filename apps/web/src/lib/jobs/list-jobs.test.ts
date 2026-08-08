@@ -23,7 +23,7 @@ describe("listJobSummaries", () => {
 
     await listJobSummaries();
 
-    expect(cacheTag).toHaveBeenCalledWith("jobs");
+    expect(cacheTag).toHaveBeenCalledWith("jobs-board");
   });
 
   // The listing counts facets over the whole board, so it cannot ask for a page

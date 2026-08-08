@@ -2,6 +2,7 @@ import "server-only";
 
 import { cacheLife, cacheTag } from "next/cache";
 
+import { JOBS_BOARD_TAG, jobTag } from "@/lib/jobs/cache-tags";
 import { isJobId, type Job } from "@/lib/jobs/types";
 import { restGet } from "@/lib/supabase/rest";
 
@@ -25,7 +26,8 @@ const COLUMNS = [
 
 // Cached so the page is prerenderable: with `cacheComponents`, an uncached await
 // here would make the whole route block on the request instead of streaming a
-// static shell. The board is crawled on a schedule, so hours-old data is correct.
+// static shell. The entry outlives any crawl schedule because the crawl is what
+// ends it -- see the `jobs` profile in next.config.ts.
 //
 // Lookup goes through the job_by_display_id RPC rather than a column filter
 // because PostgREST cannot express `upper(col) = upper($1)`. See
@@ -35,10 +37,12 @@ const COLUMNS = [
 // only by requests the proxy has already canonicalized.
 export async function getJob(jobId: string): Promise<Job | null> {
   "use cache";
-  cacheLife("hours");
-  // Tagged on the canonical uppercase form so one revalidateTag flushes every
-  // casing of the same job rather than leaving stale mixed-case entries behind.
-  cacheTag("jobs", `job:${jobId.toUpperCase()}`);
+  cacheLife("jobs");
+  // Two tags, deliberately. The board tag means a finished crawl flushes every
+  // job page without the ingestor having to name 481 ids; the per-job tag means
+  // one corrected posting can be flushed on its own, leaving the other 480
+  // entries warm.
+  cacheTag(JOBS_BOARD_TAG, jobTag(jobId));
 
   if (!isJobId(jobId)) {
     return null;
