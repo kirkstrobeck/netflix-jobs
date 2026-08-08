@@ -3,18 +3,30 @@
    .eyebrow and title treatment from job-hero.css, and the 64rem breakpoint the
    rest of the page changes shape at. Nothing new is invented. */
 
+/* 1rem below, matching .facets__head, so the label sits the same distance above
+   the first result's hairline as "Filters" does above its own rule. */
 .listing-hero {
-  padding-block: clamp(2.5rem, 6vw, 4.5rem) clamp(1.5rem, 3vw, 2rem);
+  padding-block: clamp(2rem, 4vw, 2.75rem) 1rem;
 }
 
-/* The detail page's .job-title, one step down: this is a page heading over a
-   list, not the name of the thing you came to read. */
+/* A label over the list, not a second headline. It used to be the page's h1 at
+   up to 2.75rem; the masthead now carries that weight, and two large headings
+   stacked read as a competition rather than a hierarchy.
+
+   So this drops to .facets__heading's exact treatment -- 0.8125rem, 500, wide
+   tracking, uppercase, --ink-muted -- which is already the house style for
+   "this names the column below it". The listing and the filters panel then
+   announce themselves the same way, on the same line, at the same weight.
+
+   The element is still an <h2>: only the visual weight changed, so the document
+   outline a screen reader walks is untouched. */
 .listing-title {
   margin: 0;
-  font-size: clamp(1.75rem, 1.2rem + 2.4vw, 2.75rem);
-  font-weight: 700;
-  line-height: 1.08;
-  letter-spacing: -0.02em;
+  color: var(--ink-muted);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
 }
 
 .listing__body {
@@ -31,88 +43,6 @@
     grid-template-columns: minmax(0, 1fr) 19rem;
     align-items: start;
   }
-}
-
-/* ---- results ---------------------------------------------------------- */
-
-.results {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-/* A hairline between rows, not around them: it separates without drawing a
-   table. The first row's line is the one under the heading above it. */
-.result {
-  padding-block: 1.5rem;
-  border-block-start: 1px solid var(--hairline);
-}
-
-.result__title {
-  margin: 0 0 0.75rem;
-  font-size: 1.125rem;
-  font-weight: 700;
-  letter-spacing: -0.008em;
-}
-
-.result__link {
-  color: var(--ink);
-  text-decoration: underline;
-  text-decoration-color: transparent;
-  text-underline-offset: 0.18em;
-  /* Hover-OFF only: gentle on the way out. */
-  transition: text-decoration-color 150ms ease;
-}
-
-.result__link:hover,
-.result__link:focus-visible {
-  text-decoration-color: var(--accent);
-  /* Hover-ON: instant, never a fade. */
-  transition-duration: 0s;
-}
-
-/* The aligned columns. One template shared by every row is what makes team line
-   up with team down the page without a <table> -- the alignment is the grid, not
-   a header row. Stacked below 64rem, where four columns would each be too narrow
-   to read. */
-.result__facts {
-  display: grid;
-  gap: 0.625rem 1.5rem;
-  margin: 0;
-}
-
-@media (min-width: 48rem) {
-  .result__facts {
-    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.5fr) 8rem 10rem;
-    align-items: start;
-  }
-}
-
-.result__fact {
-  min-inline-size: 0;
-}
-
-/* The label is the column header, repeated per row and set small enough to read
-   as a caption. It stays in the DOM at every width because once the columns
-   stack there is nothing else to say which value is which. */
-.result__label {
-  margin: 0 0 0.15rem;
-  color: var(--ink-faint);
-  font-size: 0.6875rem;
-  font-weight: 500;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-}
-
-.result__value {
-  margin: 0;
-  color: var(--ink-muted);
-  font-size: 0.9375rem;
-  line-height: 1.45;
-}
-
-.result__empty {
-  color: var(--ink-faint);
 }
 
 .results-empty {

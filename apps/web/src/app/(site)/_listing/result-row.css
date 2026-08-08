@@ -1,0 +1,184 @@
+/* The result row and its interaction state. Split from jobs-listing.css to stay
+   under the 200-line limit; same tokens and the same interaction rule. */
+
+.results {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* A hairline between rows, not around them: it separates without drawing a
+   table. The first row's line is the one under the heading above it.
+
+   position and isolation exist for the hover treatment and are both static, so
+   nothing here reflows. isolation is load-bearing: it makes the row a stacking
+   context, which keeps the wash's z-index: -1 INSIDE the row. Without it the
+   negative layer escapes to the nearest ancestor context and paints behind the
+   page instead of behind the row's text. */
+.result {
+  position: relative;
+  isolation: isolate;
+  padding-block: 1.5rem;
+  border-block-start: 1px solid var(--hairline);
+}
+
+/* The state is drawn, not painted onto the row's own box: it has to break past
+   the text column into the shell gutter, and the row has no inline padding to
+   give it. A flat fill would land its edges exactly on the text edges -- a box,
+   which is to say a card, which is the one thing this list must not become.
+
+   -0.75rem sits inside --gutter at its 1.25rem floor, so this never reaches
+   past .shell and .job-page's overflow-x: clip is never called on.
+
+   Both layers hang off the PADDING box, so the hairline above is never part of
+   the state and needs no rule of its own. */
+.result::before,
+.result::after {
+  content: "";
+  position: absolute;
+  inset-inline-start: -0.75rem;
+  z-index: -1;
+  opacity: 0;
+  pointer-events: none;
+  /* Hover-OFF only: gentle on the way out. */
+  transition: opacity 150ms ease;
+}
+
+/* The wash: a gradient off the start edge rather than a fill, shaped to die
+   before the Posted column instead of closing the row in with a second hard
+   vertical edge. The one hard edge left is the mark, so the light reads as
+   thrown from it. (Gradients have no logical direction keyword; flip for RTL.) */
+.result::before {
+  inset-block: 0;
+  inset-inline-end: 0;
+  background-image: linear-gradient(
+    to right,
+    var(--surface-raised),
+    rgba(255, 255, 255, 0) 62%
+  );
+}
+
+/* The mark, standing in the gutter like an editor's margin rule. --accent is
+   4.30:1 on --surface and 4.04:1 on the wash it stands in -- never enough for
+   text, comfortably past the 3:1 WCAG 1.4.11 asks of a non-text indicator -- so
+   2px of rule is the one place in this row where red can carry meaning.
+
+   inset-block keeps it clear of the hairlines above and below, so two adjacent
+   hovered rows never read as one continuous rule down the side of the list. */
+.result::after {
+  inset-block: 0.375rem;
+  inline-size: 2px;
+  background: var(--accent);
+  transform: scaleY(0.35);
+  /* Hover-OFF: retracts toward its middle on the way out. */
+  transition: opacity 150ms ease, transform 150ms ease;
+}
+
+/* Hover-ON for the whole row: instant, never a fade.
+   :has(.result__link:focus-visible) rather than :focus-within -- focus-within
+   matches after a mouse click too, which would leave a row lit that nobody is
+   on. The link keeps its own focus ring, so a keyboard gets both: the ring says
+   where you are, the row says what will open. */
+.result:is(:hover, :has(.result__link:focus-visible))::before,
+.result:is(:hover, :has(.result__link:focus-visible))::after {
+  opacity: 1;
+  transform: none;
+  transition-duration: 0s;
+}
+
+/* The only movement is the mark's retract, and it only happens on the way out.
+   Reduced motion keeps the mark and drops the movement. */
+@media (prefers-reduced-motion: reduce) {
+  .result::after {
+    transform: none;
+    transition: opacity 150ms ease;
+  }
+}
+
+.result__title {
+  margin: 0 0 0.75rem;
+  font-size: 1.125rem;
+  font-weight: 700;
+  letter-spacing: -0.008em;
+}
+
+.result__link {
+  color: var(--ink);
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  text-underline-offset: 0.18em;
+  /* Hover-OFF only: gentle on the way out. */
+  transition: text-decoration-color 150ms ease;
+}
+
+/* Scoped to the row rather than to .result__link:hover: the underline is part
+   of the row's state, so it lights from anywhere in the row and not only from
+   the width of the title. Link hover is a subset of row hover, so nothing is
+   lost by moving it up. */
+.result:is(:hover, :has(.result__link:focus-visible)) .result__link {
+  text-decoration-color: var(--accent);
+  /* Hover-ON: instant, never a fade. */
+  transition-duration: 0s;
+}
+
+/* The aligned columns. One template shared by every row is what makes team line
+   up with team down the page without a table -- the alignment is the grid, not
+   a header row. Stacked below 48rem, where four columns would each be too
+   narrow to read. */
+.result__facts {
+  display: grid;
+  gap: 0.625rem 1.5rem;
+  margin: 0;
+}
+
+@media (min-width: 48rem) {
+  .result__facts {
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.5fr) 8rem 10rem;
+    align-items: start;
+  }
+}
+
+.result__fact {
+  min-inline-size: 0;
+}
+
+/* The label is the column header, repeated per row and set small enough to read
+   as a caption. It stays in the DOM at every width because once the columns
+   stack there is nothing else to say which value is which. */
+.result__label {
+  margin: 0 0 0.15rem;
+  color: var(--ink-faint);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  /* Hover-OFF only. */
+  transition: color 150ms ease;
+}
+
+.result__value {
+  margin: 0;
+  color: var(--ink-muted);
+  font-size: 0.9375rem;
+  line-height: 1.45;
+  /* Hover-OFF only. */
+  transition: color 150ms ease;
+}
+
+/* The row's text wakes with it: values to full ink, labels one step up. The
+   same promotion .option makes on hover, so the two hoverable things in this
+   listing behave alike. Hover-ON: instant. */
+.result:is(:hover, :has(.result__link:focus-visible)) .result__value {
+  color: var(--ink);
+  transition-duration: 0s;
+}
+
+.result:is(:hover, :has(.result__link:focus-visible)) .result__label {
+  color: var(--ink-muted);
+  transition-duration: 0s;
+}
+
+/* Stays faint on hover: "Not listed" is an absence, not a value. */
+.result__empty {
+  color: var(--ink-faint);
+}

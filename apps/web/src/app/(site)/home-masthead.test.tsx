@@ -6,14 +6,20 @@ import { HEADLINE, HomeMasthead } from "@/app/(site)/home-masthead";
 
 const html = () => renderToStaticMarkup(<HomeMasthead />);
 
-// React escapes the apostrophe to &#x27; on the way into the markup; the browser
-// decodes it back, so the rendered text is the headline exactly as written.
-const decoded = () => html().replaceAll("&#x27;", "'");
+// U+2019 needs no HTML escaping, so it reaches the markup as itself.
+const decoded = html;
 
 describe("HomeMasthead", () => {
   it("renders the headline verbatim, in sentence case, as an h1", () => {
-    expect(HEADLINE).toBe("Be part of what's next");
+    expect(HEADLINE).toBe("Be part of what’s next");
     expect(decoded()).toContain(`<h1 class="masthead__title">${HEADLINE}</h1>`);
+  });
+
+  // Typeset copy: the apostrophe is the right single quote, not the typewriter
+  // one. Asserting the codepoint catches a normalising editor as well as a typo.
+  it("uses U+2019 for the apostrophe, never ASCII U+0027", () => {
+    expect(HEADLINE).toContain("’");
+    expect(HEADLINE).not.toContain("'");
   });
 
   it("has exactly one h1", () => {

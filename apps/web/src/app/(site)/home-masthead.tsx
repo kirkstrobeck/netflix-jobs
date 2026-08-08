@@ -2,7 +2,11 @@ import { BarsStage } from "@/app/_bars/bars-stage";
 
 // The page's one h1. "Open roles" below it is an h2, so the outline runs
 // h1 -> h2 (the listing, and the filters panel) -> h3 (each result).
-export const HEADLINE = "Be part of what's next";
+// The apostrophe is U+2019 RIGHT SINGLE QUOTATION MARK, not ASCII U+0027 --
+// this is typeset copy, and the straight quote is a typewriter artefact. Its
+// test asserts the codepoint, so an editor that "helpfully" normalises it back
+// to a straight quote fails rather than silently downgrading the headline.
+export const HEADLINE = "Be part of what’s next";
 
 // The same red-bar field the job masthead carries, mounted through the same
 // <BarsStage> rather than rebuilt: the stage is the positioned box, <Bars />
