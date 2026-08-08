@@ -1,6 +1,7 @@
 import { formatLocation } from "@/lib/format/location";
 import type { JobSummary } from "@/lib/jobs/job-summary";
-import { facetValues, filterJobs } from "@/lib/search/filter-jobs";
+import { filterJobs } from "@/lib/search/filter-jobs";
+import { facetValues } from "@/lib/search/job-index";
 import type { FacetKey, JobQuery } from "@/lib/search/job-query";
 
 export type FacetOption = {

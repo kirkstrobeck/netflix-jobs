@@ -1,36 +1,10 @@
 import { describe, expect, it } from "vitest";
 
 import { BOARD, summary } from "@/lib/jobs/job-summary.fixture";
-import { facetValues, filterJobs, matchesQuery } from "@/lib/search/filter-jobs";
+import { filterJobs } from "@/lib/search/filter-jobs";
 import { EMPTY_QUERY, toggleFacet, type JobQuery } from "@/lib/search/job-query";
 
 const titles = (jobs: { title: string }[]) => jobs.map((job) => job.title).sort();
-
-describe("facetValues", () => {
-  it("reads the single-valued facets as one-entry lists", () => {
-    const job = summary({ team: "Legal", work_type: "Remote" });
-
-    expect(facetValues(job, "team")).toEqual(["Legal"]);
-    expect(facetValues(job, "workType")).toEqual(["Remote"]);
-  });
-
-  it("is empty where the column is null", () => {
-    expect(facetValues(summary({ team: null }), "team")).toEqual([]);
-    expect(facetValues(summary({ work_type: null }), "workType")).toEqual([]);
-  });
-
-  // locations is NOT NULL with a '{}' default, so the scalar column is the
-  // fallback rather than a second source of truth.
-  it("falls back to the scalar location when the array is empty", () => {
-    const job = summary({ locations: [], location: "Tokyo,Japan" });
-
-    expect(facetValues(job, "location")).toEqual(["Tokyo,Japan"]);
-  });
-
-  it("is empty when neither location column has anything", () => {
-    expect(facetValues(summary({ locations: [], location: "" }), "location")).toEqual([]);
-  });
-});
 
 describe("filterJobs", () => {
   it("returns everything for an empty query", () => {
@@ -84,9 +58,9 @@ describe("filterJobs", () => {
   it("searches the team, the work type and the job code as well as the title", () => {
     const job = summary({ title: "Analyst", team: "Legal", display_job_id: "JR9182" });
 
-    expect(matchesQuery(job, { ...EMPTY_QUERY, keywords: ["legal"] })).toBe(true);
-    expect(matchesQuery(job, { ...EMPTY_QUERY, keywords: ["onsite"] })).toBe(true);
-    expect(matchesQuery(job, { ...EMPTY_QUERY, keywords: ["jr9182"] })).toBe(true);
+    expect(filterJobs([job], { ...EMPTY_QUERY, keywords: ["legal"] })).toHaveLength(1);
+    expect(filterJobs([job], { ...EMPTY_QUERY, keywords: ["onsite"] })).toHaveLength(1);
+    expect(filterJobs([job], { ...EMPTY_QUERY, keywords: ["jr9182"] })).toHaveLength(1);
   });
 
   // "New York" is stored as "New York,New York,United States of America", so
@@ -101,8 +75,14 @@ describe("filterJobs", () => {
     expect(filterJobs(BOARD, { ...EMPTY_QUERY, keywords: ["atlantis"] })).toEqual([]);
   });
 
+  // A keyword of nothing but space matches everything, so it is dropped rather
+  // than scanned: the answer is the same and the board is not walked for it.
+  it("ignores a keyword that is only whitespace", () => {
+    expect(filterJobs(BOARD, { ...EMPTY_QUERY, keywords: ["   "] })).toHaveLength(5);
+  });
+
   // A row with every optional column null must still be searchable by title
-  // rather than throwing on the way to building its haystack.
+  // rather than throwing on the way to building its index.
   it("still matches the title when every other field is null", () => {
     const job = summary({
       title: "Archivist",
@@ -113,8 +93,8 @@ describe("filterJobs", () => {
       location: "",
     });
 
-    expect(matchesQuery(job, { ...EMPTY_QUERY, keywords: ["archivist"] })).toBe(true);
-    expect(matchesQuery(job, { ...EMPTY_QUERY, keywords: ["engineering"] })).toBe(false);
+    expect(filterJobs([job], { ...EMPTY_QUERY, keywords: ["archivist"] })).toHaveLength(1);
+    expect(filterJobs([job], { ...EMPTY_QUERY, keywords: ["engineering"] })).toEqual([]);
   });
 
   // `ignore` is what lets a facet count its own options while its selections
