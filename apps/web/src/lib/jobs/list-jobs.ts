@@ -1,0 +1,34 @@
+import "server-only";
+
+import { cacheLife, cacheTag } from "next/cache";
+
+import { SUMMARY_COLUMNS, type JobSummary } from "@/lib/jobs/job-summary";
+import { restGet } from "@/lib/supabase/rest";
+
+// PostgREST caps a request at its own max-rows setting, so the ceiling is stated
+// rather than assumed. 481 active postings today; 2000 leaves room to grow
+// without a second round trip, and the board is crawled on a schedule so this
+// number only has to outlast a cache period.
+const MAX_ROWS = 2000;
+
+// The whole active board in one cached entry.
+//
+// It is fetched entire, not per page, because the facet counts have to be exact:
+// "Engineering (96)" is a count over every job matching the OTHER facets, which
+// no single page of ten rows can know. Filtering, faceting and pagination then
+// all run in memory over this one array. At 145KB that is cheaper than the four
+// or five count queries the alternative needs, and it makes the whole listing a
+// pure function of the URL.
+//
+// Ordered newest first at the database. The listing never re-sorts, so this is
+// the order a visitor sees, and pagination is a slice of it.
+export async function listJobSummaries(): Promise<JobSummary[]> {
+  "use cache";
+  cacheLife("hours");
+  cacheTag("jobs");
+
+  return restGet<JobSummary[]>(
+    `jobs?select=${SUMMARY_COLUMNS}&is_active=eq.true` +
+      `&order=posting_date.desc.nullslast,position_id.desc&limit=${MAX_ROWS}`,
+  );
+}

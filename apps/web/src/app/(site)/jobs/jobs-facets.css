@@ -1,0 +1,131 @@
+/* The facet panel. Same tokens and the same interaction-state rule as the rest
+   of the page: every state arrives instantly and only fades on the way out. */
+
+.facets {
+  display: grid;
+  gap: 1.75rem;
+  align-content: start;
+}
+
+@media (min-width: 64rem) {
+  .facets {
+    /* Clears the masthead the way .job-details does, so the panel does not sit
+       under it while the results scroll past. */
+    position: sticky;
+    inset-block-start: 2rem;
+    max-block-size: calc(100dvh - 4rem);
+    overflow-y: auto;
+  }
+}
+
+.facets__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-block-end: 1rem;
+  border-block-end: 1px solid var(--hairline);
+}
+
+.facets__heading {
+  margin: 0;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+}
+
+.facets__clear {
+  color: var(--ink-muted);
+  font-size: 0.8125rem;
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  text-underline-offset: 0.2em;
+  /* Hover-OFF only. */
+  transition: text-decoration-color 150ms ease, color 150ms ease;
+}
+
+.facets__clear:hover,
+.facets__clear:focus-visible {
+  color: var(--ink);
+  text-decoration-color: var(--ink);
+  /* Hover-ON: instant. */
+  transition-duration: 0s;
+}
+
+/* A <fieldset> with its browser chrome removed -- kept for the semantics, since
+   a group of checkboxes needs a group name and <legend> is how that is said. */
+.facet {
+  min-inline-size: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.facet__legend {
+  display: block;
+  margin-block-end: 0.625rem;
+  padding: 0;
+  color: var(--ink);
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.facet__search {
+  inline-size: 100%;
+  min-block-size: 2.5rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--hairline);
+  border-radius: 3px;
+  background: var(--surface-raised);
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.875rem;
+  /* Focus-OFF only. */
+  transition: border-color 150ms ease;
+}
+
+.facet__search::placeholder {
+  color: var(--ink-faint);
+}
+
+.facet__search:focus-visible {
+  border-color: var(--ink-muted);
+  /* Focus-ON: instant. */
+  transition-duration: 0s;
+}
+
+.facet__form {
+  display: contents;
+}
+
+.keyword__entry {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.keyword__add {
+  flex: none;
+  min-block-size: 2.5rem;
+  padding-inline: 0.875rem;
+  border: 1px solid var(--hairline);
+  border-radius: 3px;
+  background: var(--surface-raised);
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  /* Hover-OFF only. */
+  transition: background-color 150ms ease, border-color 150ms ease;
+}
+
+.keyword__add:hover,
+.keyword__add:focus-visible {
+  border-color: var(--ink-muted);
+  background: rgba(255, 255, 255, 0.08);
+  /* Hover-ON: instant. */
+  transition-duration: 0s;
+}
+

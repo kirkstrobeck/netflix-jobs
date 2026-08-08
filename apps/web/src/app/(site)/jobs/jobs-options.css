@@ -1,0 +1,100 @@
+/* Facet options and keyword chips. Split from jobs-facets.css to stay under
+   the 200-line limit; same tokens, same interaction-state rule. */
+
+/* Capped and scrollable: 40 locations should not push the results column's
+   footer off the screen. The search bar above is the real way through a list
+   this long; the scroll is the fallback. */
+.facet__options {
+  max-block-size: 15rem;
+  margin: 0.75rem 0 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.facet__none {
+  margin: 0.75rem 0 0;
+  color: var(--ink-faint);
+  font-size: 0.875rem;
+}
+
+.option {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.3125rem 0.25rem;
+  border-radius: 3px;
+  color: var(--ink-muted);
+  font-size: 0.875rem;
+  cursor: pointer;
+  /* Hover-OFF only. */
+  transition: background-color 150ms ease, color 150ms ease;
+}
+
+.option:hover,
+.option:has(:focus-visible) {
+  background: var(--surface-raised);
+  color: var(--ink);
+  /* Hover-ON: instant. */
+  transition-duration: 0s;
+}
+
+.option__box {
+  flex: none;
+  inline-size: 0.9375rem;
+  block-size: 0.9375rem;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.option__label {
+  flex: 1;
+  min-inline-size: 0;
+}
+
+/* Tabular figures so the counts form a straight edge down the right of the list
+   instead of shuffling with each digit width. */
+.option__count {
+  flex: none;
+  color: var(--ink-faint);
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+  margin: 0.75rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.5rem;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  background: var(--accent);
+  color: #fff;
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  /* Hover-OFF only. */
+  transition: opacity 150ms ease;
+}
+
+.chip:hover,
+.chip:focus-visible {
+  opacity: 0.85;
+  /* Hover-ON: instant. */
+  transition-duration: 0s;
+}
+
+.chip__cross {
+  font-size: 0.875rem;
+  line-height: 1;
+}

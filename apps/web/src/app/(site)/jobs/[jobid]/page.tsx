@@ -8,6 +8,8 @@ import { getJob } from "@/lib/jobs/get-job";
 import { listRecentJobIds } from "@/lib/jobs/job-ids";
 
 import "@/app/(site)/jobs/[jobid]/job-hero.css";
+import "@/app/(site)/jobs/[jobid]/job-facts.css";
+import "@/app/(site)/jobs/[jobid]/posted-badge.css";
 import "@/app/(site)/jobs/[jobid]/job-details.css";
 import "@/app/(site)/jobs/[jobid]/prose.css";
 
