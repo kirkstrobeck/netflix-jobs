@@ -1,8 +1,35 @@
 /* The masthead block: eyebrow, title, fact row, primary call to action. */
 
+/* The hero stays in .shell's 76rem column, so the title, facts and apply button
+   keep the content measure. The backdrop and the divider both break out of it. */
 .job-hero {
   padding-block: clamp(2.5rem, 6vw, 4.5rem) clamp(2rem, 4vw, 3rem);
-  border-block-end: 1px solid var(--hairline);
+}
+
+/* Full-bleed out of the shell column: pin the box's inline start to the hero's
+   centre, make it a viewport wide, then pull it back half a viewport. That lands
+   it edge to edge whatever the column is doing, with no dependency on --gutter
+   or the 76rem cap. Both the backdrop and the divider need it. */
+.job-hero .bars,
+.job-hero::after {
+  inset-inline: 50% auto;
+  inline-size: 100vw;
+  margin-inline-start: -50vw;
+}
+
+/* A drawn divider, not border-block-end: a border is bound to the element's own
+   box, so it could only ever be as wide as the shell column. This is the same
+   hairline, painted across the viewport.
+
+   It comes after .bars in tree order and both sit at the auto z-index, so it
+   paints over the field rather than under it -- at 10% alpha the bars would
+   otherwise tint the line where they crossed it. */
+.job-hero::after {
+  content: "";
+  position: absolute;
+  inset-block-end: 0;
+  block-size: 1px;
+  background: var(--hairline);
 }
 
 .eyebrow {
@@ -22,71 +49,6 @@
   line-height: 1.06;
   letter-spacing: -0.022em;
   text-wrap: balance;
-}
-
-.job-facts {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem 1.5rem;
-  margin: 1.75rem 0 0;
-  padding: 0;
-  list-style: none;
-  color: var(--ink-muted);
-  font-size: 1rem;
-}
-
-.job-facts__item {
-  position: relative;
-}
-
-/* Separator dots are drawn, not typed, so they never wrap onto a line alone. */
-.job-facts__item + .job-facts__item::before {
-  content: "";
-  position: absolute;
-  inset-inline-start: -0.8125rem;
-  inset-block-start: 0.55em;
-  inline-size: 3px;
-  block-size: 3px;
-  border-radius: 50%;
-  background: var(--ink-faint);
-}
-
-.job-facts__empty {
-  color: var(--ink-faint);
-}
-
-/* "New" borrows the fact row's own separator dot rather than introducing a
-   pill: the same 3px circle at the same 0.55em optical offset, filled with
-   --accent instead of --ink-faint. Type is .eyebrow's exact treatment, so the
-   badge is made of parts the page already uses.
-
-   The dot carries the colour because the text cannot. job-shell.css measures
-   --accent at 4.3:1 on --surface, which fails as 13px text -- so red stays a
-   background here and the word itself is --ink, a step brighter than the
-   --ink-muted row around it. That lift is what marks it, not a box.
-
-   Inline rather than inline-flex on purpose: an inline-flex badge takes its
-   baseline from its first flex item, which would be the dot, and the word would
-   sit off the line it belongs to. */
-.posted-badge {
-  position: relative;
-  margin-inline-start: 1.0625rem;
-  color: var(--ink);
-  font-size: 0.8125rem;
-  font-weight: 500;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-}
-
-.posted-badge::before {
-  content: "";
-  position: absolute;
-  inset-inline-start: -0.625rem;
-  inset-block-start: 0.55em;
-  inline-size: 3px;
-  block-size: 3px;
-  border-radius: 50%;
-  background: var(--accent);
 }
 
 .apply-button {

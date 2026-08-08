@@ -7,6 +7,7 @@ import {
   WASH_BEZIER_Y1,
   WASH_BEZIER_Y2,
 } from "@/app/_glow/glow-math";
+import { PAUSED_CLASS } from "@/app/_motion/pause-when-idle";
 
 function easedRedWash(): string {
   const stops = Array.from({ length: 49 }, (_, i) => {
@@ -88,6 +89,12 @@ export function generateGlowCss(): string {
 }
 ${keyframes}
 ${rules}
+/* Off-screen, or in a background tab. Only the orbs stop -- .glow__wash is a
+   static gradient that costs nothing to leave painted, and pausing it would mean
+   the footer's red ground vanished as you scrolled away from it. */
+.glow.${PAUSED_CLASS} .glow__orb {
+  animation-play-state: paused;
+}
 @media (prefers-reduced-motion: reduce) {
   .glow__orb { animation: none !important; opacity: 0; }
 }

@@ -36,6 +36,15 @@
   display: grid;
   grid-template-rows: auto 1fr auto;
   background: var(--surface);
+
+  /* The hero's bars backdrop is 100vw, and on a desktop classic scrollbar 100vw
+     counts the scrollbar gutter -- so it overhangs the visible width and raises
+     a horizontal scrollbar. This trims that overhang.
+
+     clip, not hidden: hidden makes this a scroll container, which would capture
+     .job-details' position: sticky and pin it to a box that never scrolls. clip
+     creates no scroll container, so the sidebar keeps sticking to the viewport. */
+  overflow-x: clip;
   color: var(--ink);
   min-block-size: 100svh;
   font-synthesis-weight: none;
@@ -153,6 +162,20 @@
 .wordmark__mark {
   block-size: 1.625rem;
   inline-size: auto;
+}
+
+/* Masthead only, 10% off the shared 1.625rem. Scoped to .site-header rather
+   than edited into the rule above, because that rule drives BOTH instances and
+   the footer's size is load-bearing: the note above records the mark sitting
+   ~300px up a bottom-anchored stack against .job-footer__scrim's solid zone,
+   which runs to 304px. Shrinking the shared value would walk the footer
+   wordmark back down through numbers that were measured, not chosen.
+
+   Nothing reflows here either, for the reason the shared rule gives: the row's
+   height comes from .site-header__inner's 4.5rem floor, and 1.4625rem (23.4px)
+   is further inside 72px than the 26px it replaces. */
+.site-header .wordmark__mark {
+  block-size: 1.4625rem;
 }
 
 .wordmark__suffix {

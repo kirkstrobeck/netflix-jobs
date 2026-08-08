@@ -1,5 +1,6 @@
 import { generateGlowCss } from "@/app/_glow/generate-glow-css";
 import { ORB_COUNT } from "@/app/_glow/glow-math";
+import { MotionRegion } from "@/app/_motion/motion-region";
 
 // The whole effect is one deterministic string: one @keyframes walk per orb,
 // generated from the tunables in glow-math.ts. It is built once per server
@@ -23,7 +24,7 @@ const GLOW_CSS = generateGlowCss();
 // only 4.4:1 against --ink. See .job-footer__scrim.
 export function Glow() {
   return (
-    <div aria-hidden="true" className="glow">
+    <MotionRegion className="glow">
       <style>{GLOW_CSS}</style>
       <div className="glow__wash" />
       <div className="glow__orbs">
@@ -31,6 +32,6 @@ export function Glow() {
           <div className={`glow__orb glow__orb--${i}`} key={i} />
         ))}
       </div>
-    </div>
+    </MotionRegion>
   );
 }

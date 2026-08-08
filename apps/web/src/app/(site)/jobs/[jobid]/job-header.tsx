@@ -1,5 +1,6 @@
 import { ApplyButton } from "@/app/(site)/jobs/[jobid]/apply-button";
 import { PostedDate } from "@/app/(site)/jobs/[jobid]/posted-date";
+import { BarsStage } from "@/app/_bars/bars-stage";
 import { formatLocations } from "@/lib/format/location";
 import { formatPostedDate } from "@/lib/format/posted-date";
 import type { Job } from "@/lib/jobs/types";
@@ -11,8 +12,11 @@ export function JobHeader({ job }: { job: Job }) {
   const locations = formatLocations(job.locations, job.location);
   const posted = formatPostedDate(job.posting_date);
 
+  // The stage IS the <header>, not a wrapper inside it: the bars are the
+  // masthead's backdrop, and the hero's padding-block is most of its height, so
+  // a stage nested inside would leave that padding bare.
   return (
-    <header className="job-hero">
+    <BarsStage as="header" className="job-hero">
       <p className="eyebrow">{job.department ?? "Netflix"}</p>
 
       <h1 className="job-title">{job.title}</h1>
@@ -35,6 +39,6 @@ export function JobHeader({ job }: { job: Job }) {
       </ul>
 
       <ApplyButton href={job.apply_url} title={job.title} />
-    </header>
+    </BarsStage>
   );
 }

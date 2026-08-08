@@ -31,6 +31,20 @@ describe("JobHeader", () => {
     expect(html).toContain("<time");
   });
 
+  // The bars are the masthead's backdrop, so the stage has to BE the <header>
+  // -- nested inside it, the hero's padding-block would be left bare.
+  it("makes the masthead itself the bars stage, with the content above it", () => {
+    const html = renderToStaticMarkup(<JobHeader job={SAMPLE_JOB} />);
+
+    expect(html).toContain('<header class="bars-stage job-hero">');
+    expect(html).toContain('class="bars"');
+    expect(html).toContain('class="bars-stage__content"');
+    // Title inside the lifted content layer, not adrift beside the backdrop.
+    expect(html.indexOf('class="bars-stage__content"')).toBeLessThan(
+      html.indexOf(SAMPLE_JOB.title),
+    );
+  });
+
   it("shows a fallback message when the posted date is empty", () => {
     const html = renderToStaticMarkup(<JobHeader job={MINIMAL_JOB} />);
 
