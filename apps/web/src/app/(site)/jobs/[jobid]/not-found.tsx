@@ -1,6 +1,8 @@
 import Link from "next/link";
 
 import "@/app/(site)/jobs/[jobid]/job-hero.css";
+import "@/app/(site)/jobs/[jobid]/job-facts.css";
+import "@/app/(site)/jobs/[jobid]/posted-badge.css";
 import "@/app/(site)/jobs/[jobid]/job-details.css";
 
 // The only 404 a job URL can produce. Every miss lands here -- a well-formed code

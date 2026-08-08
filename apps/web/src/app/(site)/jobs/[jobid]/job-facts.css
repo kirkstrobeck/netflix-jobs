@@ -1,0 +1,52 @@
+/* The hero's fact row -- location, work type, posted date -- and the New badge
+   that rides with the date. Split from job-hero.css to stay under the 200-line
+   limit; same tokens and the same 64rem breakpoint as the rest of the page. */
+
+/* Stacked by default -- location, work type, posted date each on their own row.
+   A grid rather than the flex row below, so an item that wraps to two lines
+   still occupies one track and the rows stay evenly spaced. The New badge needs
+   no special handling: it lives inside the posted item, so it stacks with it. */
+.job-facts {
+  display: grid;
+  gap: 0.5rem;
+  margin: 1.75rem 0 0;
+  padding: 0;
+  list-style: none;
+  color: var(--ink-muted);
+  font-size: 1rem;
+}
+
+.job-facts__item {
+  position: relative;
+}
+
+.job-facts__empty {
+  color: var(--ink-faint);
+}
+
+/* 64rem is the job page's one breakpoint -- .job-body splits into its two
+   columns here and .job-details starts sticking -- so the fact row rejoins the
+   same line at the width the rest of the page changes shape.
+
+   The separator dots exist ONLY in this state. Stacked, a dot between rows would
+   sit at the start of a line marking nothing, so it is not hidden after the fact
+   -- it is never drawn below 64rem. */
+@media (min-width: 64rem) {
+  .job-facts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.5rem;
+  }
+
+  /* Drawn, not typed, so they never wrap onto a line alone. */
+  .job-facts__item + .job-facts__item::before {
+    content: "";
+    position: absolute;
+    inset-inline-start: -0.8125rem;
+    inset-block-start: 0.55em;
+    inline-size: 3px;
+    block-size: 3px;
+    border-radius: 50%;
+    background: var(--ink-faint);
+  }
+}
