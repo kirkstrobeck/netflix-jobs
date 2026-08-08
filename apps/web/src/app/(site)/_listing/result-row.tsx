@@ -13,12 +13,14 @@ export function ResultRow({ job }: { job: JobSummary }) {
 
   return (
     <li className="result">
-      <h2 className="result__title">
+      {/* h3: the page runs h1 (masthead) -> h2 ("Open roles") -> h3 per result,
+          so a screen reader's heading list nests instead of flattening. */}
+      <h3 className="result__title">
         {/* The whole title is the target, so the hit area matches the text. */}
         <a className="result__link" href={`/jobs/${job.display_job_id}`}>
           {job.title}
         </a>
-      </h2>
+      </h3>
 
       <dl className="result__facts">
         <div className="result__fact result__fact--team">

@@ -100,5 +100,20 @@ describe("Home", () => {
 
     expect(html).toContain("Open roles");
     expect(html).toContain("listing-hero");
+    // One h1 for the whole page -- the masthead's. "Open roles" is the h2 under
+    // it, and each result is an h3 under that.
+    expect(html.match(/<h1/g)).toHaveLength(1);
+    expect(html).toContain('<h2 class="listing-title">Open roles</h2>');
+  });
+
+  it("nests each result as an h3 under the listing's h2", async () => {
+    listMock.mockResolvedValue(BOARD);
+
+    const html = renderToStaticMarkup(
+      await JobListing({ searchParams: Promise.resolve({}) }),
+    );
+
+    expect(html).toContain('<h3 class="result__title">');
+    expect(html).not.toContain('<h2 class="result__title">');
   });
 });

@@ -3,8 +3,10 @@ import { Suspense } from "react";
 
 import { JobListing } from "@/app/(site)/_listing/job-listing";
 import { ListingSkeleton } from "@/app/(site)/_listing/listing-skeleton";
+import { HomeMasthead } from "@/app/(site)/home-masthead";
 import type { RawSearchParams } from "@/lib/search/job-query";
 
+import "@/app/(site)/home-masthead.css";
 import "@/app/(site)/_listing/jobs-listing.css";
 import "@/app/(site)/_listing/jobs-pager.css";
 import "@/app/(site)/_listing/jobs-facets.css";
@@ -30,9 +32,14 @@ type HomeProps = { searchParams: Promise<RawSearchParams> };
 export default function Home({ searchParams }: HomeProps) {
   return (
     <div className="listing">
+      <HomeMasthead />
+
+      {/* h2, not h1: the masthead above owns the page's only h1, and this names
+          the section under it. The "Netflix" eyebrow that used to sit here went
+          with it -- a brand kicker directly beneath a full-bleed Netflix-red
+          masthead was saying the same thing twice. */}
       <header className="listing-hero">
-        <p className="eyebrow">Netflix</p>
-        <h1 className="listing-title">Open roles</h1>
+        <h2 className="listing-title">Open roles</h2>
       </header>
 
       <Suspense fallback={<ListingSkeleton />}>

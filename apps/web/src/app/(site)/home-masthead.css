@@ -1,0 +1,33 @@
+/* The home page masthead: one headline on the animated red-bar field. Same
+   tokens and the same full-bleed pattern as the job hero -- this is the same
+   effect in the same house style, not a second treatment. */
+
+.masthead {
+  /* Deep enough that the bars read as a field rather than a stripe behind the
+     text, and the headline has room to sit in. */
+  padding-block: clamp(4rem, 10vw, 7.5rem) clamp(3.5rem, 8vw, 6rem);
+  border-block-end: 1px solid var(--hairline);
+}
+
+/* Full-bleed out of .shell's 76rem column, the same way .job-hero .bars does:
+   pin the field's inline start to the masthead's centre, make it a viewport
+   wide, then pull it back half a viewport. .job-page carries overflow-x: clip,
+   which trims what the scrollbar gutter adds to 100vw. */
+.masthead .bars {
+  inset-inline: 50% auto;
+  inline-size: 100vw;
+  margin-inline-start: -50vw;
+}
+
+/* --ink, and no scrim. See the note in home-masthead.tsx: the worst the bars can
+   ever make the backdrop is rgb(183,8,16), where this measures 6.28:1. */
+.masthead__title {
+  margin: 0;
+  max-inline-size: 18ch;
+  color: var(--ink);
+  font-size: clamp(2.5rem, 1.4rem + 4.8vw, 4.5rem);
+  font-weight: 700;
+  line-height: 1.02;
+  letter-spacing: -0.028em;
+  text-wrap: balance;
+}
