@@ -12,11 +12,14 @@ export default defineConfig({
     environment: "jsdom",
     setupFiles: ["./vitest.setup.ts"],
     include: ["src/**/*.test.{ts,tsx}"],
+    // Benchmarks measure the real board off the local Supabase stack, so they
+    // are not part of the suite, and not part of what the suite has to cover.
+    benchmark: { include: ["src/**/*.bench.ts"] },
     css: false,
     coverage: {
       provider: "v8",
       include: ["src/**/*.{ts,tsx}"],
-      exclude: ["src/**/*.test.{ts,tsx}"],
+      exclude: ["src/**/*.test.{ts,tsx}", "src/**/*.bench.ts"],
       thresholds: {
         lines: 100,
         functions: 100,
