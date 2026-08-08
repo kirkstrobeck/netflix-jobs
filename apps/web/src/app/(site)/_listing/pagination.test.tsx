@@ -3,18 +3,18 @@ import { describe, expect, it, vi } from "vitest";
 
 import { Pagination } from "@/app/(site)/_listing/pagination";
 import { ResultCount } from "@/app/(site)/_listing/result-count";
+import { NavigateProvider } from "@/app/(site)/_listing/use-query-navigation";
 import { EMPTY_QUERY, type JobQuery } from "@/lib/search/job-query";
 import { paginate } from "@/lib/search/paginate";
 
-// next/link renders an <a> and nothing here depends on its client behaviour.
-vi.mock("next/link", () => ({
-  default: ({ children, ...props }: { children: React.ReactNode }) => (
-    <a {...props}>{children}</a>
-  ),
-}));
-
+// The static render is the one a crawler and a JavaScript-off visitor get, so
+// what is under test here is that every page is still a real href.
 const markup = (total: number, page: number, query: JobQuery = EMPTY_QUERY) =>
-  renderToStaticMarkup(<Pagination query={query} window={paginate(total, page)} />);
+  renderToStaticMarkup(
+    <NavigateProvider value={vi.fn()}>
+      <Pagination query={query} window={paginate(total, page)} />
+    </NavigateProvider>,
+  );
 
 // renderToStaticMarkup escapes the & between query params, so the attribute
 // text is not the URL until it is decoded.

@@ -1,3 +1,7 @@
+"use client";
+
+import { memo } from "react";
+
 import { PostedDate } from "@/app/(site)/jobs/[jobid]/posted-date";
 import { formatLocations } from "@/lib/format/location";
 import { formatPostedDate } from "@/lib/format/posted-date";
@@ -7,7 +11,15 @@ import { jobLocations, type JobSummary } from "@/lib/jobs/job-summary";
 // link and the facts sit under it in fixed columns, so team lines up with team
 // down the page without any of the furniture -- rules, headers, stripes -- that
 // would make it a table.
-export function ResultRow({ job }: { job: JobSummary }) {
+//
+// memo, and the only prop is the row itself. Filtering rebuilds the page ARRAY
+// on every keystroke, but the rows in it are the same objects out of the same
+// board, so a row that survived the change is === the row that was already
+// there and React skips it. Paging from 1 to 2 re-renders ten rows because ten
+// rows changed; narrowing a facet from 40 results to 30 re-renders none of the
+// ones that stayed. Each row formats two dates and mounts a PostedDate that
+// runs its own effect, so skipping is worth the comparison.
+function Row({ job }: { job: JobSummary }) {
   const locations = formatLocations(jobLocations(job), job.location);
   const posted = formatPostedDate(job.posting_date);
 
@@ -57,3 +69,5 @@ export function ResultRow({ job }: { job: JobSummary }) {
     </li>
   );
 }
+
+export const ResultRow = memo(Row);

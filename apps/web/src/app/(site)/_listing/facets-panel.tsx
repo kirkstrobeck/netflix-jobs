@@ -1,24 +1,28 @@
+"use client";
+
 import { FacetGroup } from "@/app/(site)/_listing/facet-group";
 import { KeywordFacet } from "@/app/(site)/_listing/keyword-facet";
-import type { JobSummary } from "@/lib/jobs/job-summary";
-import { facetOptions } from "@/lib/search/facet-counts";
-import {
-  EMPTY_QUERY,
-  isFiltered,
-  jobsHref,
-  type FacetKey,
-  type JobQuery,
-} from "@/lib/search/job-query";
+import { QueryLink } from "@/app/(site)/_listing/query-link";
+import type { FacetOption } from "@/lib/search/facet-counts";
+import { EMPTY_QUERY, isFiltered, type FacetKey, type JobQuery } from "@/lib/search/job-query";
 
-// Counting happens here, on the server, over the whole cached board -- the
-// client components receive finished options and never see the 481 rows.
+// The options arrive counted. deriveListing does it once for all three groups,
+// over the whole board, so the panel is a layout and the arithmetic has exactly
+// one home -- the same one the server render uses.
 const GROUPS: { key: FacetKey; legend: string; searchLabel: string }[] = [
   { key: "team", legend: "Team", searchLabel: "Search teams" },
   { key: "workType", legend: "Work type", searchLabel: "Search work types" },
   { key: "location", legend: "Location", searchLabel: "Search locations" },
 ];
 
-export function FacetsPanel({ jobs, query }: { jobs: JobSummary[]; query: JobQuery }) {
+type FacetsPanelProps = {
+  facets: Record<FacetKey, FacetOption[]>;
+  query: JobQuery;
+  draft: string;
+  onDraft: (value: string) => void;
+};
+
+export function FacetsPanel({ facets, query, draft, onDraft }: FacetsPanelProps) {
   return (
     <aside aria-labelledby="filters-heading" className="facets">
       <div className="facets__head">
@@ -28,20 +32,20 @@ export function FacetsPanel({ jobs, query }: { jobs: JobSummary[]; query: JobQue
 
         {/* A link, not a button: clearing filters is just the unfiltered URL. */}
         {isFiltered(query) ? (
-          <a className="facets__clear" href={jobsHref(EMPTY_QUERY)}>
+          <QueryLink className="facets__clear" query={EMPTY_QUERY}>
             Clear all
-          </a>
+          </QueryLink>
         ) : null}
       </div>
 
-      <KeywordFacet query={query} />
+      <KeywordFacet draft={draft} onDraft={onDraft} query={query} />
 
       {GROUPS.map((group) => (
         <FacetGroup
           facetKey={group.key}
           key={group.key}
           legend={group.legend}
-          options={facetOptions(jobs, query, group.key)}
+          options={facets[group.key]}
           query={query}
           searchLabel={group.searchLabel}
         />

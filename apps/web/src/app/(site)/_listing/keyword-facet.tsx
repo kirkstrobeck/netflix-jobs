@@ -1,15 +1,25 @@
 "use client";
 
-import { useId, useState } from "react";
+import { useId } from "react";
 
 import { useQueryNavigation } from "@/app/(site)/_listing/use-query-navigation";
 import { addKeyword, removeKeyword, type JobQuery } from "@/lib/search/job-query";
 
+type KeywordFacetProps = {
+  query: JobQuery;
+  draft: string;
+  onDraft: (value: string) => void;
+};
+
 // Free text, added as chips. A form rather than a bare input so Enter submits
 // the way the keyboard expects and the browser's own "search" affordances work;
-// preventDefault keeps the navigation on the client router instead of a reload.
-export function KeywordFacet({ query }: { query: JobQuery }) {
-  const [draft, setDraft] = useState("");
+// preventDefault keeps the change on the client instead of a reload.
+//
+// The draft is not local state any more. It filters the list as it is typed, so
+// it has to reach the same place the chips do -- see withDraft in useListing.
+// What Add does is promote it from "what the box says" to a chip, which is the
+// part that goes in the URL and can be shared.
+export function KeywordFacet({ query, draft, onDraft }: KeywordFacetProps) {
   const navigate = useQueryNavigation();
   const inputId = useId();
 
@@ -18,7 +28,7 @@ export function KeywordFacet({ query }: { query: JobQuery }) {
     // addKeyword ignores blanks and repeats, so the guard lives in one place
     // and this only has to decide whether to clear the box.
     navigate(addKeyword(query, draft));
-    setDraft("");
+    onDraft("");
   };
 
   return (
@@ -33,7 +43,7 @@ export function KeywordFacet({ query }: { query: JobQuery }) {
             autoComplete="off"
             className="facet__search"
             id={inputId}
-            onChange={(event) => setDraft(event.target.value)}
+            onChange={(event) => onDraft(event.target.value)}
             placeholder="Add a keyword"
             type="search"
             value={draft}

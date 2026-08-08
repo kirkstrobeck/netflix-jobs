@@ -4,12 +4,25 @@ import { describe, expect, it, vi } from "vitest";
 import { FacetsPanel } from "@/app/(site)/_listing/facets-panel";
 import { ListingSkeleton } from "@/app/(site)/_listing/listing-skeleton";
 import { ResultList } from "@/app/(site)/_listing/result-list";
+import { NavigateProvider } from "@/app/(site)/_listing/use-query-navigation";
 import { BOARD, summary } from "@/lib/jobs/job-summary.fixture";
-import { EMPTY_QUERY, toggleFacet } from "@/lib/search/job-query";
+import { EMPTY_QUERY, toggleFacet, type JobQuery } from "@/lib/search/job-query";
+import { deriveListing } from "@/lib/search/listing-view";
 import { PAGE_SIZE } from "@/lib/search/paginate";
 
-// The panel contains client components; there is no router in a static render.
-vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }));
+// The panel is fed the options deriveListing already counted, which is exactly
+// what the real tree hands it -- server render and client render alike.
+const panel = (query: JobQuery) =>
+  renderToStaticMarkup(
+    <NavigateProvider value={vi.fn()}>
+      <FacetsPanel
+        draft=""
+        facets={deriveListing(BOARD, query).facets}
+        onDraft={vi.fn()}
+        query={query}
+      />
+    </NavigateProvider>,
+  );
 
 describe("ResultList", () => {
   it("renders one linked row per job", () => {
@@ -91,9 +104,7 @@ describe("ResultList", () => {
 
 describe("FacetsPanel", () => {
   it("renders the four facets with their counts", () => {
-    const html = renderToStaticMarkup(
-      <FacetsPanel jobs={BOARD} query={EMPTY_QUERY} />,
-    );
+    const html = panel(EMPTY_QUERY);
 
     expect(html).toContain("Keywords");
     expect(html).toContain("Team");
@@ -104,24 +115,20 @@ describe("FacetsPanel", () => {
 
   // Nothing to clear, no control offering to clear it.
   it("offers Clear all only once something is filtering", () => {
-    const clean = renderToStaticMarkup(
-      <FacetsPanel jobs={BOARD} query={EMPTY_QUERY} />,
-    );
-    const filtered = renderToStaticMarkup(
-      <FacetsPanel jobs={BOARD} query={toggleFacet(EMPTY_QUERY, "team", "Engineering")} />,
-    );
+    const clean = panel(EMPTY_QUERY);
+    const filtered = panel(toggleFacet(EMPTY_QUERY, "team", "Engineering"));
 
     expect(clean).not.toContain("Clear all");
     expect(filtered).toContain("Clear all");
   });
 
   it("points Clear all at the unfiltered listing", () => {
-    const html = renderToStaticMarkup(
-      <FacetsPanel
-        jobs={BOARD}
-        query={{ ...EMPTY_QUERY, team: ["Engineering"], keywords: ["design"], page: 4 }}
-      />,
-    );
+    const html = panel({
+      ...EMPTY_QUERY,
+      team: ["Engineering"],
+      keywords: ["design"],
+      page: 4,
+    });
 
     expect(html).toContain('href="/"');
   });

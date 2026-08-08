@@ -1,19 +1,25 @@
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import { useState, type ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { FacetGroup } from "@/app/(site)/_listing/facet-group";
 import { KeywordFacet } from "@/app/(site)/_listing/keyword-facet";
+import { NavigateProvider } from "@/app/(site)/_listing/use-query-navigation";
 import { BOARD } from "@/lib/jobs/job-summary.fixture";
 import { facetOptions } from "@/lib/search/facet-counts";
-import { EMPTY_QUERY, toggleFacet, type JobQuery } from "@/lib/search/job-query";
+import { EMPTY_QUERY, jobsHref, toggleFacet, type JobQuery } from "@/lib/search/job-query";
 
-const push = vi.fn();
+const navigate = vi.fn();
 
-vi.mock("next/navigation", () => ({
-  useRouter: () => ({ push: (...args: unknown[]) => push(...args) }),
-}));
+// Controls hand over a query, not a URL. Reading it back as a URL is still the
+// clearest way to state the expectation, and it is the same serialiser the
+// address bar gets, so the assertion is the contract rather than a shape.
+const navigatedTo = () => jobsHref(navigate.mock.calls.at(-1)![0]);
 
-beforeEach(() => push.mockClear());
+const mount = (ui: ReactNode) =>
+  render(<NavigateProvider value={navigate}>{ui}</NavigateProvider>);
+
+beforeEach(() => navigate.mockClear());
 // The vitest config does not set `globals`, so Testing Library's automatic
 // cleanup is never registered and renders would pile up across tests.
 afterEach(cleanup);
@@ -22,7 +28,7 @@ const checkbox = (name: RegExp) =>
   screen.getByRole("checkbox", { name }) as HTMLInputElement;
 
 function renderTeams(query: JobQuery = EMPTY_QUERY) {
-  return render(
+  return mount(
     <FacetGroup
       facetKey="team"
       legend="Team"
@@ -33,16 +39,24 @@ function renderTeams(query: JobQuery = EMPTY_QUERY) {
   );
 }
 
-// The round trip the URL contract depends on: a control writes state to the URL,
-// and nothing else. Scrolling is suppressed because the panel is often below the
-// fold and jumping to the top would lose the visitor's place.
+// The draft is owned by useListing in the real tree, because it filters the list
+// as it is typed. Here a local holder stands in for that.
+function Keywords({ query }: { query: JobQuery }) {
+  const [draft, setDraft] = useState("");
+
+  return <KeywordFacet draft={draft} onDraft={setDraft} query={query} />;
+}
+
+// The round trip the URL contract depends on: a control states the new query and
+// nothing else. Whether that costs a round trip is useListing's decision, not
+// the control's, so there is one kind of control rather than two.
 describe("facet to URL", () => {
   it("navigates to the URL that selects the option", () => {
     renderTeams();
 
     fireEvent.click(checkbox(/Engineering/));
 
-    expect(push).toHaveBeenCalledWith("/?team=Engineering", { scroll: false });
+    expect(navigatedTo()).toBe("/?team=Engineering");
   });
 
   it("navigates to the URL that clears an already-selected option", () => {
@@ -50,7 +64,7 @@ describe("facet to URL", () => {
 
     fireEvent.click(checkbox(/Engineering/));
 
-    expect(push).toHaveBeenCalledWith("/", { scroll: false });
+    expect(navigatedTo()).toBe("/");
   });
 
   it("keeps the other facets and drops back to page 1", () => {
@@ -64,9 +78,7 @@ describe("facet to URL", () => {
 
     fireEvent.click(checkbox(/Marketing/));
 
-    expect(push).toHaveBeenCalledWith("/?team=Marketing&type=Remote&q=design", {
-      scroll: false,
-    });
+    expect(navigatedTo()).toBe("/?team=Marketing&type=Remote&q=design");
   });
 
   it("shows each option with its count and its checked state", () => {
@@ -93,7 +105,7 @@ describe("facet option search", () => {
 
     expect(checkbox(/Marketing/)).toBeTruthy();
     expect(screen.queryByRole("checkbox", { name: /Engineering/ })).toBeNull();
-    expect(push).not.toHaveBeenCalled();
+    expect(navigate).not.toHaveBeenCalled();
   });
 
   it("says so when nothing matches", () => {
@@ -117,41 +129,41 @@ describe("facet option search", () => {
 
 describe("keywords to URL", () => {
   it("adds a chip through the URL when the form is submitted", () => {
-    render(<KeywordFacet query={EMPTY_QUERY} />);
+    mount(<Keywords query={EMPTY_QUERY} />);
 
     fireEvent.change(screen.getByLabelText("Keywords"), {
       target: { value: "design" },
     });
     fireEvent.click(screen.getByRole("button", { name: "Add" }));
 
-    expect(push).toHaveBeenCalledWith("/?q=design", { scroll: false });
+    expect(navigatedTo()).toBe("/?q=design");
   });
 
   it("ignores a blank keyword", () => {
-    render(<KeywordFacet query={EMPTY_QUERY} />);
+    mount(<Keywords query={EMPTY_QUERY} />);
 
     fireEvent.change(screen.getByLabelText("Keywords"), { target: { value: "   " } });
     fireEvent.click(screen.getByRole("button", { name: "Add" }));
 
-    expect(push).toHaveBeenCalledWith("/", { scroll: false });
+    expect(navigatedTo()).toBe("/");
   });
 
   it("removes a chip through the URL, keeping the others", () => {
-    render(<KeywordFacet query={{ ...EMPTY_QUERY, keywords: ["design", "senior"] }} />);
+    mount(<Keywords query={{ ...EMPTY_QUERY, keywords: ["design", "senior"] }} />);
 
     fireEvent.click(screen.getByRole("button", { name: "Remove keyword: design" }));
 
-    expect(push).toHaveBeenCalledWith("/?q=senior", { scroll: false });
+    expect(navigatedTo()).toBe("/?q=senior");
   });
 
   it("renders one chip per active keyword", () => {
-    render(<KeywordFacet query={{ ...EMPTY_QUERY, keywords: ["design", "senior"] }} />);
+    mount(<Keywords query={{ ...EMPTY_QUERY, keywords: ["design", "senior"] }} />);
 
     expect(screen.getAllByRole("button", { name: /Remove keyword:/ })).toHaveLength(2);
   });
 
   it("renders no chip list when there are no keywords", () => {
-    render(<KeywordFacet query={EMPTY_QUERY} />);
+    mount(<Keywords query={EMPTY_QUERY} />);
 
     expect(screen.queryByRole("button", { name: /Remove keyword:/ })).toBeNull();
   });

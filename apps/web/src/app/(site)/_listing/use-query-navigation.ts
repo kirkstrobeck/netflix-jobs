@@ -1,28 +1,32 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useCallback } from "react";
+import { createContext, useContext } from "react";
 
-import { jobsHref, type JobQuery } from "@/lib/search/job-query";
+import type { JobQuery } from "@/lib/search/job-query";
 
 /**
- * The one way any control changes the listing: write the new state to the URL
- * and let the server re-render from it. No control holds filter state of its
- * own, so the URL cannot drift out of step with what is on screen.
+ * The one way any control changes the listing: hand it the new query.
  *
- * push, not replace, so every filter change is a back-button step -- ticking a
- * box is a navigation a visitor expects to be able to undo.
- *
- * scroll: false, because the panel that changed is usually below the fold on a
- * narrow screen and jumping to the top would throw away the visitor's place.
+ * No control holds filter state of its own and none of them knows whether the
+ * change will cost a round trip -- useListing decides that in one place, by
+ * whether the board has arrived. A facet, a chip and a page link are the same
+ * call, so they cannot drift apart in how they navigate.
  */
-export function useQueryNavigation() {
-  const router = useRouter();
+export type Navigate = (query: JobQuery) => void;
 
-  return useCallback(
-    (query: JobQuery) => {
-      router.push(jobsHref(query), { scroll: false });
-    },
-    [router],
-  );
+const NavigateContext = createContext<Navigate | null>(null);
+
+export const NavigateProvider = NavigateContext.Provider;
+
+export function useQueryNavigation(): Navigate {
+  const navigate = useContext(NavigateContext);
+
+  // A control rendered outside the listing would otherwise push to the URL with
+  // nothing listening, which looks like a filter that half works. Failing loudly
+  // is the only version of this that gets noticed.
+  if (!navigate) {
+    throw new Error("useQueryNavigation must be used inside the listing");
+  }
+
+  return navigate;
 }

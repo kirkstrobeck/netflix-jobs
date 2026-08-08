@@ -75,6 +75,21 @@ export function parseJobQuery(params: RawSearchParams): JobQuery {
   };
 }
 
+// The browser hands the same information as URLSearchParams rather than as the
+// plain object Next gives the server. It is converted into that object and run
+// through the SAME parse, because "what does this URL mean" has to have one
+// answer -- a second reader here is how a back button lands on a state the
+// server would have rendered differently.
+export function readSearchParams(params: URLSearchParams): JobQuery {
+  const raw: RawSearchParams = {};
+
+  params.forEach((_value, key) => {
+    raw[key] = params.getAll(key);
+  });
+
+  return parseJobQuery(raw);
+}
+
 // Written in a fixed order -- facets, then keywords, then page -- so the same
 // state always produces byte-identical URLs and a copied link is stable.
 export function toSearchParams(query: JobQuery): URLSearchParams {

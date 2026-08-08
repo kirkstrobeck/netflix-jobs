@@ -3,19 +3,24 @@ import { describe, expect, it, vi } from "vitest";
 
 import { JobListing } from "@/app/(site)/_listing/job-listing";
 import Home from "@/app/(site)/page";
+import { boardVersion } from "@/lib/jobs/board-payload";
 import { summary } from "@/lib/jobs/job-summary.fixture";
 import { listJobSummaries } from "@/lib/jobs/list-jobs";
 import type { RawSearchParams } from "@/lib/search/job-query";
+import { PAGE_SIZE } from "@/lib/search/paginate";
 
 vi.mock("@/lib/jobs/list-jobs", () => ({ listJobSummaries: vi.fn() }));
-vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }));
-vi.mock("next/link", () => ({
-  default: ({ children, ...props }: { children: React.ReactNode }) => (
-    <a {...props}>{children}</a>
-  ),
+vi.mock("@/lib/jobs/board-payload", () => ({ boardVersion: vi.fn() }));
+
+// A static render is the first paint: no effects, so the board fetch has not
+// happened and every assertion below is about what the SERVER produced.
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push: vi.fn() }),
+  useSearchParams: () => new URLSearchParams(),
 }));
 
 const listMock = vi.mocked(listJobSummaries);
+vi.mocked(boardVersion).mockResolvedValue("bo4rdv3rs10n");
 
 // 25 jobs across two teams: enough for three pages and a facet worth counting.
 const BOARD = Array.from({ length: 25 }, (_, i) =>
@@ -86,6 +91,26 @@ describe("JobListing", () => {
 
     expect(html.indexOf("Showing")).toBeGreaterThan(html.indexOf("class=\"result\""));
   });
+
+  // Every page link is a real href even before the board lands, which is what a
+  // crawler follows and what a visitor with JavaScript off clicks.
+  it("links every page as a URL, not a button", async () => {
+    const html = await renderListing({});
+
+    expect(html).toContain('href="/?page=2"');
+    expect(html).not.toContain("<button class=\"pager__link\"");
+  });
+
+  // The board is 143KB and there are thousands of these URLs. It arrives from
+  // /api/board once, so none of it may be in the document.
+  it("sends the derived view, never the board", async () => {
+    const html = await renderListing({});
+
+    // Ten rows on page one, and the fifteen behind them nowhere in the document
+    // -- not as markup and not as serialised props.
+    expect(html.match(/Role \d+/g)).toHaveLength(PAGE_SIZE);
+    expect(html).not.toContain("Role 24");
+  });
 });
 
 describe("Home", () => {
@@ -115,11 +140,7 @@ describe("Home", () => {
   });
 
   it("nests each result as an h3 under the listing's h2", async () => {
-    listMock.mockResolvedValue(BOARD);
-
-    const html = renderToStaticMarkup(
-      await JobListing({ searchParams: Promise.resolve({}) }),
-    );
+    const html = await renderListing({});
 
     expect(html).toContain('<h3 class="result__title">');
     expect(html).not.toContain('<h2 class="result__title">');

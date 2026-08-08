@@ -3,16 +3,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { FacetGroup } from "@/app/(site)/_listing/facet-group";
 import { VISIBLE_OPTIONS } from "@/app/(site)/_listing/facet-options";
+import { NavigateProvider } from "@/app/(site)/_listing/use-query-navigation";
 import type { FacetOption } from "@/lib/search/facet-counts";
 import { EMPTY_QUERY, type JobQuery } from "@/lib/search/job-query";
 
-const push = vi.fn();
+const navigate = vi.fn();
 
-vi.mock("next/navigation", () => ({
-  useRouter: () => ({ push: (...args: unknown[]) => push(...args) }),
-}));
-
-beforeEach(() => push.mockClear());
+beforeEach(() => navigate.mockClear());
 afterEach(cleanup);
 
 // 12 teams, so the default slice of 8 leaves 4 behind.
@@ -25,13 +22,15 @@ const OPTIONS: FacetOption[] = Array.from({ length: 12 }, (_, i) => ({
 
 function renderGroup(options: FacetOption[], query: JobQuery = EMPTY_QUERY) {
   return render(
-    <FacetGroup
-      facetKey="team"
-      legend="Team"
-      options={options}
-      query={query}
-      searchLabel="Search teams"
-    />,
+    <NavigateProvider value={navigate}>
+      <FacetGroup
+        facetKey="team"
+        legend="Team"
+        options={options}
+        query={query}
+        searchLabel="Search teams"
+      />
+    </NavigateProvider>,
   );
 }
 

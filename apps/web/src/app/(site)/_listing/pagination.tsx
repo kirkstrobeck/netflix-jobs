@@ -1,6 +1,7 @@
-import Link from "next/link";
+"use client";
 
-import { jobsHref, withPage, type JobQuery } from "@/lib/search/job-query";
+import { QueryLink } from "@/app/(site)/_listing/query-link";
+import { withPage, type JobQuery } from "@/lib/search/job-query";
 import type { PageWindow } from "@/lib/search/paginate";
 
 // A window of page numbers around the current one, so 49 pages do not render 49
@@ -27,13 +28,9 @@ function PageLink({ page, query, label, current }: {
 }) {
   return (
     <li>
-      <Link
-        aria-current={current ? "page" : undefined}
-        className="pager__link"
-        href={jobsHref(withPage(query, page))}
-      >
+      <QueryLink className="pager__link" current={current} query={withPage(query, page)}>
         {label}
-      </Link>
+      </QueryLink>
     </li>
   );
 }
