@@ -31,6 +31,7 @@ export type IngestContext = {
     countJobs: Mock;
   };
   http: { configureReader: Mock; transportCounts: Mock };
+  revalidate: { revalidateWeb: Mock };
 };
 
 export function position(id: number): Position {
@@ -59,6 +60,8 @@ export async function loadIngest(env: Record<string, string> = {}): Promise<Inge
     IngestContext['eightfold'];
   const db = (await import('../lib/db.ts')) as unknown as IngestContext['db'];
   const http = (await import('../lib/http.ts')) as unknown as IngestContext['http'];
+  const revalidate = (await import('../lib/revalidate.ts')) as unknown as
+    IngestContext['revalidate'];
   const ingest = await import('./ingest.ts');
 
   // resetModules() re-imports bin/ingest.ts but hands back the same mock
@@ -74,6 +77,7 @@ export async function loadIngest(env: Record<string, string> = {}): Promise<Inge
     db.countJobs,
     http.configureReader,
     http.transportCounts,
+    revalidate.revalidateWeb,
   ];
   for (const mock of mocks) {
     mock.mockReset();
@@ -87,6 +91,7 @@ export async function loadIngest(env: Record<string, string> = {}): Promise<Inge
   db.deactivateMissing.mockResolvedValue(0);
   db.countJobs.mockResolvedValue(0);
   http.transportCounts.mockReturnValue({ direct: 0, reader: 0 });
+  revalidate.revalidateWeb.mockResolvedValue('ok');
 
-  return { main: ingest.main, eightfold, db, http };
+  return { main: ingest.main, eightfold, db, http, revalidate };
 }

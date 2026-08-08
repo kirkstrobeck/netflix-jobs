@@ -23,6 +23,10 @@ vi.mock('../lib/db.ts', () => ({
   countJobs: vi.fn(async () => 0),
 }));
 
+vi.mock('../lib/revalidate.ts', () => ({
+  revalidateWeb: vi.fn(async () => 'ok'),
+}));
+
 beforeEach(() => {
   logged.length = 0;
   vi.spyOn(console, 'log').mockImplementation((message: string) => {

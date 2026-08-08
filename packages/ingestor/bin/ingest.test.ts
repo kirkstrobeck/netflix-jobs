@@ -23,6 +23,10 @@ vi.mock('../lib/db.ts', () => ({
   countJobs: vi.fn(async () => 0),
 }));
 
+vi.mock('../lib/revalidate.ts', () => ({
+  revalidateWeb: vi.fn(async () => 'ok'),
+}));
+
 beforeEach(() => {
   logged.length = 0;
   vi.spyOn(console, 'log').mockImplementation((message: string) => {
@@ -66,6 +70,7 @@ describe('main', () => {
     expect(rows[0].description_text).toBe('Work here');
 
     expect(ctx.db.deactivateMissing).toHaveBeenCalledExactlyOnceWith('run-1');
+    expect(ctx.revalidate.revalidateWeb).toHaveBeenCalledOnce();
     expect(ctx.db.finishRun).toHaveBeenCalledExactlyOnceWith(
       'run-1',
       'succeeded',
@@ -124,6 +129,9 @@ describe('main', () => {
     await ctx.main(exit);
 
     expect(ctx.db.ingestJobs).not.toHaveBeenCalled();
+    // A failed crawl wrote nothing worth flushing, so the web app keeps the
+    // cache it has rather than being told to rebuild from a half-written board.
+    expect(ctx.revalidate.revalidateWeb).not.toHaveBeenCalled();
     expect(ctx.db.finishRun).toHaveBeenCalledWith(
       'run-1',
       'failed',

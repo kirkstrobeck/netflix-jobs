@@ -23,6 +23,10 @@ vi.mock('../lib/db.ts', () => ({
   countJobs: vi.fn(async () => 0),
 }));
 
+vi.mock('../lib/revalidate.ts', () => ({
+  revalidateWeb: vi.fn(async () => 'ok'),
+}));
+
 const range = (from: number, count: number): number[] =>
   Array.from({ length: count }, (_, index) => from + index);
 

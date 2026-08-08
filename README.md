@@ -30,6 +30,26 @@ pnpm ingest       # crawl the board into public.jobs
 The port block is deliberately off the 54321–54324 default so the stack can run
 alongside another project's.
 
+## Cache revalidation
+
+The web app caches the whole board under one tag and holds it for a week, on the
+assumption that the crawl announces itself. It does that through
+`POST /api/revalidate` (`apps/web/src/app/api/revalidate/route.ts`), which
+requires a shared secret in an `x-revalidate-secret` header and answers 401
+without it.
+
+| Env var             | Where               | Purpose                                        |
+| ------------------- | ------------------- | ---------------------------------------------- |
+| `REVALIDATE_SECRET` | web app + ingestor  | Shared secret; same value on both sides         |
+| `REVALIDATE_URL`    | ingestor            | Endpoint to post to; defaults to `http://127.0.0.1:3000/api/revalidate` |
+
+Both sides fail closed and fail soft respectively: the endpoint rejects every
+caller when `REVALIDATE_SECRET` is unset there, and **the ingestor skips the call
+with a warning, rather than posting unauthenticated, when it is unset there.** A
+crawl whose revalidation never lands still succeeds — the data is written — but
+the site keeps serving the previous crawl until its cache expires. See the
+[ingestor README](packages/ingestor/README.md#telling-the-web-app).
+
 ## Commands
 
 - `pnpm dev` — start development tasks

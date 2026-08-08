@@ -23,6 +23,24 @@ built-in TypeScript stripping and `fetch`.
 | `MAX_JOBS`            | `0` (all) | Cap the crawl, for smoke tests          |
 | `DETAIL_CONCURRENCY`  | `3`     | Parallel detail fetches                   |
 | `READER_SPACING_MS`   | `900`   | Min gap between proxy requests            |
+| `REVALIDATE_URL`      | `http://127.0.0.1:3000/api/revalidate` | Web app cache-flush endpoint |
+| `REVALIDATE_SECRET`   | _unset_ | Shared secret for that endpoint; unset means skip |
+
+## Telling the web app
+
+The web app caches the board until it is told the board changed, so the last
+step of a **successful** run is `POST $REVALIDATE_URL` with the shared secret in
+an `x-revalidate-secret` header (`lib/revalidate.ts`). An empty body flushes the
+whole board; `{"jobIds": ["JR41912"]}` flushes named postings as well, and
+`{"jobIds": [...], "board": false}` flushes only those.
+
+`REVALIDATE_SECRET` must hold the same value as the web app's. **If it is unset
+the ingestor skips the call with a warning rather than posting unauthenticated**
+— an unsigned call gets a 401 anyway, so a clear warning beats a confusing
+failure. Everything about this call fails soft: the rows are already committed
+when it runs, so an unreachable or unhappy web app logs loudly (`REVALIDATE
+FAILED`) and the run still finishes `succeeded`. The visible symptom of a missed
+call is a board still showing the previous crawl.
 
 ## How the crawl works
 

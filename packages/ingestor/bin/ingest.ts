@@ -27,6 +27,7 @@ import {
 } from '../lib/db.ts';
 import { createSemaphore } from '../lib/semaphore.ts';
 import { mapPosition } from '../lib/map-position.ts';
+import { revalidateWeb } from '../lib/revalidate.ts';
 
 const DETAIL_CONCURRENCY = Number(process.env.DETAIL_CONCURRENCY ?? 3);
 const READER_CONCURRENCY = Number(process.env.READER_CONCURRENCY ?? 3);
@@ -143,6 +144,11 @@ export async function main(
     const rows = await collectRows(positions, started);
     await writeRows(rows, runId);
     counts.deactivated = await deactivateMissing(runId);
+
+    // Last, and only on the path where every write landed: the web app's cache
+    // is keyed on the crawl, not on a clock. revalidateWeb never throws, so a
+    // web app that is down cannot demote a finished crawl to a failed run.
+    await revalidateWeb();
   } catch (err) {
     status = 'failed';
     failures.push(err instanceof Error ? err.message : String(err));
