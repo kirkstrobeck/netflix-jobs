@@ -1,7 +1,9 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { SAMPLE_JOB } from "@/lib/jobs/job.fixture";
+import { MINIMAL_JOB, SAMPLE_JOB } from "@/lib/jobs/job.fixture";
+import { checkBreadcrumbList } from "@/lib/seo/rules/breadcrumb-rules";
+import { checkJobPosting } from "@/lib/seo/rules/job-posting-rules";
 
 vi.mock("@/lib/jobs/get-job", () => ({ getJob: vi.fn() }));
 vi.mock("@/lib/jobs/job-ids", () => ({ listRecentJobIds: vi.fn() }));
@@ -75,5 +77,35 @@ describe("JobPage", () => {
 
     await expect(JobPage({ params })).rejects.toThrow("NEXT_NOT_FOUND");
     expect(notFound).toHaveBeenCalled();
+  });
+});
+
+// Not "the builder returns the right object" -- that is job-posting.test.ts.
+// This parses the JSON back out of the HTML the page actually renders and runs
+// the spec rules over it, so a script tag that never got added, or one whose
+// payload the encoder mangled, fails here.
+async function emitted(job: typeof SAMPLE_JOB) {
+  vi.mocked(getJob).mockResolvedValue(job);
+
+  const html = renderToStaticMarkup(await JobPage({ params }));
+  const blocks = [...html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)];
+
+  return blocks.map((block) => JSON.parse(block[1].replace(/\\u003c/g, "<")));
+}
+
+describe("the JSON-LD the job page emits", () => {
+  it("validates against Google's JobPosting and BreadcrumbList rules", async () => {
+    const [posting, breadcrumbs] = await emitted(SAMPLE_JOB);
+
+    expect(posting["@type"]).toBe("JobPosting");
+    expect(checkJobPosting(posting)).toEqual([]);
+    expect(breadcrumbs["@type"]).toBe("BreadcrumbList");
+    expect(checkBreadcrumbList(breadcrumbs)).toEqual([]);
+  });
+
+  it("emits no JobPosting at all when the row cannot fill Google's required set", async () => {
+    const blocks = await emitted(MINIMAL_JOB);
+
+    expect(blocks.map((block) => block["@type"])).toEqual(["BreadcrumbList"]);
   });
 });

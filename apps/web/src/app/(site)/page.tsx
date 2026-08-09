@@ -4,6 +4,8 @@ import { Suspense } from "react";
 import { JobListing } from "@/app/(site)/_listing/job-listing";
 import { ListingSkeleton } from "@/app/(site)/_listing/listing-skeleton";
 import { HomeMasthead } from "@/app/(site)/home-masthead";
+import { JsonLd } from "@/lib/seo/json-ld";
+import { netflixOrganization } from "@/lib/seo/organization";
 import type { RawSearchParams } from "@/lib/search/job-query";
 
 import "@/app/(site)/home-masthead.css";
@@ -33,6 +35,20 @@ type HomeProps = { searchParams: Promise<RawSearchParams> };
 export default function Home({ searchParams }: HomeProps) {
   return (
     <div className="listing">
+      {/* Netflix, described once, here. Google's Organization guidance is to
+          "place this information on your home page, or a single page that
+          describes your organization" -- so not the root layout, which would
+          repeat it on the 404 and on /foo.
+
+          No ItemList. Google supports carousel/ItemList markup for four content
+          types (course list, movie, recipe, restaurant) and JobPosting is not
+          among them, and the JobPosting guidelines separately forbid job
+          structured data on "pages intended to present a list of jobs". Markup
+          nothing consumes on a page that is explicitly excluded is not a
+          harmless extra -- it is a claim about a filtered, paginated list that
+          changes with every query parameter. */}
+      <JsonLd data={netflixOrganization()} />
+
       <HomeMasthead />
 
       <Suspense fallback={<ListingSkeleton />}>

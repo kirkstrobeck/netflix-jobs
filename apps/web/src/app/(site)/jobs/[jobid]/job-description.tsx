@@ -1,15 +1,12 @@
-import { fitHeadingOutline } from "@/lib/html/heading-outline";
-import { sanitizeHtml } from "@/lib/html/sanitize-html";
-
-// Two passes, and the order matters. sanitizeHtml rebuilds the crawled markup
-// through an allowlist; fitHeadingOutline then renumbers what is left so the
-// description's own outline continues from the h2 above it instead of starting
-// over. 3 is that h2's child level, which is why this page still has exactly one
-// h1 no matter what the crawl brought back.
-const prose = (html: string) => fitHeadingOutline(sanitizeHtml(html), 3);
+import { descriptionHtml } from "@/lib/jobs/description-html";
 
 // The description arrives as HTML from the crawl. It is rebuilt through an
 // allowlist before it reaches dangerouslySetInnerHTML.
+//
+// The pipeline lives in lib/jobs/description-html.ts because the JobPosting's
+// `description` property has to be these exact bytes -- Google wants the HTML
+// description job seekers can read in their browser, and a second copy of the
+// two passes here is how that stops being true.
 export function JobDescription({ html }: { html: string }) {
   return (
     <section aria-labelledby="job-description-heading" className="job-description">
@@ -19,7 +16,7 @@ export function JobDescription({ html }: { html: string }) {
 
       <div
         className="job-prose"
-        dangerouslySetInnerHTML={{ __html: prose(html) }}
+        dangerouslySetInnerHTML={{ __html: descriptionHtml(html) }}
       />
     </section>
   );

@@ -6,6 +6,9 @@ import { JobDetails } from "@/app/(site)/jobs/[jobid]/job-details";
 import { JobHeader } from "@/app/(site)/jobs/[jobid]/job-header";
 import { getJob } from "@/lib/jobs/get-job";
 import { listRecentJobIds } from "@/lib/jobs/job-ids";
+import { buildBreadcrumbs } from "@/lib/seo/breadcrumbs";
+import { buildJobPosting } from "@/lib/seo/job-posting";
+import { JsonLd } from "@/lib/seo/json-ld";
 
 import "@/app/(site)/jobs/[jobid]/job-hero.css";
 import "@/app/(site)/jobs/[jobid]/job-facts.css";
@@ -59,6 +62,16 @@ export default async function JobPage({ params }: JobPageProps) {
     notFound();
   }
 
+  // This is the leaf page for one posting, which is the only place Google
+  // accepts JobPosting: "Put structured data on the most detailed leaf page
+  // possible. Don't add structured data to pages intended to present a list of
+  // jobs." The listing therefore carries none, by design rather than by omission.
+  //
+  // buildJobPosting returns null when a required property cannot be filled from
+  // the crawl. Emitting nothing beats emitting an invalid posting, and
+  // tools/structured-data fails the build if any active job lands here.
+  const posting = buildJobPosting(job);
+
   return (
     <article className="job-article">
       <JobHeader job={job} />
@@ -67,6 +80,20 @@ export default async function JobPage({ params }: JobPageProps) {
         <JobDescription html={job.description_html} />
         <JobDetails job={job} />
       </div>
+
+      {/* Last, not first. The JobPosting's `description` is the whole
+          description again -- Google requires the full HTML -- so these two
+          blocks are ~7.9KB, and there is no reason for the h1 and the hero to
+          sit behind them in the byte stream. Position inside <body> means
+          nothing to a JSON-LD consumer.
+
+          It is worth saying what this did NOT fix: moving them here did not
+          move Lighthouse. Measured on /jobs/JR41938, LCP was 0.97 both leading
+          and trailing, against 0.98 for the page with no JSON-LD at all. The
+          cost is the bytes, not their position -- see the note in
+          tools/structured-data/README.md. */}
+      {posting ? <JsonLd data={posting} /> : null}
+      <JsonLd data={buildBreadcrumbs(job)} />
     </article>
   );
 }
