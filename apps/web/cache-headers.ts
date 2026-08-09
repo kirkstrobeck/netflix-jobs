@@ -9,6 +9,29 @@ const immutable = [
   },
 ];
 
+// The same content type the route handler sets, stated again here, and the
+// duplication is load-bearing rather than sloppy.
+//
+// Next appends a route handler's own headers with appendHeader, which stores
+// even a single value as an ARRAY. next start's gzip middleware asks
+// compressible() whether res.getHeader("Content-Type") is worth compressing,
+// and compressible() rejects anything that is not a string -- so every route
+// handler response goes out uncompressed. Measured: 143,495 bytes for the board
+// against 14,704 gzipped.
+//
+// A header declared here is set as a plain string BEFORE the handler runs, and
+// sendResponse then skips the handler's copy because the name is already
+// present. Same value, one string, and the middleware compresses it.
+//
+// The handler keeps its own copy so the response is still correctly typed in
+// dev, where this whole function returns nothing.
+const boardType = [
+  {
+    key: "Content-Type",
+    value: "application/json; charset=utf-8",
+  },
+];
+
 const html = [
   {
     key: "Cache-Control",
@@ -36,7 +59,7 @@ export async function cacheHeaders(): Promise<HeaderList> {
     // back in front of the interaction this whole thing exists to remove.
     {
       source: "/api/board",
-      headers: immutable,
+      headers: [...immutable, ...boardType],
     },
     // Not /:path* -- that also swallowed /_next/static, whose URLs Next DOES
     // content-hash in a production build and already serves as immutable.

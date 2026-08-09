@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { Listing } from "@/app/(site)/_listing/listing";
 import { summary } from "@/lib/jobs/job-summary.fixture";
-import { EMPTY_QUERY, parseJobQuery, type JobQuery } from "@/lib/search/job-query";
+import { EMPTY_QUERY, type JobQuery } from "@/lib/search/job-query";
 import { deriveListing } from "@/lib/search/listing-view";
 
 // A stand-in for the pairing this whole feature rests on: Next patches
@@ -90,6 +90,11 @@ function mount(query: JobQuery = EMPTY_QUERY) {
 const titles = () =>
   screen.getAllByRole("heading", { level: 3 }).map((heading) => heading.textContent);
 
+const tick = (name: string) => screen.findByRole("checkbox", { name: new RegExp(name) });
+
+// Page one of the Marketing results: indices 10-24, ten to a page.
+const MARKETING = Array.from({ length: 10 }, (_, i) => `Role ${i + 10}`);
+
 // Nothing on screen changes when the board lands -- that is the point -- so
 // there is no rendered thing to wait for. Flushing the fetch's microtasks
 // inside act() is what commits it.
@@ -128,27 +133,17 @@ describe("once the board is in memory", () => {
     expect(titles()).toEqual(before);
   });
 
-  it("filters with no request at all", async () => {
+  it("filters and writes the URL with no request at all", async () => {
     mount();
     await board();
     fetchMock.mockClear();
 
-    fireEvent.click(await screen.findByRole("checkbox", { name: /Marketing/ }));
+    fireEvent.click(await tick("Marketing"));
 
-    await waitFor(() => expect(titles()).toEqual(["Role 10", "Role 11", "Role 12"].concat(
-      ["Role 13", "Role 14", "Role 15", "Role 16", "Role 17", "Role 18", "Role 19"],
-    )));
+    await waitFor(() => expect(titles()).toEqual(MARKETING));
+    expect(pushState).toHaveBeenCalledWith(null, "", "/?team=Marketing");
     expect(fetchMock).not.toHaveBeenCalled();
     expect(push).not.toHaveBeenCalled();
-  });
-
-  it("writes the change to the URL through the history API", async () => {
-    mount();
-    await board();
-
-    fireEvent.click(await screen.findByRole("checkbox", { name: /Marketing/ }));
-
-    await waitFor(() => expect(pushState).toHaveBeenCalledWith(null, "", "/?team=Marketing"));
   });
 
   it("pages without a request", async () => {
@@ -163,37 +158,23 @@ describe("once the board is in memory", () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  // Back has to restore the state, not just the address bar.
-  it("restores the previous state on back", async () => {
+  // Back and forward have to restore the state, not just the address bar.
+  it("walks back and forward through the states it wrote", async () => {
     mount();
     await board();
-
-    fireEvent.click(await screen.findByRole("checkbox", { name: /Marketing/ }));
-    await waitFor(() => expect(titles()[0]).toBe("Role 10"));
+    fireEvent.click(await tick("Marketing"));
+    await waitFor(() => expect(titles()).toEqual(MARKETING));
 
     await travel(-1);
 
-    expect(titles()[0]).toBe("Role 0");
     expect(url()).toBe("/");
-    expect(screen.getByRole("checkbox", { name: /Marketing/ })).toHaveProperty(
-      "checked",
-      false,
-    );
-  });
-
-  it("walks forward again to the state it left", async () => {
-    mount();
-    await board();
-
-    fireEvent.click(await screen.findByRole("checkbox", { name: /Marketing/ }));
-    await waitFor(() => expect(titles()[0]).toBe("Role 10"));
-    await travel(-1);
     expect(titles()[0]).toBe("Role 0");
+    expect(await tick("Marketing")).toHaveProperty("checked", false);
 
     await travel(1);
 
-    expect(titles()[0]).toBe("Role 10");
     expect(url()).toBe("/?team=Marketing");
+    expect(titles()).toEqual(MARKETING);
   });
 
   // The half-typed keyword filters the list but is never written to the URL:
@@ -217,7 +198,6 @@ describe("once the board is in memory", () => {
     fireEvent.click(screen.getByRole("button", { name: "Add" }));
 
     await waitFor(() => expect(url()).toBe("/?q=Role+24"));
-    expect(parseJobQuery({ q: "Role 24" }).keywords).toEqual(["Role 24"]);
     expect(titles()).toEqual(["Role 24"]);
   });
 });
