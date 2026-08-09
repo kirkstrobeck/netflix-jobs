@@ -11,9 +11,11 @@ function textOf(inner: string): string {
     .trim();
 }
 
-// The source levels that survive, shallowest first. Only headings with text
-// count: an empty one is about to be deleted and must not reserve a level for
-// itself, or removing it would open the very gap this is closing.
+// The distinct source levels that survive, in no particular order -- the only
+// question asked of them is "how many are shallower than this one". Only
+// headings with text count: an empty one is about to be deleted and must not
+// reserve a level for itself, or removing it would open the very gap this is
+// closing.
 function levelsPresent(html: string): number[] {
   const levels = new Set<number>();
 
@@ -24,23 +26,28 @@ function levelsPresent(html: string): number[] {
     }
   }
 
-  return [...levels].sort((a, b) => a - b);
+  return [...levels];
 }
 
-// Source level -> the level it will be rendered at: contiguous from `base`, in
+// The level a source level renders at: `base`, plus one step for each distinct
+// shallower level the fragment uses. Contiguous from `base` by construction, in
 // the source's own order of depth.
+//
+// A rank, not a lookup table, on purpose. A table has to answer for levels it
+// has no entry for, and that answer is dead code: `levelsPresent` records the
+// level of every heading that survives, so the only levels ever asked about are
+// levels it recorded. A rank is total -- it has a right answer for all six --
+// so there is no default to write, and no unreachable branch to test.
 //
 // Clamped at h6, which is the one case where the result can repeat a level. Six
 // is as deep as HTML goes, so a description nesting five levels below our h2 has
 // nowhere left to go -- and a repeat is a heading that reads as a sibling rather
 // than a child, which is wrong but not a skip. axe fails the skip, not the
 // repeat, and so does a screen reader user trying to find their place.
-function levelMap(html: string, base: number): Map<number, number> {
-  const present = levelsPresent(html);
+function fittedLevel(present: number[], level: number, base: number): number {
+  const shallower = present.filter((other) => other < level).length;
 
-  return new Map(
-    present.map((level, index) => [level, Math.min(base + index, DEEPEST)]),
-  );
+  return Math.min(base + shallower, DEEPEST);
 }
 
 /**
@@ -63,7 +70,7 @@ function levelMap(html: string, base: number): Map<number, number> {
  * noise in every heading list an assistive-tech user navigates by.
  */
 export function fitHeadingOutline(html: string, base: number): string {
-  const map = levelMap(html, base);
+  const present = levelsPresent(html);
 
   return html.replace(HEADING, (_match, level: string, inner: string) => {
     const text = textOf(inner);
@@ -72,7 +79,7 @@ export function fitHeadingOutline(html: string, base: number): string {
       return "";
     }
 
-    const fitted = map.get(Number(level)) ?? base;
+    const fitted = fittedLevel(present, Number(level), base);
 
     return `<h${fitted}>${inner}</h${fitted}>`;
   });

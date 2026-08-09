@@ -21,6 +21,22 @@ describe("fitHeadingOutline", () => {
     );
   });
 
+  // Depth is ranked, not read in document order: a fragment that opens on its
+  // deepest heading still renumbers by how deep each level is.
+  it("ranks by depth, not by order of appearance", () => {
+    expect(fitHeadingOutline("<h4>A</h4><h2>B</h2><h3>C</h3>", 3)).toBe(
+      "<h5>A</h5><h3>B</h3><h4>C</h4>",
+    );
+  });
+
+  // The empty heading is the only h2 here, so nothing renumbers around it: the
+  // h3 is still the shallowest surviving level and still lands on base.
+  it("does not let an empty heading reserve a level of its own", () => {
+    expect(fitHeadingOutline("<h2></h2><h3>Real</h3><h4>Deep</h4>", 2)).toBe(
+      "<h2>Real</h2><h3>Deep</h3>",
+    );
+  });
+
   it("drops an empty heading without opening a gap behind it", () => {
     expect(fitHeadingOutline("<h2></h2><h3>Real</h3>", 3)).toBe("<h3>Real</h3>");
   });
