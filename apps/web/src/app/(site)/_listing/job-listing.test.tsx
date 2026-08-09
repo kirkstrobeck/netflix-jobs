@@ -140,9 +140,11 @@ describe("Home", () => {
   it("heads the results column with the h2, inside the column itself", async () => {
     const html = await renderListing({});
 
+    // The heading's TEXT varies with the sort and the place; its id does not,
+    // because every pager link ends in #open-roles.
     expect(html).toContain(
       '<main class="listing__results"><header class="listing-hero">' +
-        '<h2 class="listing-title" id="open-roles">Open roles</h2>',
+        '<h2 class="listing-title" id="open-roles">Newest open roles</h2>',
     );
     // The sort control is the header's second child, on the same line.
     expect(html.indexOf('class="sort"')).toBeGreaterThan(

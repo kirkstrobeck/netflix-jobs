@@ -1,15 +1,17 @@
 "use client";
 
 import { FacetsPanel } from "@/app/(site)/_listing/facets-panel";
+import { LocationOffer } from "@/app/(site)/_listing/location-offer";
 import { Pagination } from "@/app/(site)/_listing/pagination";
 import { ResultCount } from "@/app/(site)/_listing/result-count";
 import { RESULTS_ANCHOR } from "@/app/(site)/_listing/results-anchor";
 import { ResultList } from "@/app/(site)/_listing/result-list";
 import { SortControl } from "@/app/(site)/_listing/sort-control";
-import { SortStatus } from "@/app/(site)/_listing/sort-status";
 import { useListing } from "@/app/(site)/_listing/use-listing";
 import { NavigateProvider } from "@/app/(site)/_listing/use-query-navigation";
+import { headingPlace } from "@/app/(site)/_listing/heading-place";
 import type { JobQuery } from "@/lib/search/job-query";
+import { listingHeading } from "@/lib/search/listing-heading";
 import type { ListingView } from "@/lib/search/listing-view";
 
 type ListingProps = {
@@ -38,6 +40,11 @@ export function Listing({ boardVersion, initialQuery, initialView }: ListingProp
     boardVersion,
   );
 
+  // Country on the server and on the first client render; device only once a
+  // real position has landed. See heading-place.ts for why that split is what
+  // keeps the heading out of the cache key.
+  const place = headingPlace(query, view.facets.country, nearest);
+
   return (
     <NavigateProvider value={navigate}>
       <div className="listing__body">
@@ -51,9 +58,22 @@ export function Listing({ boardVersion, initialQuery, initialView }: ListingProp
             {/* The id is what every page link ends in, so changing page puts
                 this line at the top of the viewport instead of leaving the
                 visitor at the bottom of a list that has just been replaced.
-                The offset is scroll-margin-block-start in jobs-listing.css. */}
+                The offset is scroll-margin-block-start in jobs-listing.css.
+
+                THE ID IS FIXED; THE TEXT IS NOT.
+
+                This heading now carries the sort and the place -- "Newest open
+                roles", "Open roles in the United States", "Open roles nearest to
+                you" -- instead of a separate status line under it restating what
+                the list is. Two things it is load-bearing for survive that:
+
+                the id never changes with the wording, so #open-roles keeps
+                landing here from every pager link; and the enable-location offer
+                is NOT nested in here, because this is a document-outline heading
+                and a button inside it would become part of the heading's text.
+                The offer is a sibling, below. */}
             <h2 className="listing-title" id={RESULTS_ANCHOR}>
-              Open roles
+              {listingHeading(query.sort, place)}
             </h2>
 
             {/* Inside the header and after the heading, so it reads as "these
@@ -63,10 +83,10 @@ export function Listing({ boardVersion, initialQuery, initialView }: ListingProp
             <SortControl onNearest={nearest.request} query={query} />
           </header>
 
-          {/* Under the header rather than inside it: it is a sentence about
-              what the list below is, and it appears and disappears, so putting
-              it in the header would make that line change height. */}
-          {query.sort === "nearest" ? <SortStatus status={nearest.status} /> : null}
+          {/* Under the header rather than inside it: it appears and disappears,
+              so putting it in the header would make that line change height --
+              and it holds a button, which must not end up inside an h2. */}
+          {query.sort === "nearest" ? <LocationOffer nearest={nearest} /> : null}
 
           <ResultList jobs={view.jobs} />
 
