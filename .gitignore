@@ -10,6 +10,10 @@ coverage/
 # next.js
 .next/
 out/
+# A copy of .next taken while chasing an OOM in the build. It is build output
+# like the rest of this section -- 135 MB of it -- and it was tracked for a
+# while by accident, so the pattern is explicit rather than a .next* glob.
+apps/web/.next.bak-oom/
 
 # production
 build/
@@ -32,6 +36,10 @@ build/
 
 # sandbox credential + state cache — never commit
 tools/sandbox/.cache/
+
+# per-machine Claude Code settings: host paths, so they do not travel.
+# .claude/settings.json is the shared one and stays tracked.
+.claude/settings.local.json
 
 # typescript
 *.tsbuildinfo
