@@ -66,3 +66,38 @@ describe("deriveListing", () => {
     expect(view.window.total).toBe(0);
   });
 });
+
+// Sort is the one input that is NOT read off the query. It arrives as its own
+// argument, so the server -- which never has one -- cannot accidentally start
+// varying on it.
+describe("the order the page comes back in", () => {
+  const NEAREST = { ...EMPTY_QUERY, sort: "nearest" } as const;
+  const RINGS = { "jp-tokyo": 0, "us-los-gatos": 91, "us-new-york": 83 };
+  const titles = (query: typeof NEAREST, rings?: typeof RINGS) =>
+    deriveListing(BOARD, query, rings).jobs.map((job) => job.title);
+
+  // The server's call, in the shape the server makes it. `?sort=near` is on the
+  // query and the result is still the board's own newest-first order.
+  it("is newest when nobody hands it any rings", () => {
+    expect(titles(NEAREST)).toEqual(titles(EMPTY_QUERY as typeof NEAREST));
+  });
+
+  it("is by ring once the browser has them", () => {
+    expect(titles(NEAREST, RINGS)[0]).toBe("Marketing manager");
+  });
+
+  it("ignores the rings entirely when the sort is newest", () => {
+    expect(titles(EMPTY_QUERY as typeof NEAREST, RINGS)).toEqual(titles(NEAREST));
+  });
+
+  // Sorting AFTER filtering and BEFORE paginating, which is what makes page 2 of
+  // a nearest list the second ring's worth of roles rather than the newest
+  // list's second page re-ordered in place.
+  it("sorts the whole result set, not the page", () => {
+    const paged = deriveListing(BOARD, { ...NEAREST, page: 2 }, RINGS);
+    const whole = deriveListing(BOARD, NEAREST, RINGS);
+
+    expect(paged.window.total).toBe(whole.window.total);
+    expect(whole.jobs[0].title).toBe("Marketing manager");
+  });
+});

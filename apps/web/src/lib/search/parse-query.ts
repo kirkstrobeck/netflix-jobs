@@ -4,6 +4,7 @@ import {
   PARAM,
   type JobQuery,
 } from "@/lib/search/job-query";
+import { parseSort } from "@/lib/search/sort-order";
 
 // Reading a URL. The other half -- what the state is and how it is written back
 // out -- is job-query.ts; this is the side that has to cope with whatever a
@@ -68,6 +69,12 @@ export function parseJobQuery(params: RawSearchParams): JobQuery {
     // both sides. De-duplication is therefore case-sensitive here on purpose:
     // "Remote" and "remote" look different in a chip, so they stay two chips.
     keywords: readList(params[PARAM.keywords]),
+    // Read on the server too, and deliberately so. The server does not ACT on
+    // it -- deriveListing is handed no buckets there, so every render is newest
+    // -- but the value has to survive the round trip, or the first facet link
+    // the visitor clicks would silently drop the sort they came in with. Read
+    // here, written by toSearchParams, ignored in between.
+    sort: parseSort(params[PARAM.sort]),
     page: readPage(params[PARAM.page]),
   };
 }

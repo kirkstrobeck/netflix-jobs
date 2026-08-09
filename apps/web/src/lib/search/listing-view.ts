@@ -1,9 +1,11 @@
 import { siteCatalog, type Board } from "@/lib/jobs/board";
 import type { JobSummary } from "@/lib/jobs/job-summary";
+import type { SiteBuckets } from "@/lib/jobs/nearby-sites";
 import { facetOptions, type FacetOption } from "@/lib/search/facet-counts";
 import { filterJobs } from "@/lib/search/filter-jobs";
 import { FACET_KEYS, type FacetKey, type JobQuery } from "@/lib/search/job-query";
 import { pageSlice, paginate, type PageWindow } from "@/lib/search/paginate";
+import { orderResults } from "@/lib/search/sort-jobs";
 
 /** Everything the listing draws, for one query. */
 export type ListingView = {
@@ -29,10 +31,27 @@ export type ListingView = {
  * query before this is called (see applyCountryDefault), so what reaches here
  * is only ever "these filters" -- which is why the same call on the client, over
  * the same board, reproduces the server's screen exactly.
+ *
+ * `nearest` IS the deliberate exception, and it is an argument rather than
+ * something read off the query for exactly that reason. Sorting by distance
+ * needs the visitor's position, which the server does not have and must never
+ * be sent, so the server calls this with two arguments and gets the newest-first
+ * board every time -- for `?sort=near` too. The browser calls it with three
+ * once the visitor has asked for Nearest and the rings have come back.
+ *
+ * That asymmetry is the only one. The country is resolved into the query before
+ * anyone gets here, so it does not create a second; and because the sort is
+ * applied AFTER filtering and BEFORE paginating, page 2 of a nearest list is the
+ * second ring's worth of roles rather than the newest list re-sorted in place.
  */
-export function deriveListing(board: Board, query: JobQuery): ListingView {
+export function deriveListing(
+  board: Board,
+  query: JobQuery,
+  nearest: SiteBuckets | null = null,
+): ListingView {
   const catalog = siteCatalog(board.sites);
-  const results = filterJobs(board.jobs, query, catalog);
+  const matched = filterJobs(board.jobs, query, catalog);
+  const results = orderResults(matched, query.sort, nearest);
   // paginate() clamps, so `window.page` is the page that actually exists -- the
   // one the pagination links have to be built from. `query.page` is only ever
   // what was asked for.

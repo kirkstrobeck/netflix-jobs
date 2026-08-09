@@ -137,8 +137,9 @@ describe("round trip", () => {
     ["empty", EMPTY_QUERY],
     ["one facet", { ...EMPTY_QUERY, team: ["Engineering"] }],
     ["every country, chosen", { ...EMPTY_QUERY, everywhere: true }],
+    ["a sort", { ...EMPTY_QUERY, sort: "nearest" }],
     [
-      "every facet plus keywords and a page",
+      "every facet plus keywords, a sort and a page",
       {
         team: ["Advertising", "Engineering"],
         workType: ["Remote"],
@@ -146,6 +147,7 @@ describe("round trip", () => {
         site: ["jp-tokyo", "us-remote"],
         everywhere: false,
         keywords: ["design", "senior"],
+        sort: "nearest",
         page: 7,
       },
     ],
