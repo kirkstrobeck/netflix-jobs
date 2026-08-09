@@ -26,11 +26,6 @@
   font-size: 0.875rem;
 }
 
-.result-count strong {
-  color: var(--ink);
-  font-weight: 700;
-}
-
 .pager__list {
   display: flex;
   flex-wrap: wrap;

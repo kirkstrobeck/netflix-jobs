@@ -99,12 +99,11 @@ describe("ResultCount", () => {
     renderToStaticMarkup(<ResultCount window={paginate(total, page)} />);
 
   it("reports the window and the total", () => {
-    expect(count(481, 1)).toContain("Showing <strong>1</strong> to <strong>10</strong>");
-    expect(count(481, 1)).toContain("<strong>481</strong>");
+    expect(count(481, 1)).toContain("Showing 1 thru 10 of 481 roles");
   });
 
   it("reports a partial last page", () => {
-    expect(count(24, 3)).toContain("<strong>21</strong> to <strong>24</strong>");
+    expect(count(24, 3)).toContain("21 thru 24");
   });
 
   it("says so when nothing matched", () => {

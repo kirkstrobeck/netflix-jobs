@@ -12,14 +12,11 @@ import type { PageWindow } from "@/lib/search/paginate";
 export function ResultCount({ window }: { window: PageWindow }) {
   return (
     <p aria-live="polite" className="result-count">
-      {window.total === 0 ? (
-        "No matching roles"
-      ) : (
-        <>
-          Showing <strong>{window.from}</strong> to <strong>{window.to}</strong> of{" "}
-          <strong>{window.total}</strong> {window.total === 1 ? "role" : "roles"}
-        </>
-      )}
+      {window.total === 0
+        ? "No matching roles"
+        : `Showing ${window.from} thru ${window.to} of ${window.total} ${
+            window.total === 1 ? "role" : "roles"
+          }`}
     </p>
   );
 }

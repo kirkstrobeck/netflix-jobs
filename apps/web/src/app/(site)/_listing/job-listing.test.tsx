@@ -44,21 +44,20 @@ describe("JobListing", () => {
     const html = await renderListing({});
 
     expect(html.match(/class="result"/g)).toHaveLength(10);
-    expect(html).toContain("<strong>25</strong>");
+    expect(html).toContain("Showing 1 thru 10 of 25 roles");
   });
 
   it("renders the page the URL asks for", async () => {
     const html = await renderListing({ page: "3" });
 
-    expect(html).toContain("<strong>21</strong>");
-    expect(html).toContain("<strong>25</strong>");
+    expect(html).toContain("Showing 21 thru 25 of 25 roles");
     expect(html.match(/class="result"/g)).toHaveLength(5);
   });
 
   it("filters from the URL, server-side", async () => {
     const html = await renderListing({ team: "Engineering" });
 
-    expect(html).toContain("<strong>10</strong>");
+    expect(html).toContain("of 10 roles");
     expect(html).toContain("Role 0");
     expect(html).not.toContain("Role 20");
   });
@@ -67,7 +66,7 @@ describe("JobListing", () => {
     const html = await renderListing({ team: "Marketing", type: "Remote" });
 
     // Marketing is indices 10-24; Remote is the odd ones, so 11,13,...,23 = 7.
-    expect(html).toContain("<strong>7</strong>");
+    expect(html).toContain("of 7 roles");
   });
 
   // The requested page can be past the end after a filter narrows the results.
@@ -75,7 +74,7 @@ describe("JobListing", () => {
   it("clamps a page past the end and pages from the clamped page", async () => {
     const html = await renderListing({ team: "Engineering", page: "9" });
 
-    expect(html).toContain("<strong>1</strong> to <strong>10</strong>");
+    expect(html).toContain("Showing 1 thru 10 of 10 roles");
     expect(html).not.toContain('aria-current="page"');
   });
 

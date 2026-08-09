@@ -110,7 +110,7 @@ describe("before the board arrives", () => {
     mount();
 
     expect(titles()).toHaveLength(10);
-    expect(screen.getByText("25", { selector: "strong" })).toBeTruthy();
+    expect(screen.getByText(/Showing 1 thru 10 of 25 roles/)).toBeTruthy();
   });
 
   it("falls back to the router when a facet is ticked", () => {
