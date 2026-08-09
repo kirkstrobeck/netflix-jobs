@@ -75,7 +75,17 @@ export const SITE_SEED: SeedSite[] = [
     coords: [24.8138, 120.9675],
     alsoKnownAs: ['tw-east-dist'],
   },
-  { slug: 'tw-taipei-city', country: 'TW', city: 'Taipei City', coords: [25.033, 121.5654] },
+  // Same office written two ways, exactly as Hsinchu above: the board says both
+  // 'Taipei City,Taiwan' and 'Xinyi District,Taipei City,Taiwan', and Netflix's
+  // Taipei office is the Xinyi one. A separate seed entry would put a second
+  // site a couple of kilometres away and split the city in the nearest-sort.
+  {
+    slug: 'tw-taipei-city',
+    country: 'TW',
+    city: 'Taipei City',
+    coords: [25.033, 121.5654],
+    alsoKnownAs: ['tw-xinyi-district'],
+  },
   // Plumas County, California -- the board lists it for production roles.
   {
     slug: 'us-beckwourth',
