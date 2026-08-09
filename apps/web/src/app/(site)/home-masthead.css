@@ -20,14 +20,39 @@
 }
 
 /* --ink, and no scrim. See the note in home-masthead.tsx: the worst the bars can
-   ever make the backdrop is rgb(183,8,16), where this measures 6.28:1. */
+   ever make the backdrop is rgb(183,8,16), where this measures 6.28:1. Neither
+   the cut nor the casing below moves that number -- it is a colour pair.
+
+   Ultra-condensed bold, in caps, and every value here is retuned for it rather
+   than inherited from the Bold-at-normal-width setting this replaces:
+
+   - text-transform, not a rewritten string. HEADLINE stays sentence case with
+     its U+2019, so the accessibility tree, the copied text and the test all
+     still see "Be part of what's next". Only the paint is capitalised.
+   - letter-spacing goes from -0.028em to +0.01em. Negative tracking was closing
+     up the loose sidebearings of the wide Bold cut; ultra-condensed already has
+     almost none, and caps have no ascender/descender interlock to help the eye
+     separate them, so they need air added back rather than taken away.
+   - line-height 0.88, down from 1.02. All-caps lines carry no descenders, so
+     the space a normal leading reserves below the baseline is dead; closing it
+     is what makes a stacked condensed headline read as one block.
+   - font-size runs higher at both ends. This cut sets far narrower at a given
+     size, so matching the old optical weight means asking for more of it.
+   - max-inline-size is gone rather than retuned. It was doing real work at 18ch
+     against the wide Bold cut, which ran the headline past the column. This cut
+     sets the whole line in 8.2em, so it clears the 76rem shell on one line from
+     about 700px up and stacks to two below that on its own. Every ch value big
+     enough not to break that single-line lockup is also wider than the column,
+     i.e. inert -- so the honest version is to let the shell govern the measure
+     and let text-wrap: balance even up the two lines when it does wrap. */
 .masthead__title {
   margin: 0;
-  max-inline-size: 18ch;
   color: var(--ink);
-  font-size: clamp(2.5rem, 1.4rem + 4.8vw, 4.5rem);
+  font-family: var(--font-netflix-sans-ultra-condensed);
+  font-size: clamp(3.25rem, 1.9rem + 6.2vw, 6.5rem);
   font-weight: 700;
-  line-height: 1.02;
-  letter-spacing: -0.028em;
+  line-height: 0.88;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
   text-wrap: balance;
 }
