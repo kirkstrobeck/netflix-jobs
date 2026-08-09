@@ -15,6 +15,16 @@ export const ALLOWED_TAGS = new Set([
   "br",
   "hr",
   "blockquote",
+  // Headings pass through at their source level. Fitting them into the page's
+  // outline is fitHeadingOutline's job, and it has to see the levels the source
+  // actually used to do it -- see heading-outline.ts. Nothing renders a
+  // sanitized description without that pass.
+  "h1",
+  "h2",
+  "h3",
+  "h4",
+  "h5",
+  "h6",
 ]);
 
 // Dropped along with their contents. None of these appear in the data today; they
@@ -40,32 +50,14 @@ export const DROPPED_TAGS = new Set([
   "base",
 ]);
 
-// The page owns the only <h1>, and 125 descriptions carry an <h1> of their own.
-// Demoting every source heading keeps one h1 per document and a gapless order:
-// page h1 > section h2 > description h3 > h4.
-export const HEADING_MAP: Record<string, string> = {
-  h1: "h3",
-  h2: "h3",
-  h3: "h4",
-  h4: "h5",
-  h5: "h6",
-  h6: "h6",
-};
-
 const VOID_TAGS = new Set(["br", "hr", "img", "input", "meta", "link", "source"]);
 
 export function isVoidTag(name: string): boolean {
   return VOID_TAGS.has(name);
 }
 
-// Anything not allowed, not dropped and not a heading is unwrapped: the tag
-// disappears but its text survives. That is what happens to <div> and <font>.
+// Anything not allowed and not dropped is unwrapped: the tag disappears but its
+// text survives. That is what happens to <div> and <font>.
 export function mapTag(name: string): string | null {
-  const heading = HEADING_MAP[name];
-
-  if (heading) {
-    return heading;
-  }
-
   return ALLOWED_TAGS.has(name) ? name : null;
 }

@@ -19,8 +19,8 @@ describe("sanitizeHtml", () => {
     expect(sanitizeHtml("<div>text</div>")).toBe("text");
   });
 
-  it("demotes an h1 to h3", () => {
-    expect(sanitizeHtml("<h1>Title</h1>")).toBe("<h3>Title</h3>");
+  it("leaves a heading at its source level", () => {
+    expect(sanitizeHtml("<h1>Title</h1>")).toBe("<h1>Title</h1>");
   });
 
   it("escapes a bare < in text", () => {

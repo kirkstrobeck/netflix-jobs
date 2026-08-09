@@ -14,12 +14,9 @@ describe("isVoidTag", () => {
 });
 
 describe("mapTag", () => {
-  it("demotes headings", () => {
-    expect(mapTag("h1")).toBe("h3");
-    expect(mapTag("h2")).toBe("h3");
-    expect(mapTag("h3")).toBe("h4");
-    expect(mapTag("h4")).toBe("h5");
-    expect(mapTag("h5")).toBe("h6");
+  it("keeps headings at their source level for fitHeadingOutline to renumber", () => {
+    expect(mapTag("h1")).toBe("h1");
+    expect(mapTag("h3")).toBe("h3");
     expect(mapTag("h6")).toBe("h6");
   });
 
