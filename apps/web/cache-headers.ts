@@ -67,8 +67,31 @@ export async function cacheHeaders(): Promise<HeaderList> {
     // one, which is the opposite of the intent. api/ is excluded for the same
     // reason in the other direction: /api/revalidate is a POST lever, not a
     // document, and nothing about it should be cacheable.
+    //
+    // `.+` rather than `.*`, so the LISTING is not matched. That one character
+    // is the whole of the country's cache story, and it is deliberate:
+    //
+    // The listing is rendered for one country -- the one in the URL, the one in
+    // the cookie, or the one the edge read off the address -- and the last two
+    // are not in the URL. A shared cache keys on the URL, so `s-maxage=60` here
+    // hands a visitor in Seoul the document built a moment earlier for a
+    // visitor in Los Gatos. `Vary: Cookie, X-Vercel-IP-Country` is the textbook
+    // answer and it does not work: Next sets its own Vary (rsc,
+    // next-router-state-tree, ...) on every app-router response, overwriting
+    // both a header declared here and one appended in proxy.ts -- verified
+    // against `next start`, which returns Next's list either way. The docs say
+    // as much, and say the fix is to move cache-affecting inputs into the
+    // pathname (02-guides/cdn-caching.md).
+    //
+    // So the listing is left to the header Next sets for it, which is already
+    // right: `private, no-cache, no-store, max-age=0, must-revalidate`, because
+    // the route reads cookies and headers. Overriding that with a public policy
+    // was the bug. What is expensive is cached elsewhere and unaffected -- the
+    // 108KB board is immutable under /api/board, the chunks are immutable under
+    // /_next/static -- so what this costs is one dynamic HTML render per visit,
+    // which is what "the listing varies by country" means.
     {
-      source: "/:path((?!_next/|api/).*)",
+      source: "/:path((?!_next/|api/).+)",
       headers: html,
     },
     {
