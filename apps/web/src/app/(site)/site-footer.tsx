@@ -1,5 +1,6 @@
 import { Glow } from "@/app/_glow/glow";
 import { Wordmark } from "@/app/(site)/wordmark";
+import type { RawSearchParams } from "@/lib/search/parse-query";
 
 import "@/app/(site)/site-footer.css";
 import "@/app/(site)/site-footer-content.css";
@@ -30,6 +31,11 @@ const LINKS = [
   },
 ];
 
+// The listing's query, when this footer is under the listing. Same prop and
+// same reason as the masthead's: both wordmarks are one component, so both
+// carry the facets or neither does. See @footer/page.tsx.
+type SiteFooterProps = { searchParams?: Promise<RawSearchParams> };
+
 // No "use client": <Glow /> is a server component emitting static markup and a
 // stylesheet import, so the band works from the server HTML with no hydration
 // and no media to download. Reduced motion is CSS-only.
@@ -40,7 +46,7 @@ const LINKS = [
 // nothing. site-footer.css puts it back with z-index -- scrim 1, content 2,
 // <Glow /> left at auto so it stays underneath both -- inside an
 // isolation: isolate on the band that keeps those two numbers footer-local.
-export function SiteFooter() {
+export function SiteFooter({ searchParams }: SiteFooterProps) {
   return (
     <footer className="job-footer">
       <Glow />
@@ -56,7 +62,11 @@ export function SiteFooter() {
             site-footer.css carries the measurement.
 
             Lazy, unlike the masthead's: this is below the fold on every page. */}
-        <Wordmark className="wordmark job-footer__wordmark" loading="lazy" />
+        <Wordmark
+          className="wordmark job-footer__wordmark"
+          loading="lazy"
+          searchParams={searchParams}
+        />
 
         {/* Netflix sets this in grey fine print. It is an accommodation offer,
             so here it gets body-copy size and the accent rule the prose uses. */}

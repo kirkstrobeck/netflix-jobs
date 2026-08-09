@@ -4,7 +4,10 @@ import { join } from "node:path";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
+import { renderAsync } from "@/app/(site)/render-async";
 import { WORDMARK_RED, Wordmark } from "@/app/(site)/wordmark";
+import { EMPTY_QUERY, jobsHref } from "@/lib/search/job-query";
+import { parseJobQuery, type RawSearchParams } from "@/lib/search/parse-query";
 
 function readAsset(publicPath: string): string {
   return readFileSync(join(process.cwd(), "public", publicPath), "utf8");
@@ -50,6 +53,85 @@ describe("Wordmark", () => {
 
     expect(html).toContain(`loading="${loading}"`);
     expect(html).toContain(WORDMARK_RED);
+  });
+});
+
+// The href in the HTML that ships, as a URL. `&` between params is written
+// `&amp;` in an attribute -- correct HTML, and the browser hands the unescaped
+// URL to the network -- so it is unescaped here and the assertions below are
+// about the address rather than about the encoding.
+function markHref(html: string): string {
+  const raw = html.match(/<a class="wordmark" href="([^"]*)"/)?.[1] ?? "";
+
+  return raw.replaceAll("&amp;", "&");
+}
+
+async function renderFiltered(params: RawSearchParams): Promise<string> {
+  return renderAsync(
+    <Wordmark className="wordmark" loading="eager" searchParams={Promise.resolve(params)} />,
+  );
+}
+
+// The mark goes home, and on the board home is the board they are already on.
+// A bare "/" there is the worst answer available: it drops the filters, and `/`
+// is then re-answered by proxy.ts with the country it reads off the request, so
+// the visitor lands on a differently filtered board rather than an unfiltered
+// one.
+describe("the wordmark on a filtered board", () => {
+  it("carries the active facets home", async () => {
+    const html = await renderFiltered({
+      country: "US",
+      team: "Engineering",
+      type: "Remote",
+    });
+
+    expect(markHref(html)).toBe("/?country=US&type=Remote&team=Engineering");
+  });
+
+  // Not "spelled the same way" -- spelled by the same function. A second
+  // serializer that ordered the params differently would be a second URL for
+  // one state, and two cache entries for one board.
+  it("is spelled by the builder every facet link is spelled by", async () => {
+    const params: RawSearchParams = {
+      country: ["JP", "US"],
+      site: "tokyo",
+      unit: "Streaming",
+      q: "data",
+      sort: "near",
+      page: "2",
+    };
+    const html = await renderFiltered(params);
+
+    expect(markHref(html)).toBe(jobsHref(parseJobQuery(params)));
+  });
+
+  // Country is a facet like any other here. It reaches most URLs by IP
+  // detection rather than by a tick, and carrying it is what stops the mark
+  // from handing the visitor back to that detection.
+  it("keeps a country that arrived from detection", async () => {
+    const html = await renderFiltered({ country: "JP" });
+
+    expect(markHref(html)).toBe("/?country=JP");
+  });
+
+  it("stays a bare / when the board has nothing applied", async () => {
+    const html = await renderFiltered({});
+
+    expect(markHref(html)).toBe("/");
+    expect(html).not.toContain("/?");
+  });
+
+  // What the shell carries before the query lands, and what a visitor with no
+  // JavaScript is left with: the same mark, at the same size, pointing at the
+  // unfiltered board. Nothing moves when the real href arrives.
+  it("falls back to the unfiltered board, not to a hole", () => {
+    const html = renderToStaticMarkup(
+      <Wordmark className="wordmark" loading="eager" searchParams={Promise.resolve({})} />,
+    );
+
+    expect(markHref(html)).toBe(jobsHref(EMPTY_QUERY));
+    expect(html).toContain(WORDMARK_RED);
+    expect(html).toContain(">Jobs</span>");
   });
 });
 
