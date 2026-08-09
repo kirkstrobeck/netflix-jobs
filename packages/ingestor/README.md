@@ -74,10 +74,47 @@ back up on its own. `ingest_runs.notes` records the transport split per run.
 `supabase/migrations/`:
 
 - `jobs` — one row per Eightfold position id, with `raw` jsonb for the full payload
-- `job_locations` — postings exploded by location
+- `locations` — one row per SITE, keyed by slug, carrying the coordinates
+- `job_locations` — posting ↔ site, by slug
 - `ingest_runs` — per-crawl provenance and counts
 - `ingest_jobs(payload, run)` — atomic bulk upsert used by the ingestor
+- `site_distance_km(a, b)` — great-circle km; `strict`, so a missing point is a
+  null distance rather than a zero one
 - `jobs_active` — convenience view over currently-listed postings
+- `job_sites` — a posting's sites, with coordinates as one object or as null
+
+## Locations
+
+The board writes a posting's location as free text, and the same office arrives
+under several spellings — `Vancouver,Canada` and `Vancouver,British Columbia,
+Canada` are one place, `Seoul,Korea, Republic of` puts a comma inside the
+country, `USA - Remote` is a country with no place in it. `lib/parse-location.ts`
+turns each string into a site record: city, region, country as ISO-3166-1
+alpha-2 plus a display name, a remote flag, and a slug (`us-los-gatos`,
+`us-remote`) that the spellings of one office all agree on. The header of that
+file lists every shape the live board actually uses.
+
+Coordinates come from **`lib/sites-seed.ts`**, checked in, one line per site.
+Nothing geocodes at runtime. A crawl upserts the seed into `locations` before it
+writes any posting, and a site the seed does not cover is **named on the console
+and in `ingest_runs.notes`** — the posting still lands, minus that one link.
+That report is the signal to add a line to the seed.
+
+Editing the seed does not need a crawl:
+
+```bash
+pnpm --filter @netflix-jobs/ingestor relink
+```
+
+reads the raw strings already stored on `jobs`, re-seeds `locations`, rebuilds
+`job_locations`, and exits non-zero if anything is still uncovered.
+
+A remote scope has a country and **no coordinates at all**: `locations.coords`
+is a single `point`, so it is null as a pair rather than as two numbers a caller
+could take one of, and a check constraint refuses a remote row that has one or a
+place row that does not. `site_distance_km` is `strict`, so a remote site's
+distance is null — `order by ... nulls last` puts it after every real office
+instead of ahead of all of them at zero.
 
 ## Sandbox note
 

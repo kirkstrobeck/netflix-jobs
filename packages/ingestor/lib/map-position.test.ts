@@ -11,6 +11,29 @@ const listed: Position = {
   display_job_id: 'JR1234',
 };
 
+describe('mapPosition sites', () => {
+  it('carries the seed-backed slugs alongside the raw strings', () => {
+    const row = mapPosition(listed, {
+      locations: [
+        'Los Gatos,California,United States of America',
+        'Los Gatos,United States of America',
+        'USA - Remote',
+      ],
+    });
+
+    expect(row.locations).toHaveLength(3);
+    expect(row.location_slugs).toEqual(['us-los-gatos', 'us-remote']);
+  });
+
+  it('leaves the slugs empty rather than the posting, for an unplaceable site', () => {
+    const row = mapPosition(listed, { locations: ['Nairobi,Kenya'] });
+
+    expect(row.locations).toEqual(['Nairobi,Kenya']);
+    expect(row.location_slugs).toEqual([]);
+    expect(row.position_id).toBe('790123');
+  });
+});
+
 describe('mapPosition', () => {
   it('lets the detail payload override the list payload', () => {
     const detail: Position = {

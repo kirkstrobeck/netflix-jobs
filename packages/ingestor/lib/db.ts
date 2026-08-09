@@ -1,3 +1,5 @@
+import type { LocationRow } from './sites.ts';
+
 // Writes go through the local Supabase PostgREST endpoint with the service-role
 // key, which bypasses RLS. Using the HTTP API instead of a pg client keeps this
 // package dependency-free — it runs under plain `node bin/ingest.ts`.
@@ -20,6 +22,8 @@ export type JobRow = {
   team: string | null;
   location: string;
   locations: string[];
+  /** Seed-backed site slugs for `locations`; see lib/sites.ts. */
+  location_slugs: string[];
   work_location_option: string | null;
   location_flexibility: string | null;
   work_type: string | null;
@@ -113,6 +117,52 @@ export async function ingestJobs(rows: JobRow[], runId: string): Promise<number>
 export async function deactivateMissing(runId: string): Promise<number> {
   const affected = await rpc('deactivate_missing_jobs', { run: runId });
   return Number(affected ?? 0);
+}
+
+// The seed goes in before any posting does, so ingest_jobs' foreign key on
+// job_locations.location_slug always has something to point at. Sending
+// updated_at explicitly is what makes a re-seed visible: the column's default
+// only fires on insert, and a moved coordinate is otherwise a silent edit.
+export async function upsertLocations(rows: LocationRow[]): Promise<number> {
+  if (rows.length === 0) return 0;
+  const stamped = rows.map((row) => ({ ...row, updated_at: new Date().toISOString() }));
+
+  await request(
+    '/rest/v1/locations',
+    { method: 'POST', body: JSON.stringify(stamped) },
+    { Prefer: 'resolution=merge-duplicates,return=minimal' },
+  );
+
+  return rows.length;
+}
+
+// Every posting's raw location strings, for re-deriving the site join without
+// crawling the board again (bin/relink-locations.ts).
+export async function listJobLocations(): Promise<
+  Array<{ position_id: number; locations: string[]; location: string }>
+> {
+  const rows = (await request(
+    '/rest/v1/jobs?select=position_id,locations,location&order=position_id',
+    { method: 'GET' },
+    { Range: '0-99999' },
+  )) as Array<{ position_id: number; locations: string[]; location: string }> | null;
+
+  return rows ?? [];
+}
+
+export async function replaceJobSites(
+  links: Array<{ job_position_id: number; location_slug: string }>,
+): Promise<number> {
+  await request('/rest/v1/job_locations?job_position_id=gt.0', { method: 'DELETE' });
+  if (links.length === 0) return 0;
+
+  await request(
+    '/rest/v1/job_locations',
+    { method: 'POST', body: JSON.stringify(links) },
+    { Prefer: 'return=minimal' },
+  );
+
+  return links.length;
 }
 
 export async function countJobs(): Promise<number> {

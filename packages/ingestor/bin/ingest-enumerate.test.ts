@@ -19,6 +19,7 @@ vi.mock('../lib/db.ts', () => ({
   startRun: vi.fn(async () => 'run-1'),
   finishRun: vi.fn(async () => undefined),
   ingestJobs: vi.fn(async () => 0),
+  upsertLocations: vi.fn(async () => 0),
   deactivateMissing: vi.fn(async () => 0),
   countJobs: vi.fn(async () => 0),
 }));

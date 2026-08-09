@@ -10,6 +10,7 @@ import {
   type Position,
 } from './eightfold.ts';
 import { htmlToText, normalizeTitle } from './html-text.ts';
+import { assignSites } from './sites.ts';
 import type { JobRow } from './db.ts';
 
 function trimmed(value: unknown): string | null {
@@ -38,6 +39,11 @@ export function mapPosition(listed: Position, detail: Position | null): JobRow {
     team: customField(merged, 'team'),
     location: locations.join(' | '),
     locations,
+    // The raw strings stay exactly as the board sent them; the slugs are the
+    // normalised view of the same thing. A location the seed does not cover
+    // drops out of this array and out of nothing else -- the posting still
+    // lands, and bin/ingest.ts prints what went missing.
+    location_slugs: assignSites(locations).slugs,
     // The list page carries work_location_option; detail often nulls it out.
     work_location_option: trimmed(merged.work_location_option ?? listed.work_location_option),
     location_flexibility: trimmed(merged.location_flexibility),

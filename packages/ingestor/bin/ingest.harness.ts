@@ -27,6 +27,7 @@ export type IngestContext = {
     startRun: Mock;
     finishRun: Mock;
     ingestJobs: Mock;
+    upsertLocations: Mock;
     deactivateMissing: Mock;
     countJobs: Mock;
   };
@@ -35,7 +36,9 @@ export type IngestContext = {
 };
 
 export function position(id: number): Position {
-  return { id, name: `Role ${id}`, location: 'Los Gatos, CA' };
+  // Spelled the way the board spells it, so the site parser places it and the
+  // run's notes read as a healthy crawl rather than as an unplaced location.
+  return { id, name: `Role ${id}`, location: 'Los Gatos,California,United States of America' };
 }
 
 export function page(ids: number[], total: number): { positions: Position[]; total: number } {
@@ -73,6 +76,7 @@ export async function loadIngest(env: Record<string, string> = {}): Promise<Inge
     db.startRun,
     db.finishRun,
     db.ingestJobs,
+    db.upsertLocations,
     db.deactivateMissing,
     db.countJobs,
     http.configureReader,
@@ -88,6 +92,7 @@ export async function loadIngest(env: Record<string, string> = {}): Promise<Inge
   db.startRun.mockResolvedValue('run-1');
   db.finishRun.mockResolvedValue(undefined);
   db.ingestJobs.mockResolvedValue(0);
+  db.upsertLocations.mockResolvedValue(0);
   db.deactivateMissing.mockResolvedValue(0);
   db.countJobs.mockResolvedValue(0);
   http.transportCounts.mockReturnValue({ direct: 0, reader: 0 });

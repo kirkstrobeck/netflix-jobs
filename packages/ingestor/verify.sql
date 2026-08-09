@@ -12,7 +12,8 @@ select
   (select count(*) from public.jobs where is_active) as active_jobs,
   (select count(*) from public.job_locations) as job_locations,
   (select count(*) from public.jobs where description_text <> '') as with_description,
-  (select count(distinct location) from public.job_locations) as distinct_locations;
+  (select count(*) from public.locations) as sites,
+  (select count(*) from public.locations where is_remote) as remote_sites;
 
 \echo ''
 \echo '== latest ingest run =='
@@ -41,9 +42,37 @@ select department, count(*) as openings
  limit 10;
 
 \echo ''
-\echo '== top locations =='
-select location, count(*) as openings
-  from public.job_locations
- group by location
+\echo ''
+\echo '== top sites =='
+select display_name, count(*) as openings
+  from public.job_sites
+ group by display_name
  order by openings desc
  limit 10;
+
+\echo ''
+\echo '== openings by country =='
+select country_code, country, count(distinct job_position_id) as openings
+  from public.job_sites
+ group by country_code, country
+ order by openings desc;
+
+\echo ''
+\echo '== postings the seed could not place =='
+select position_id, location
+  from public.jobs j
+ where not exists (
+   select 1 from public.job_locations where job_position_id = j.position_id
+ )
+ limit 10;
+
+\echo ''
+\echo '== remote sites have no distance, rather than a distance of zero =='
+select slug, site_distance_km(coords, point(-121.9624, 37.2358)) as km_from_los_gatos
+  from public.locations
+ order by km_from_los_gatos asc nulls last
+ limit 5;
+
+select slug, site_distance_km(coords, point(-121.9624, 37.2358)) as km_from_los_gatos
+  from public.locations
+ where is_remote;

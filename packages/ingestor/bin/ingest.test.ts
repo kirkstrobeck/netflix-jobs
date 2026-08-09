@@ -19,6 +19,7 @@ vi.mock('../lib/db.ts', () => ({
   startRun: vi.fn(async () => 'run-1'),
   finishRun: vi.fn(async () => undefined),
   ingestJobs: vi.fn(async () => 0),
+  upsertLocations: vi.fn(async () => 0),
   deactivateMissing: vi.fn(async () => 0),
   countJobs: vi.fn(async () => 0),
 }));
@@ -75,7 +76,7 @@ describe('main', () => {
       'run-1',
       'succeeded',
       { listed: 2, detailOk: 2, detailFailed: 0, upserted: 2, deactivated: 3 },
-      'transport direct=5 reader=2 | no failures',
+      'transport direct=5 reader=2 | no failures | sites: all placed',
     );
     expect(exit).toHaveBeenCalledExactlyOnceWith(0);
     expect(logged).toContain('ingest run run-1');
@@ -106,7 +107,7 @@ describe('main', () => {
       'run-1',
       'succeeded',
       expect.objectContaining({ detailOk: 1, detailFailed: 1 }),
-      'transport direct=0 reader=0 | failures: 2: HTTP 502',
+      'transport direct=0 reader=0 | failures: 2: HTTP 502 | sites: all placed',
     );
     expect(exit).toHaveBeenCalledExactlyOnceWith(0);
   });
@@ -136,7 +137,7 @@ describe('main', () => {
       'run-1',
       'failed',
       expect.objectContaining({ listed: 0, upserted: 0, deactivated: 0 }),
-      'transport direct=0 reader=0 | failures: board unreachable',
+      'transport direct=0 reader=0 | failures: board unreachable | sites: not reached',
     );
     expect(exit).toHaveBeenCalledExactlyOnceWith(1);
   });
@@ -151,7 +152,7 @@ describe('main', () => {
       'run-1',
       'failed',
       expect.anything(),
-      'transport direct=0 reader=0 | failures: board on fire',
+      'transport direct=0 reader=0 | failures: board on fire | sites: not reached',
     );
   });
 

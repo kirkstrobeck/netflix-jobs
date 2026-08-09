@@ -23,11 +23,14 @@ import {
   finishRun,
   ingestJobs,
   startRun,
+  upsertLocations,
   type JobRow,
 } from '../lib/db.ts';
 import { createSemaphore } from '../lib/semaphore.ts';
 import { mapPosition } from '../lib/map-position.ts';
 import { revalidateWeb } from '../lib/revalidate.ts';
+import { reportUnplaced } from '../lib/sites-report.ts';
+import { seedRows } from '../lib/sites.ts';
 
 const DETAIL_CONCURRENCY = Number(process.env.DETAIL_CONCURRENCY ?? 3);
 const READER_CONCURRENCY = Number(process.env.READER_CONCURRENCY ?? 3);
@@ -135,6 +138,7 @@ export async function main(
 
   const started = Date.now();
   let status = 'succeeded';
+  let sites = 'sites: not reached';
 
   try {
     const positions = await enumeratePositions();
@@ -142,6 +146,11 @@ export async function main(
     console.log(`enumerated ${counts.listed} positions; fetching details`);
 
     const rows = await collectRows(positions, started);
+    // Sites first: job_locations.location_slug is a foreign key, so a posting
+    // cannot be linked to a site that is not in the table yet.
+    console.log(`seeding ${await upsertLocations(seedRows())} locations`);
+    sites = reportUnplaced(rows.map((row) => row.locations)).note;
+
     await writeRows(rows, runId);
     counts.deactivated = await deactivateMissing(runId);
 
@@ -159,6 +168,7 @@ export async function main(
   const notes = [
     `transport direct=${transports.direct} reader=${transports.reader}`,
     failures.length > 0 ? `failures: ${failures.slice(0, 20).join('; ')}` : 'no failures',
+    sites,
   ].join(' | ');
 
   await finishRun(runId, status, counts, notes);
