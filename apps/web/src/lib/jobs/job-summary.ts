@@ -7,6 +7,8 @@ export type JobSummary = {
   display_job_id: string | null;
   title: string;
   team: string | null;
+  /** Three values across the whole board -- see JobQuery.businessUnit. */
+  business_unit: string | null;
   /**
    * public.locations slugs, sorted. The raw `location` / `locations[]` strings
    * the board writes are NOT here: 'Los Angeles,California,United States of
@@ -25,6 +27,9 @@ export const SUMMARY_COLUMNS = [
   "display_job_id",
   "title",
   "team",
+  // 428 of 481 rows say "Streaming", so the column costs the payload almost
+  // nothing once it is compressed -- the repetition is what gzip is best at.
+  "business_unit",
   "work_type",
   "posting_date",
   // The join, embedded rather than fetched separately: PostgREST resolves it

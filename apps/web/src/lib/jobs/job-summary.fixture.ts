@@ -14,6 +14,7 @@ export function summary(overrides: Partial<JobSummary> = {}): JobSummary {
     display_job_id: `JR${nextId}`,
     title: "Software engineer",
     team: "Engineering",
+    business_unit: "Streaming",
     sites: ["us-los-gatos"],
     work_type: "Onsite",
     posting_date: "2026-01-15",
@@ -67,10 +68,11 @@ export const SITES: Site[] = [
 // A board with a known shape, mirroring the real data's proportions: teams of
 // different sizes, two work types, and one job posted at several sites.
 //
-//   team      Engineering 3, Marketing 2
-//   workType  Onsite 3, Remote 2
-//   country   US 4, JP 1
-//   site      us-los-gatos 2, us-remote 2, jp-tokyo 1, us-new-york 1
+//   team          Engineering 3, Marketing 2
+//   workType      Onsite 3, Remote 2
+//   businessUnit  Streaming 4, Animation 1
+//   country       US 4, JP 1
+//   site          us-los-gatos 2, us-remote 2, jp-tokyo 1, us-new-york 1
 export const JOBS: JobSummary[] = [
   summary({ title: "Senior software engineer", team: "Engineering" }),
   summary({ title: "Staff software engineer", team: "Engineering" }),
@@ -85,9 +87,12 @@ export const JOBS: JobSummary[] = [
     team: "Marketing",
     sites: ["jp-tokyo"],
   }),
+  // The one posting outside the dominant unit, so a business-unit filter has
+  // something to narrow TO rather than only something to narrow away.
   summary({
     title: "Brand designer",
     team: "Marketing",
+    business_unit: "Animation",
     work_type: "Remote",
     sites: ["us-new-york", "us-remote"],
   }),

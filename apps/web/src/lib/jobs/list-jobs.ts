@@ -20,11 +20,11 @@ const MAX_ROWS = 2000;
 // The whole active board in one cached entry.
 //
 // It is fetched entire, not per page, because the facet counts have to be exact:
-// "Engineering (96)" is a count over every job matching the OTHER facets, which
-// no single page of ten rows can know. Filtering, faceting and pagination then
-// all run in memory over this one array. At 145KB that is cheaper than the four
-// or five count queries the alternative needs, and it makes the whole listing a
-// pure function of the URL.
+// "Engineering (78)" is a count over every job matching the OTHER facets, which
+// no single page of twenty rows can know. Filtering, faceting and pagination
+// then all run in memory over this one array. At 145KB that is cheaper than the
+// five count queries the alternative needs -- one per facet group -- and it
+// makes the whole listing a pure function of the URL.
 //
 // Ordered newest first at the database. The listing never re-sorts, so this is
 // the order a visitor sees, and pagination is a slice of it.

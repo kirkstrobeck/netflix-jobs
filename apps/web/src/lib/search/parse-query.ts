@@ -59,6 +59,7 @@ export function parseJobQuery(params: RawSearchParams): JobQuery {
     ...EMPTY_QUERY,
     team: readList(params[PARAM.team]),
     workType: readList(params[PARAM.workType]),
+    businessUnit: readList(params[PARAM.businessUnit]),
     // 'ALL' is not a country code, so it can never collide with a real one, and
     // it is dropped from the list here rather than filtered downstream --
     // nothing should ever see it as a value to match postings against.

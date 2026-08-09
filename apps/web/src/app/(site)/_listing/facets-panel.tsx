@@ -62,6 +62,27 @@ const TEAM = {
   singular: "team",
 };
 
+// LAST, AND IT IS HERE BECAUSE THE ROLE PAGES LINK TO IT
+//
+// Three values -- Streaming 428, Animation 43, Creations 10 -- so it is the
+// coarsest question on the panel and the one fewest people arrive with: nobody
+// opens a job board having already decided between Streaming and Animation.
+// What they do is read a role, notice it is an Animation posting, and want the
+// other forty-two. That link is the reason this group exists (see job-details),
+// and a filter reachable by link has to be a box you can also see and untick --
+// otherwise arriving on one is arriving on a filter with no control, which is
+// the same invisible-filter bug the top-five disclosure is careful to avoid.
+//
+// Bottom of the panel, not beside Work type, even though the two are the same
+// shape. Position here is how often a question is asked, and this one is asked
+// least; the two long lists in between are the ones people came for.
+const BUSINESS_UNIT = {
+  key: "businessUnit" as FacetKey,
+  legend: "Business unit",
+  plural: "business units",
+  singular: "business unit",
+};
+
 type FacetsPanelProps = {
   facets: Record<FacetKey, FacetOption[]>;
   query: JobQuery;
@@ -207,6 +228,15 @@ export function FacetsPanel({
           plural={TEAM.plural}
           query={query}
           singular={TEAM.singular}
+        />
+
+        <FacetGroup
+          facetKey={BUSINESS_UNIT.key}
+          legend={BUSINESS_UNIT.legend}
+          options={facets[BUSINESS_UNIT.key]}
+          plural={BUSINESS_UNIT.plural}
+          query={query}
+          singular={BUSINESS_UNIT.singular}
         />
       </div>
     </aside>

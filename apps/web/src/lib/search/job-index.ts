@@ -6,8 +6,8 @@ import type { FacetKey } from "@/lib/search/job-query";
 /**
  * The derived strings every filter pass needs, computed once per job.
  *
- * A keystroke re-runs five full passes over the board -- the results, plus one
- * per facet counted with its own selection open -- so 481 rows means ~2,400 job
+ * A keystroke re-runs six full passes over the board -- the results, plus one
+ * per facet counted with its own selection open -- so 481 rows means ~2,900 job
  * tests. Doing the work below inside those tests is what made it expensive: the
  * keyword haystack alone is six string concatenations, an array spread, a join
  * and a toLowerCase, all of which produce the SAME string every time because the
@@ -25,6 +25,7 @@ import type { FacetKey } from "@/lib/search/job-query";
 type JobIndex = {
   team: string[];
   workType: string[];
+  businessUnit: string[];
   country: string[];
   site: string[];
   /** Lowercased, everything a keyword is allowed to match, joined. */
@@ -50,6 +51,7 @@ function build(job: JobSummary, catalog: SiteCatalog): JobIndex {
   return {
     team: job.team ? [job.team] : [],
     workType: job.work_type ? [job.work_type] : [],
+    businessUnit: job.business_unit ? [job.business_unit] : [],
     // De-duplicated: a role open in Los Gatos AND as US-remote is one United
     // States role, not two, and the country count has to say 303 rather than
     // counting the same posting twice.
@@ -60,6 +62,11 @@ function build(job: JobSummary, catalog: SiteCatalog): JobIndex {
     // three being listed separately. description_text is deliberately absent:
     // it is twenty times the size of everything else combined and would have to
     // be cached in full to search it.
+    //
+    // business_unit is absent too, and for the opposite reason: 428 of the 481
+    // postings say "Streaming", so a keyword that matched it would narrow 481
+    // roles to 428 and read as a filter that did nothing. It is a facet with
+    // three checkboxes, which is the control that value's shape asks for.
     keywords: [
       job.title,
       job.team ?? "",
@@ -85,10 +92,10 @@ function indexOf(job: JobSummary, catalog: SiteCatalog): JobIndex {
   return built;
 }
 
-// The values a job offers to each facet. A job has one team and one work type
-// but can be posted at several sites in several countries, so every facet is a
-// list and the single-valued ones are lists of length one -- which lets counting
-// and matching treat all four identically.
+// The values a job offers to each facet. A job has one team, one work type and
+// one business unit but can be posted at several sites in several countries, so
+// every facet is a list and the single-valued ones are lists of length one --
+// which lets counting and matching treat all five identically.
 export function facetValues(
   job: JobSummary,
   key: FacetKey,

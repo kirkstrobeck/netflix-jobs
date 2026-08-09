@@ -4,11 +4,17 @@ import { DEFAULT_SORT, sortParam, type SortOrder } from "@/lib/search/sort-order
 // that knows how it is spelled there, so a link, a facet toggle and the server
 // render all agree by construction rather than by convention.
 
-export type FacetKey = "team" | "workType" | "country" | "site";
+export type FacetKey = "team" | "workType" | "businessUnit" | "country" | "site";
 
 export type JobQuery = {
   team: string[];
   workType: string[];
+  /**
+   * Streaming, Animation, Creations. Three values over 481 postings, which is
+   * why it is a facet at all: it is the coarsest cut the board has, and the one
+   * a role page can hand back as a link that means something.
+   */
+  businessUnit: string[];
   /** ISO-3166-1 alpha-2 codes, upper case. */
   country: string[];
   /** public.locations slugs, always inside a selected country. */
@@ -32,6 +38,7 @@ export type JobQuery = {
 export const PARAM: Record<FacetKey | "keywords" | "sort" | "page", string> = {
   team: "team",
   workType: "type",
+  businessUnit: "unit",
   country: "country",
   site: "site",
   keywords: "q",
@@ -54,14 +61,27 @@ export const PARAM: Record<FacetKey | "keywords" | "sort" | "page", string> = {
  */
 export const EVERYWHERE = "all";
 
-// Country before site, and both before the rest: the order here is the order
-// the facets are counted in and the order the params are written in, and the
-// country is the question the panel now leads with.
-export const FACET_KEYS: FacetKey[] = ["country", "site", "workType", "team"];
+// The order the facets are counted in and the order the params are written in.
+// Country before site because a site is a refinement of one, and the rest in a
+// fixed order after them.
+//
+// It is deliberately NOT the panel's order and does not follow it. This is the
+// spelling of a URL, and a URL that reshuffles itself because a sidebar was
+// rearranged is a URL that stops matching the links people have already shared.
+// The panel's order lives in facets-panel.tsx, where it is a design decision;
+// this one only has to never change.
+export const FACET_KEYS: FacetKey[] = [
+  "country",
+  "site",
+  "workType",
+  "team",
+  "businessUnit",
+];
 
 export const EMPTY_QUERY: JobQuery = {
   team: [],
   workType: [],
+  businessUnit: [],
   country: [],
   site: [],
   keywords: [],

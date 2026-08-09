@@ -128,17 +128,20 @@ describe("FacetsPanel", () => {
     expect(html).not.toContain("Los Gatos");
   });
 
-  // Keywords, work type, location, team: the questions people arrive with, in
-  // the order they arrive with them. Work type is two values and answers half
-  // the location question for the roles that are remote, which is why it is
-  // asked before the place rather than after it.
-  it("orders the groups keywords, work type, location, team", () => {
+  // Work type, keywords, location, team, business unit: the questions people
+  // arrive with, in the order they arrive with them. Work type is asked for
+  // first by name, and it earns it -- two values, complete on screen, and for
+  // the roles that are remote it answers half the location question below it.
+  // Business unit is last because it is the one nobody arrives with; it is here
+  // so the role pages have a filter to link to and a box to untick.
+  it("orders the groups work type, keywords, location, team, business unit", () => {
     const html = panel(EMPTY_QUERY);
     const at = (legend: string) => html.indexOf(`>${legend}`);
 
-    expect(at("Keywords")).toBeLessThan(at("Work type"));
-    expect(at("Work type")).toBeLessThan(at("Location"));
+    expect(at("Work type")).toBeLessThan(at("Keywords"));
+    expect(at("Keywords")).toBeLessThan(at("Location"));
     expect(at("Location")).toBeLessThan(at("Team"));
+    expect(at("Team")).toBeLessThan(at("Business unit"));
   });
 
   // Nothing to clear, no control offering to clear it.

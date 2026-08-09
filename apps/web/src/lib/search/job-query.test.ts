@@ -132,6 +132,7 @@ describe("round trip", () => {
       {
         team: ["Advertising", "Engineering"],
         workType: ["Remote"],
+        businessUnit: ["Animation"],
         country: ["JP", "US"],
         site: ["jp-tokyo", "us-remote"],
         keywords: ["design", "senior"],

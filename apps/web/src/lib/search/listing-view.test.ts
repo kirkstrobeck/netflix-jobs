@@ -12,6 +12,7 @@ describe("deriveListing", () => {
     expect(view.jobs).toHaveLength(5);
     expect(view.window.total).toBe(5);
     expect(Object.keys(view.facets).sort()).toEqual([
+      "businessUnit",
       "country",
       "site",
       "team",
