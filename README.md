@@ -50,11 +50,31 @@ crawl whose revalidation never lands still succeeds — the data is written — 
 the site keeps serving the previous crawl until its cache expires. See the
 [ingestor README](packages/ingestor/README.md#telling-the-web-app).
 
+## Lighthouse
+
+`pnpm test:lighthouse` is a gate, not a report: it builds the app, serves it
+with `next start`, audits the listing and the newest job posting, and exits
+non-zero if any category is below 100. It needs Supabase up — the pages it
+audits are the real ones — and inside the sandbox container that means
+`pnpm db:forward` first, same as `pnpm dev`.
+
+It reports five categories: performance, accessibility, best practices, SEO,
+and **Agentic Browsing** — Lighthouse 13's checks for how well an AI agent can
+read the site (`llms.txt`, the accessibility tree, WebMCP).
+
+Chromium is installed on demand by `tools/chromium/install.sh`, so a fresh
+container needs no preparation. The median run's full report lands in
+`.cache/lighthouse/`, pass or fail; drop it into the Lighthouse Viewer to read
+it. Settings and the reasoning behind them are in `tools/lighthouse/config.mjs`.
+
 ## Commands
 
 - `pnpm dev` — start development tasks
 - `pnpm build` — build all workspaces
 - `pnpm lint` — lint all workspaces
+- `pnpm test` — unit suites for `web` and the ingestor
+- `pnpm test:lighthouse` — the 100-in-every-category gate (above)
+- `pnpm test:all` — both of the above
 - `pnpm db:start` / `pnpm db:stop` / `pnpm db:reset` — local Supabase
 - `pnpm db:forward` — loopback port forwarder, only needed inside the sandbox container
 - `pnpm ingest` — crawl the Netflix careers board into Supabase
