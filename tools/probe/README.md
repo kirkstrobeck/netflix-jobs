@@ -22,6 +22,22 @@ Then:
 | `geo.mjs`     | whether a denied geolocation permission can be re-prompted        |
 | `nearest.mjs` | what the heading and the offer say at each precision tier         |
 | `hero.mjs`    | a cropped shot of the results header line                         |
+| `cta.mjs`     | contrast of a control against an ANIMATED backdrop, worst frame   |
+| `share.mjs`   | the share control's fallback chain, one stubbed browser per rung  |
+
+`cta.mjs` is the other one worth keeping. A screenshot answers for one frame,
+and the hero's backdrop is fifteen bars walking on loops of up to 254 seconds —
+so it drives every time-based animation to a chosen `currentTime`, samples the
+pixels around the control, and reports the best and worst frames rather than
+whichever one the shutter caught. It takes a state:
+
+    node tools/probe/cta.mjs URL .apply-button,.share-button 200 rest
+    node tools/probe/cta.mjs URL .apply-button 120 hover
+    PROBE_HIDE=.share-button node tools/probe/cta.mjs URL .apply-button 80 focus
+
+`PROBE_HIDE` matters for focus: the outline sits 3px out from the box, so the
+band the backdrop is read from otherwise lands on the next control's rim and
+reports a neighbour as if it were the background.
 
 `sweep.mjs` is the one worth keeping around. Word separation delegated to a
 margin or a flex gap is invisible on screen and wrong everywhere else — in the

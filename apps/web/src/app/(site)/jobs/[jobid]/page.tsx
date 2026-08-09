@@ -11,6 +11,7 @@ import { buildJobPosting } from "@/lib/seo/job-posting";
 import { JsonLd } from "@/lib/seo/json-ld";
 
 import "@/app/(site)/jobs/[jobid]/job-hero.css";
+import "@/app/(site)/jobs/[jobid]/job-cta.css";
 import "@/app/(site)/jobs/[jobid]/job-facts.css";
 import "@/app/(site)/jobs/[jobid]/posted-badge.css";
 import "@/app/(site)/jobs/[jobid]/job-details.css";

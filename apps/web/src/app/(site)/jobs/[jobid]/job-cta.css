@@ -1,0 +1,152 @@
+/* The hero's call to action: one primary, one secondary, and the edge both of
+   them need to survive the field behind them.
+
+   THE MEASUREMENT THIS FILE EXISTS FOR
+
+   The hero's backdrop is fifteen bars of rgb(229 9 20 / 0.15) walking sideways
+   on loops of up to 254 seconds, and where several overlap they stack. Driven
+   frame by frame with Animation.currentTime and sampled in Chromium
+   (tools/probe/cta.mjs, 200 frames), the strip immediately outside the apply
+   button runs from rgb(41,3,5) at its dimmest to rgb(143,2,11) at its
+   brightest. Against those, the button's own --accent fill measured:
+
+     dimmest    3.95:1
+     brightest  2.01:1
+
+   So for a good part of every cycle the primary action had no boundary at all.
+   That is the bug, and it is not a matter of taste: WCAG 1.4.11 asks 3:1 of the
+   visual information that identifies a control.
+
+   WHAT WAS REJECTED, AND WHY
+
+   A drop shadow: the page has none anywhere, and a shadow lightens nothing --
+   it darkens the backdrop, which is already darker than the button.
+
+   A brighter or more saturated red: no red can work. The brightest possible red
+   is rgb(255,0,0) at a relative luminance of 0.2126, which against the
+   brightest measured backdrop is 2.41:1. Every red fails, so the fix cannot be
+   a better red.
+
+   --hairline, the house token, unchanged: 14% white over --accent computes to
+   rgb(233,43,53) and measures 2.79:1 at the brightest frame. It is calibrated
+   for one near-black surface against another, which is every other place it is
+   used, and this is not that. */
+
+.job-cta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  /* 0.75rem, not the hero's larger rhythm: these two are one group, and the gap
+     between them has to read as smaller than the gap above them. */
+  gap: 0.75rem;
+  /* Moved off .apply-button, which is no longer the only thing on this line. */
+  margin-block-start: 2.25rem;
+}
+
+/* Both controls, one edge. The rim is the boundary, so it is the same rim on
+   both -- what separates primary from secondary is the fill and the weight, not
+   how visible the control is.
+
+   --hairline-bright is 70% white. Measured at the brightest frame: 5.63:1 on
+   the red fill and 4.69:1 on the dark one; at the dimmest, 11.07:1 and 9.23:1.
+   The value comes from the weaker of the two -- 55% white over --surface lands
+   at 2.93:1 and misses. */
+.apply-button,
+.share-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  /* 48px clears the 44px minimum hit target. */
+  min-block-size: 3rem;
+  border: 1px solid var(--hairline-bright);
+  border-radius: 3px;
+  font-size: 1rem;
+  text-decoration: none;
+  /* Hover-OFF only. Compositor-only for the press; the colours are one element
+     each and repaint in well under a frame. */
+  transition: background-color 150ms ease, border-color 150ms ease,
+    transform 150ms ease;
+}
+
+/* THE PRIMARY, AND THE ONLY ONE ON THE PAGE.
+   Netflix red under white text clears AA at 4.79:1 -- the same red as small
+   text on #080202 would only reach 4.3:1 and fail. */
+.apply-button {
+  padding: 0.75rem 2rem;
+  background: var(--accent);
+  color: #fff;
+  font-weight: 700;
+}
+
+/* THE SECONDARY. An opaque plate rather than a transparent one, so it does not
+   sample the red behind it: the bars would otherwise walk THROUGH the control,
+   and its label's contrast would move with them. On --surface, --ink is a flat
+   18.4:1 at every frame.
+
+   It reads as the quieter of the two on three counts -- no accent fill, 500
+   against 700, and less inline padding -- while keeping the same height and the
+   same edge, because being secondary is not a reason to be hard to find. */
+.share-button {
+  padding: 0.75rem 1.5rem;
+  background: var(--surface);
+  color: var(--ink);
+  font-weight: 500;
+}
+
+/* Hover STRENGTHENS the edge. It used to weaken it: `opacity: 0.88` on the
+   apply button composited the whole control with whatever was behind it, so
+   pointing at the button blended it INTO the bars -- the one moment it most
+   needs to be legible. An opaque lift instead, and the rim goes to full white.
+
+   And it arrives instantly. The base rule above is the fade for the way OUT
+   only; without this line the hover state took 150ms to appear. */
+.apply-button:hover,
+.share-button:hover {
+  border-color: #fff;
+  /* Hover-ON: instant. */
+  transition-duration: 0s;
+}
+
+.apply-button:hover {
+  background: color-mix(in srgb, #fff 14%, var(--accent));
+}
+
+.share-button:hover {
+  background: color-mix(in srgb, #fff 8%, var(--surface));
+}
+
+.apply-button:active,
+.share-button:active {
+  transform: scale(0.985);
+}
+
+/* The confirmation slot. It holds its width whether or not there is anything in
+   it, so copying a link cannot move the control that was just pressed. */
+.job-cta__status {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: 3rem;
+}
+
+/* Instant in, fade out -- the house rule, spelled with visibility so the note
+   also enters and leaves the accessibility tree, which is what gives the live
+   region above something to announce.
+
+   The delay is the whole trick: on the way out, opacity fades for 240ms and
+   visibility flips only after it, so the note is not yanked out of the tree
+   mid-fade. On the way in, --on zeroes both. */
+.share-note {
+  color: var(--ink-muted);
+  font-size: 0.875rem;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 240ms ease, visibility 0s linear 240ms;
+}
+
+.share-note--on {
+  opacity: 1;
+  visibility: visible;
+  /* Appears at once. */
+  transition-duration: 0s;
+  transition-delay: 0s;
+}

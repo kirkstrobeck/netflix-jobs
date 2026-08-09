@@ -1,9 +1,11 @@
 import { ApplyButton } from "@/app/(site)/jobs/[jobid]/apply-button";
 import { PostedDate } from "@/app/(site)/jobs/[jobid]/posted-date";
+import { ShareButton } from "@/app/(site)/jobs/[jobid]/share-button";
 import { BarsStage } from "@/app/_bars/bars-stage";
 import { formatLocations } from "@/lib/format/location";
 import { formatPostedDate } from "@/lib/format/posted-date";
 import { postedOn } from "@/lib/jobs/date-posted";
+import { jobShare } from "@/lib/jobs/job-share";
 import type { Job } from "@/lib/jobs/types";
 
 // posting_date is null on 179 of 481 rows, so the fact list renders a fixed set
@@ -45,7 +47,13 @@ export function JobHeader({ job }: { job: Job }) {
         </li>
       </ul>
 
-      <ApplyButton href={job.apply_url} title={job.title} />
+      {/* Apply is the page's one primary action; Share sits beside it as the
+          only other thing you can do with a posting. They are grouped so the
+          gap between them reads as smaller than the gap above them. */}
+      <div className="job-cta">
+        <ApplyButton href={job.apply_url} title={job.title} />
+        <ShareButton share={jobShare(job)} />
+      </div>
     </BarsStage>
   );
 }

@@ -6,44 +6,46 @@
 // Animation.currentTime instead of waiting, samples the pixels immediately
 // outside each control, and reports the WORST frame as well as the best.
 //
-// Usage: node tools/probe/cta.mjs [url] [selector,selector...] [samples]
+// Usage: node tools/probe/cta.mjs [url] [selector,...] [samples] [rest|hover|focus]
 import { chromium } from "playwright-core";
+
+import { brightest, contrast, hex } from "./contrast.mjs";
 
 const URL_UNDER_TEST = process.argv[2] ?? "http://127.0.0.1:3100/jobs/JR42023";
 const SELECTORS = (process.argv[3] ?? ".apply-button").split(",");
 const SAMPLES = Number(process.argv[4] ?? 160);
+const STATE = process.argv[5] ?? "rest";
+// Narrow the viewport to put a control on a line of its own: the backdrop band
+// is otherwise polluted by whatever sits 12px away, and a neighbouring
+// control's rim is not the backdrop.
+const WIDTH = Number(process.argv[6] ?? 1280);
 // The longest loop in the field, from app/_bars/bars-tunables.ts.
 const LOOP_MS = 253_850;
 // How far outside the control's own box the backdrop is sampled. 1px would land
-// on the border's own antialiasing.
-const RING_INSET = 2;
+// on the border's own antialiasing. Under focus the ring has to start beyond
+// the focus outline -- 2px at a 3px offset -- or the "backdrop" reading is the
+// indicator itself.
+const RING_INSET = STATE === "focus" ? 8 : 2;
 const RING_WIDTH = 5;
-
-const channel = (c) => {
-  const v = c / 255;
-
-  return v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4;
-};
-
-const luminance = ([r, g, b]) =>
-  0.2126 * channel(r) + 0.7152 * channel(g) + 0.0722 * channel(b);
-
-const contrast = (a, b) => {
-  const [hi, lo] = [luminance(a), luminance(b)].sort((x, y) => y - x);
-
-  return (hi + 0.05) / (lo + 0.05);
-};
-
-const hex = ([r, g, b]) =>
-  `rgb(${Math.round(r)},${Math.round(g)},${Math.round(b)})`;
+// Where the boundary is: the border row at rest, the outline under focus.
+const EDGE_BAND = STATE === "focus" ? [3, 6] : [-1, 1];
 
 const browser = await chromium.launch({
   executablePath: process.env.CHROME_PATH,
   args: ["--no-sandbox"],
 });
-const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+const page = await browser.newPage({ viewport: { width: WIDTH, height: 900 } });
 
 await page.goto(URL_UNDER_TEST, { waitUntil: "networkidle" });
+
+// PROBE_HIDE=.share-button takes a neighbour out of the frame, so the band
+// around the control under test is backdrop and nothing else. Only needed for
+// the focus outline, which reaches far enough out to meet the next control.
+if (process.env.PROBE_HIDE) {
+  await page.addStyleTag({
+    content: `${process.env.PROBE_HIDE} { display: none !important; }`,
+  });
+}
 
 // A second page is the PNG decoder: nothing in node reads pixels, and Chromium
 // already has a canvas.
@@ -67,14 +69,22 @@ async function pixels(clip) {
   }, shot.toString("base64"));
 }
 
-// Every pixel in the band around the control, plus the control's own centre and
-// its top edge (the border row, if there is one).
+// Three readings per frame: the band of backdrop just outside the control, the
+// control's own surface, and its boundary.
+//
+// The boundary is taken as the BRIGHTEST pixel in the 3px straddling the box's
+// top edge rather than a single coordinate. A control's box lands on a
+// fractional y (450.6 here), so one nominated pixel is a coin toss between the
+// rim, its antialiasing and the fill behind it. On a control with no rim at all
+// this reads the fill, which is the right answer for that case too.
 function sample(frame, box, clip) {
   const at = (x, y) => {
-    const i = (Math.round(y - clip.y) * frame.width + Math.round(x - clip.x)) * 4;
+    const i =
+      (Math.round(y - clip.y) * frame.width + Math.round(x - clip.x)) * 4;
 
     return [frame.rgba[i], frame.rgba[i + 1], frame.rgba[i + 2]];
   };
+
 
   const ring = [];
 
@@ -88,12 +98,20 @@ function sample(frame, box, clip) {
     }
   }
 
+  const edge = [];
+
+  for (let x = box.x + 8; x <= box.x + box.width - 8; x += 1) {
+    for (let d = EDGE_BAND[0]; d <= EDGE_BAND[1]; d += 1) {
+      edge.push(at(x, box.y - d), at(x, box.y + box.height + d));
+    }
+  }
+
   return {
     ring,
     // Inside the control's inline padding, so the sample is its surface rather
     // than a letter of its label.
     fill: at(box.x + 8, box.y + box.height / 2),
-    edge: at(box.x + box.width / 2, box.y + 0.5),
+    edge: brightest(edge),
   };
 }
 
@@ -106,6 +124,22 @@ for (const selector of SELECTORS) {
   }
 
   await handle.scrollIntoViewIfNeeded();
+
+  // Chromium grants :focus-visible to a scripted focus() when the most recent
+  // interaction was a keypress, which is a great deal faster than tabbing the
+  // whole document -- and lands on the same state.
+  if (STATE === "focus") {
+    await page.keyboard.press("Tab");
+    await handle.evaluate((el) => el.focus());
+    console.log(
+      "  focus-visible:",
+      await handle.evaluate((el) => el.matches(":focus-visible")),
+    );
+  }
+
+  if (STATE === "hover") {
+    await handle.hover();
+  }
 
   const box = await handle.boundingBox();
   const pad = RING_INSET + RING_WIDTH + 2;
@@ -140,14 +174,14 @@ for (const selector of SELECTORS) {
     const { ring, fill, edge } = sample(frame, box, clip);
     // The brightest pixel in the band is the one the edge has to survive, so the
     // frame is scored on its brightest backdrop rather than its average.
-    const brightest = ring.reduce((a, b) => (luminance(b) > luminance(a) ? b : a));
+    const backdrop = brightest(ring);
     const record = {
       time: Math.round(time / 1000),
-      backdrop: brightest,
+      backdrop,
       fill,
       edge,
-      fillRatio: contrast(fill, brightest),
-      edgeRatio: contrast(edge, brightest),
+      fillRatio: contrast(fill, backdrop),
+      edgeRatio: contrast(edge, backdrop),
     };
 
     if (!worst || record.edgeRatio < worst.edgeRatio) {

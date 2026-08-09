@@ -51,31 +51,9 @@
   text-wrap: balance;
 }
 
-.apply-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  /* 48px clears the 44px minimum hit target. */
-  min-block-size: 3rem;
-  margin-block-start: 2.25rem;
-  padding: 0.75rem 2rem;
-  border-radius: 3px;
-  background: var(--accent);
-  color: #fff;
-  font-size: 1rem;
-  font-weight: 700;
-  text-decoration: none;
-  /* Compositor-only properties, so hover and press stay off the main thread. */
-  transition: opacity 150ms ease, transform 150ms ease;
-}
-
-.apply-button:hover {
-  opacity: 0.88;
-}
-
-.apply-button:active {
-  transform: scale(0.985);
-}
+/* The call to action pair moved to job-cta.css when it stopped being one
+   button, and with it the edge treatment that keeps both of them legible over
+   the bars. */
 
 .job-body {
   display: grid;
