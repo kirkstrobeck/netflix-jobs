@@ -1,6 +1,7 @@
 "use client";
 
 import { FacetGroup } from "@/app/(site)/_listing/facet-group";
+import { OptionCount } from "@/app/(site)/_listing/option-count";
 import { useCountryChoice } from "@/app/(site)/_listing/use-country-choice";
 import type { FacetOption } from "@/lib/search/facet-counts";
 import { toggleCountry, toggleSite } from "@/lib/search/geo-query";
@@ -89,9 +90,7 @@ export function CountryFacet({ countries, sites, query }: CountryFacetProps) {
                 type="checkbox"
               />
               <span className="option__label">{site.label}</span>
-              <span aria-hidden="true" className="option__count">
-                {site.count}
-              </span>
+              <OptionCount count={site.count} />
             </label>
           </li>
         ))}

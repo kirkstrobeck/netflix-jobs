@@ -142,11 +142,39 @@ describe("active facet feedback", () => {
     renderGroup(options, { ...EMPTY_QUERY, team: ["Team 0"] });
 
     // Exact names: every one of the twelve is in the DOM now, so /Team 1/ would
-    // also find "Team 10" and "Team 11".
-    const on = screen.getByRole("checkbox", { name: "Team 0" }).closest("label");
-    const off = screen.getByRole("checkbox", { name: "Team 1" }).closest("label");
+    // also find "Team 10" and "Team 11". The count is part of the name -- see
+    // option-count.tsx -- so the name is the whole phrase.
+    const on = screen.getByRole("checkbox", { name: "Team 0 100 roles" }).closest("label");
+    const off = screen.getByRole("checkbox", { name: "Team 1 99 roles" }).closest("label");
 
     expect(on?.className).toContain("option--on");
     expect(off?.className).not.toContain("option--on");
+  });
+});
+
+/**
+ * THE LAST OF THE "Filters5 applied" FAMILY.
+ *
+ * The option label and its count were adjacent runs in the DOM held apart by
+ * .option's flex gap alone, so the row copied and read as "Onsite88" and would
+ * have painted that way the moment jobs-options.css was stale. aria-hidden made
+ * that string silent rather than correct, and silenced the count with it.
+ */
+describe("the option label and its count", () => {
+  it("separates them in the text, not in the gap", () => {
+    renderGroup(OPTIONS);
+
+    const label = screen.getAllByRole("checkbox")[0].closest("label");
+
+    // textContent, deliberately: this is the string a copy, an accessible name
+    // and a stylesheet-less render all see. Glued, it reads "Team 0100".
+    expect(label?.textContent).toContain("Team 0 100");
+  });
+
+  it("says what the number counts, instead of hiding it", () => {
+    renderGroup([{ ...OPTIONS[0], count: 1 }, OPTIONS[1]]);
+
+    expect(screen.getByRole("checkbox", { name: "Team 0 1 role" })).toBeTruthy();
+    expect(screen.getByRole("checkbox", { name: "Team 1 99 roles" })).toBeTruthy();
   });
 });

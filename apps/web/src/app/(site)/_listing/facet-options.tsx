@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 
+import { OptionCount } from "@/app/(site)/_listing/option-count";
 import type { FacetOption } from "@/lib/search/facet-counts";
 
 /**
@@ -68,12 +69,7 @@ function Option({
           type="checkbox"
         />
         <span className="option__label">{option.label}</span>
-        {/* aria-hidden: the label already names the option, and "Engineering 96"
-            read as one string is worse than the checkbox's own name. The number
-            is visual shorthand. */}
-        <span aria-hidden="true" className="option__count">
-          {option.count}
-        </span>
+        <OptionCount count={option.count} />
       </label>
 
       {/* Outside the <label>, deliberately. A label's implicit control is the
