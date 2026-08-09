@@ -20,7 +20,7 @@ import {
 // over the whole board, so the panel is a layout and the arithmetic has exactly
 // one home -- the same one the server render uses.
 //
-// THE ORDER, WHICH IS KEYWORDS, WORK TYPE, LOCATION, TEAM
+// THE ORDER, WHICH IS WORK TYPE, KEYWORDS, LOCATION, TEAM
 //
 // Location led for a while, on the grounds that a country can arrive ALREADY
 // TICKED and a filter that applied itself should be the first thing on the
@@ -29,17 +29,38 @@ import {
 // own count, and one line under a "Clear all" that undoes it. It does not need
 // to be first to be visible.
 //
-// What goes above it is the pair of questions that are asked before a place is.
-// Keywords is what someone arrives typing. Work type is two values -- onsite or
-// remote -- and for the 102 roles that are remote the location question is
-// largely answered by asking it, which is a reason to ask it first rather than
-// third.
+// WORK TYPE IS FIRST, AND IT IS ABOVE KEYWORDS
 //
-// `plural` is the group's name as a noun, and the only place it is written: the
-// option search's label and the disclosure that opens the rest of the list are
-// both built from it.
-const WORK_TYPE = { key: "workType" as FacetKey, legend: "Work type", plural: "work types" };
-const TEAM = { key: "team" as FacetKey, legend: "Team", plural: "teams" };
+// Asked for in those words, and it wins the top of the panel outright rather
+// than the top of the checkbox groups. The reading where Keywords keeps first
+// place because it is "a search box, not a filter" is a distinction the panel
+// does not draw anywhere else: a keyword chip counts toward "3 applied", it
+// clears with Clear all, and it narrows the list exactly as a ticked box does.
+// If it is a filter for all of that, it is a filter for this too.
+//
+// It also happens to be the better panel. Work type is two values, so it is the
+// one group that is complete on screen -- no search box worth using, no
+// disclosure -- and for the 97 roles that are remote it half-answers the
+// location question below it. Keywords is the control that rewards being found
+// second: someone who arrives typing goes to it regardless of what is above it,
+// and someone who does not is better served by being shown a choice than an
+// empty field.
+//
+// `plural` and `singular` are the group's name as a noun, and the only place it
+// is written: the option search's label and the disclosure that opens the rest
+// of the list are both built from them.
+const WORK_TYPE = {
+  key: "workType" as FacetKey,
+  legend: "Work type",
+  plural: "work types",
+  singular: "work type",
+};
+const TEAM = {
+  key: "team" as FacetKey,
+  legend: "Team",
+  plural: "teams",
+  singular: "team",
+};
 
 type FacetsPanelProps = {
   facets: Record<FacetKey, FacetOption[]>;
@@ -166,15 +187,16 @@ export function FacetsPanel({
       </div>
 
       <div className="facets__panel">
-        <KeywordFacet draft={draft} onDraft={onDraft} query={query} />
-
         <FacetGroup
           facetKey={WORK_TYPE.key}
           legend={WORK_TYPE.legend}
           options={facets[WORK_TYPE.key]}
           plural={WORK_TYPE.plural}
           query={query}
+          singular={WORK_TYPE.singular}
         />
+
+        <KeywordFacet draft={draft} onDraft={onDraft} query={query} />
 
         <CountryFacet countries={facets.country} query={query} sites={facets.site} />
 
@@ -184,6 +206,7 @@ export function FacetsPanel({
           options={facets[TEAM.key]}
           plural={TEAM.plural}
           query={query}
+          singular={TEAM.singular}
         />
       </div>
     </aside>

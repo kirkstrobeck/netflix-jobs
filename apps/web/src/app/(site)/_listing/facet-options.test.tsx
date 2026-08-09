@@ -29,6 +29,7 @@ function renderGroup(options: FacetOption[], query: JobQuery = EMPTY_QUERY) {
         options={options}
         plural="teams"
         query={query}
+        singular="team"
       />
     </NavigateProvider>,
   );
@@ -65,16 +66,46 @@ describe("option list length", () => {
     expect(document.querySelector("[aria-expanded]")).toBeNull();
   });
 
-  // Sentence case, the count, and the noun -- "Show all 12" alone tells a screen
+  // Sentence case, the count, and the noun -- "Show 7 more" alone tells a screen
   // reader nothing about which list it opens. Both labels are in the markup and
   // CSS shows the true one, so neither state has to re-render to tell the truth.
-  it("names the group and the count in both of its labels", () => {
+  //
+  // The count is what the control REVEALS, not what the group totals: 12 teams
+  // with 5 already on screen is a promise of 7, and a reader should not have to
+  // do that subtraction to find out whether opening it is worth the click.
+  it("names the group and how many more it opens, in both of its labels", () => {
     renderGroup(OPTIONS);
 
     const summary = disclosure()!.querySelector("summary")!;
 
-    expect(summary.textContent).toContain("Show all 12 teams");
+    expect(summary.textContent).toContain("Show 7 more teams");
     expect(summary.textContent).toContain("Show fewer teams");
+    expect(summary.textContent).not.toContain("12");
+  });
+
+  // Pulling a selected option up out of the tail shortens the tail, and the
+  // promise has to shorten with it. This is the case the old "Show all 12 teams"
+  // wording got outright wrong: six rows would be on screen and the control
+  // still offered twelve.
+  it("counts the tail after a selected option has been pulled out of it", () => {
+    const options = OPTIONS.map((option, i) =>
+      i === 11 ? { ...option, selected: true } : option,
+    );
+    renderGroup(options, { ...EMPTY_QUERY, team: ["Team 11"] });
+
+    expect(disclosure()!.querySelector("summary")!.textContent).toContain(
+      "Show 6 more teams",
+    );
+  });
+
+  // One hidden row is "1 more team", not "1 more teams". The singular is passed
+  // in beside the plural rather than derived by chopping an s off the end.
+  it("agrees with its own number when only one option is hidden", () => {
+    renderGroup(OPTIONS.slice(0, VISIBLE_OPTIONS + 1));
+
+    expect(disclosure()!.querySelector("summary")!.textContent).toContain(
+      "Show 1 more team",
+    );
   });
 
   // Work type has exactly two values; a disclosure there would be noise.

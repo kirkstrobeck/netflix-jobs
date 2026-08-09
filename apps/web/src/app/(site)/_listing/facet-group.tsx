@@ -13,6 +13,10 @@ type FacetGroupProps = {
   options: FacetOption[];
   /** The group's name as a plural noun: "teams", "work types", "countries". */
   plural: string;
+  /** The same noun in the singular. Both are written out rather than one
+   *  derived from the other: "business unit" -> "business units" is a rule that
+   *  holds for today's four groups and for nothing in particular after that. */
+  singular: string;
   query: JobQuery;
   /**
    * What ticking a box does, when it is not just "toggle this value".
@@ -39,6 +43,7 @@ export function FacetGroup({
   legend,
   options,
   plural,
+  singular,
   query,
   onToggle,
   renderNested,
@@ -50,7 +55,7 @@ export function FacetGroup({
   const visible = matchOptions(options, search);
   const selected = query[facetKey].length;
   // Built from the same noun the disclosure below uses, so "Search teams" and
-  // "Show all 31 teams" cannot drift into naming the same group two ways.
+  // "Show 26 more teams" cannot drift into naming the same group two ways.
   const searchLabel = `Search ${plural}`;
   const toggle =
     onToggle ?? ((value: string) => navigate(toggleFacet(query, facetKey, value)));
@@ -105,6 +110,7 @@ export function FacetGroup({
           options={visible}
           plural={plural}
           renderNested={renderNested}
+          singular={singular}
         />
       )}
 

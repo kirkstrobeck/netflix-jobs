@@ -18,7 +18,7 @@ import type { FacetOption } from "@/lib/search/facet-counts";
  * values and so never shows the control at all.
  *
  * The OFFICES under a country are the deliberate exception and show in full.
- * Seventeen of the 21 countries have exactly one, and a "show all 1 sites"
+ * Seventeen of the 21 countries have exactly one, and a "show 1 more site"
  * disclosure over a single row is a control that costs a click to reveal
  * nothing. Only the United States has more than three, and its ten only appear
  * after the country has been ticked -- by which point the visitor has asked
@@ -44,8 +44,10 @@ type RenderNested = (option: FacetOption) => ReactNode;
 
 type FacetOptionsProps = {
   options: FacetOption[];
-  /** The group's name as a plural noun, for "Show all 31 locations". */
+  /** The group's name as a plural noun, for "Show 16 more locations". */
   plural: string;
+  /** The same noun in the singular, for the one-row case. */
+  singular: string;
   onToggle: (value: string) => void;
   renderNested?: RenderNested;
 };
@@ -99,11 +101,19 @@ const isOpen = (option: FacetOption, index: number) =>
 export function FacetOptions({
   options,
   plural,
+  singular,
   onToggle,
   renderNested,
 }: FacetOptionsProps) {
   const open = options.filter(isOpen);
   const rest = options.filter((option, index) => !isOpen(option, index));
+  // What opening it costs, not what the list totals. "Show all 21 locations"
+  // made the reader do the subtraction to find out whether this was two more
+  // rows or sixteen -- and it did the subtraction WRONG whenever a selected
+  // option had already been pulled up out of the tail, because the open list was
+  // six rows and the promise still counted twenty-one. rest.length is by
+  // construction exactly what is behind the control, in every state.
+  const more = rest.length === 1 ? `1 more ${singular}` : `${rest.length} more ${plural}`;
 
   return (
     <>
@@ -123,9 +133,7 @@ export function FacetOptions({
           {/* Sentence case, and the count is the useful half of the promise: the
               difference between opening two more rows and opening twenty-nine. */}
           <summary className="facet__more">
-            <span className="facet__more-all">
-              Show all {options.length} {plural}
-            </span>
+            <span className="facet__more-all">Show {more}</span>
             <span className="facet__more-fewer">Show fewer {plural}</span>
           </summary>
 

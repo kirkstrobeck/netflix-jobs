@@ -36,6 +36,7 @@ function renderTeams(query: JobQuery = EMPTY_QUERY) {
       options={facetOptions(JOBS, query, "team", siteCatalog(SITES))}
       plural="teams"
       query={query}
+      singular="team"
     />,
   );
 }
