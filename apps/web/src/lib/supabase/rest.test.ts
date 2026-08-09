@@ -1,9 +1,19 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { restGet } from "@/lib/supabase/rest";
 
+// The connection details are stubbed rather than inherited, because
+// lib/supabase/env.ts has no defaults to inherit: it throws when either is
+// unset. These tests are about the request restGet builds, so they supply a
+// URL and a key and say what they are.
+beforeEach(() => {
+  vi.stubEnv("SUPABASE_URL", "http://127.0.0.1:54721");
+  vi.stubEnv("SUPABASE_ANON_KEY", "test-anon-key");
+});
+
 afterEach(() => {
   vi.unstubAllGlobals();
+  vi.unstubAllEnvs();
 });
 
 describe("restGet", () => {

@@ -1,9 +1,18 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { restRpc } from "@/lib/supabase/rpc";
 
+// Stubbed rather than inherited: lib/supabase/env.ts throws when either is
+// unset, so the URL asserted below is one this test states, not one that leaked
+// in from a default.
+beforeEach(() => {
+  vi.stubEnv("SUPABASE_URL", "http://127.0.0.1:54721");
+  vi.stubEnv("SUPABASE_ANON_KEY", "test-anon-key");
+});
+
 afterEach(() => {
   vi.unstubAllGlobals();
+  vi.unstubAllEnvs();
 });
 
 describe("restRpc", () => {
