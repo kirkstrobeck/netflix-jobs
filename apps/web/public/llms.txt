@@ -1,0 +1,25 @@
+# Careers at Netflix
+
+A mirror of the Netflix careers board. Every posting is a server-rendered page
+at a stable URL, so there is nothing here that needs a browser to read.
+
+## Pages
+
+- [Open roles](/): the whole active board. Filter with query parameters —
+  `?team=Engineering`, `?type=Full+Time`, `?location=Los+Gatos`, `?q=free+text`,
+  `?page=2`. Each of `team`, `type` and `q` may repeat. Every filter is in the
+  URL, so any listing you can see is a link you can share.
+- [A single posting](/jobs/JR41912): `/jobs/{job code}`, where the job code is
+  the id printed on the posting (`JR41912`, `AJRT30201`). Case-insensitive; the
+  canonical form is uppercase and anything else redirects to it.
+
+## Data
+
+- [The board as JSON](/api/board): every active posting as one array, newest
+  first — job code, title, team, work type, locations and posting date. Business
+  unit and the full description are on the posting page only, not here. This is
+  the same payload the listing page filters against, so reading it
+  once is strictly better than crawling the pages for the same fields.
+
+Applications go to the official Netflix careers site, linked from the Apply
+button on each posting.
