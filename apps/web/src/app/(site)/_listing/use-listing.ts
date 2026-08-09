@@ -4,6 +4,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useDeferredValue, useMemo, useState } from "react";
 
 import { useBoard } from "@/app/(site)/_listing/use-board";
+import { useNearest, type Nearest } from "@/app/(site)/_listing/use-nearest";
 import { applyCountryDefault, type CountryDefault } from "@/lib/search/geo-query";
 import { jobsHref, type JobQuery } from "@/lib/search/job-query";
 import { deriveListing, type ListingView } from "@/lib/search/listing-view";
@@ -16,6 +17,8 @@ export type Listing = {
   draft: string;
   setDraft: (value: string) => void;
   navigate: (query: JobQuery) => void;
+  /** The distance island: its state, and the one call that starts it. */
+  nearest: Nearest;
 };
 
 // The keyword box filters as it is typed, so the text has to reach the filter
@@ -52,6 +55,7 @@ export function useListing(
   countryDefault: CountryDefault,
 ): Listing {
   const board = useBoard(boardVersion);
+  const nearest = useNearest(initialQuery.sort);
   const router = useRouter();
   const params = useSearchParams();
   const [query, setQuery] = useState(initialQuery);
@@ -106,13 +110,19 @@ export function useListing(
   );
   const deferredQuery = useDeferredValue(previewQuery);
 
+  // initialView is the server's render, which is ALWAYS newest -- the server has
+  // no position and is never given one. So the moment rings arrive there is a
+  // view the server could not have produced, and the board has to be in memory
+  // for it: with no board there is nothing to re-sort, so the fallback stays the
+  // newest list the server sent, which is exactly what the sort status says is
+  // on screen.
   const view = useMemo(() => {
     if (!board) {
       return initialView;
     }
 
-    return deriveListing(board, deferredQuery);
-  }, [board, deferredQuery, initialView]);
+    return deriveListing(board, deferredQuery, nearest.buckets);
+  }, [board, deferredQuery, initialView, nearest.buckets]);
 
   const navigate = useCallback(
     (next: JobQuery) => {
@@ -137,5 +147,5 @@ export function useListing(
     [board, router],
   );
 
-  return { query, view, draft, setDraft, navigate };
+  return { query, view, draft, setDraft, navigate, nearest };
 }

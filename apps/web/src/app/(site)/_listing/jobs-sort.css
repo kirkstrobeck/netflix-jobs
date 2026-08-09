@@ -1,0 +1,98 @@
+/* The sort control, on the "Open roles" line. Same tokens and the same
+   interaction-state rule as the rest of the page: every state arrives instantly
+   and only fades on the way out. */
+
+/* Baseline alignment is what puts "Sort" on the same line as the boxed options
+   beside it even though the boxes are taller than the text in them. */
+.sort {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+/* Names the group without competing with it. Hidden below the breakpoint where
+   the column narrows -- "Newest | Nearest" already says what it is, and on a
+   phone the word is the first thing worth spending the width on. The group
+   keeps its accessible name either way, because that comes from
+   aria-labelledby pointing at this element rather than from it being visible. */
+.sort__label {
+  color: var(--ink-faint);
+  font-size: 0.75rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+@media (max-width: 30rem) {
+  .sort__label {
+    /* clip, not display:none: the element stays in the accessibility tree, so
+       aria-labelledby still resolves to a name. */
+    position: absolute;
+    clip-path: inset(50%);
+    inline-size: 1px;
+    block-size: 1px;
+    overflow: hidden;
+  }
+}
+
+/* A segmented control: one hairline box around the pair, one rule between them.
+   This is the "it is a control, not a heading" part -- the weight comes from
+   the border and the fill rather than from type size, so the line still reads
+   as one label plus one control instead of two headings. */
+.sort__options {
+  display: flex;
+  border: 1px solid var(--hairline);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.sort__option {
+  padding: 0.1875rem 0.625rem;
+  color: var(--ink-muted);
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1.35;
+  white-space: nowrap;
+  /* Hover-OFF only. */
+  transition: background-color 150ms ease, color 150ms ease;
+}
+
+/* The divider belongs to the second option, not to a separate element: a border
+   on the shared edge is one line, and the container's overflow: hidden clips it
+   to the rounded corners. */
+.sort__option + .sort__option {
+  border-inline-start: 1px solid var(--hairline);
+}
+
+.sort__option:hover,
+.sort__option:focus-visible {
+  background: var(--surface-raised);
+  color: var(--ink);
+  /* Hover-ON: instant. */
+  transition-duration: 0s;
+}
+
+/* Selected reads as ON. Off the ARIA attribute rather than a class, because the
+   attribute is what actually has to be right -- styling it is what makes a
+   missing one visible during development instead of invisible until a screen
+   reader finds it. */
+.sort__option[aria-current="true"] {
+  background: var(--accent);
+  color: #fff;
+}
+
+.sort__option[aria-current="true"]:hover,
+.sort__option[aria-current="true"]:focus-visible {
+  background: var(--accent);
+  color: #fff;
+}
+
+/* What happened, when Nearest did not end in a distance-ordered list. Sits
+   between the header rule and the first row, at the muted weight the rest of
+   the page uses for a note about the thing next to it rather than for the thing
+   itself. */
+.sort-status {
+  margin: 0.875rem 0 0;
+  color: var(--ink-muted);
+  font-size: 0.8125rem;
+  text-wrap: pretty;
+}

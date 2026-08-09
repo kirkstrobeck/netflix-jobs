@@ -28,7 +28,11 @@ function PageLink({ page, query, label, current }: {
 }) {
   return (
     <li>
-      <QueryLink className="pager__link" current={current} query={withPage(query, page)}>
+      <QueryLink
+        className="pager__link"
+        current={current ? "page" : undefined}
+        query={withPage(query, page)}
+      >
         {label}
       </QueryLink>
     </li>

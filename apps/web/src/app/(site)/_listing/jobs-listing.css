@@ -9,9 +9,42 @@
    should read as a pair.
 
    The padding and rule are .facets__head's exactly, and both labels are the same
-   size and weight, so the two boxes are the same height and the alignment holds
-   without either one being nudged. */
+   size and weight.
+
+   That used to be the whole story: two heads holding one line of 0.8125rem text
+   each came out the same height on their own. It stopped being true when this
+   one gained a boxed control taller than its label, which pushed this column's
+   rule a few pixels below the facets' rule and made two deliberately aligned
+   lines read as a near miss. So the height is now DECLARED once for the pair
+   rather than left to emerge from whatever each happens to contain.
+
+   2.75rem is the whole BOX -- everything above the rule, including the 1rem of
+   padding under the label -- because box-sizing is border-box here and a
+   min-block-size stated as the line height alone would be swallowed by that
+   padding and do nothing. Measured: the taller of the two heads is 41.2px (a
+   24.2px sort control over 16px of padding), so 44px clears it with a little
+   air. Both heads take it as a MINIMUM, so the shorter one grows to match
+   rather than the taller one being squeezed, and anything added to either
+   column head later moves both. */
+.listing {
+  --column-head: 2.75rem;
+}
+
+/* Flex for the same reason .facets__head is: a name on the left, a control on
+   the right, on one line.
+
+   center, not baseline, and that is the second half of keeping the two column
+   labels level. Baseline alignment would drag "Open roles" DOWN to sit on the
+   sort option's baseline -- which is lower than the text's own, because the
+   option is a padded box -- while "Filters" in the other column stayed put. The
+   boxes would match and the words in them would not. Centring both heads inside
+   the same declared height puts the two labels on one line by construction. */
 .listing-hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  min-block-size: var(--column-head);
   padding-block-end: 1rem;
   border-block-end: 1px solid var(--hairline);
 }

@@ -147,8 +147,13 @@ describe("Home", () => {
 
     expect(html).toContain(
       '<main class="listing__results"><header class="listing-hero">' +
-        '<h2 class="listing-title">Open roles</h2></header>',
+        '<h2 class="listing-title">Open roles</h2>',
     );
+    // The sort control is the header's second child, on the same line.
+    expect(html.indexOf('class="sort"')).toBeGreaterThan(
+      html.indexOf('class="listing-title"'),
+    );
+    expect(html.indexOf('class="sort"')).toBeLessThan(html.indexOf("</header>"));
     expect(html.indexOf("listing-hero")).toBeLessThan(html.indexOf("facets__head"));
   });
 

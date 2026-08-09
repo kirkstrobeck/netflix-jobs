@@ -8,7 +8,15 @@ import { jobsHref, type JobQuery } from "@/lib/search/job-query";
 type QueryLinkProps = {
   query: JobQuery;
   className?: string;
-  current?: boolean;
+  /**
+   * Which kind of "this is the one you are on" to announce, if any.
+   *
+   * "page" is for a link that IS a page -- the pager's current number. "true"
+   * is for one item of a set that is not a page, which is what a sort option
+   * is. They are different words in ARIA and the difference is audible, so the
+   * caller says which rather than having one picked for it.
+   */
+  current?: "page" | "true";
   /**
    * What a plain click does, when the default navigate is not the whole of it.
    *
@@ -63,7 +71,7 @@ export function QueryLink({
 
   return (
     <a
-      aria-current={current ? "page" : undefined}
+      aria-current={current}
       className={className}
       href={jobsHref(query)}
       onClick={click}

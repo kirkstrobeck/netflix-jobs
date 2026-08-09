@@ -18,11 +18,18 @@
   align-content: start;
 }
 
+/* min-block-size and centring, both from the pair's shared token in
+   jobs-listing.css. This head holds two runs of 0.8125rem text and the other one
+   now holds a boxed control, so left to their contents the two rules would no
+   longer line up and neither would the two labels. Both are centred inside the
+   same declared height instead. See the note on .listing for the reasoning and
+   the number. */
 .facets__head {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
   gap: 1rem;
+  min-block-size: var(--column-head);
   padding-block-end: 1rem;
   border-block-end: 1px solid var(--hairline);
 }

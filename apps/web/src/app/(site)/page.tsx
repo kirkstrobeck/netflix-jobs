@@ -12,6 +12,7 @@ import type { RawSearchParams } from "@/lib/search/parse-query";
 import "@/app/(site)/home-masthead.css";
 import "@/app/(site)/_listing/jobs-listing.css";
 import "@/app/(site)/_listing/result-row.css";
+import "@/app/(site)/_listing/jobs-sort.css";
 import "@/app/(site)/_listing/jobs-pager.css";
 import "@/app/(site)/_listing/jobs-facets.css";
 import "@/app/(site)/_listing/jobs-options.css";

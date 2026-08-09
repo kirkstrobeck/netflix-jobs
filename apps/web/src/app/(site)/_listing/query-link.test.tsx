@@ -57,13 +57,29 @@ describe("QueryLink", () => {
   it("marks the current page for assistive tech", () => {
     render(
       <NavigateProvider value={navigate}>
-        <QueryLink current query={QUERY}>
+        <QueryLink current="page" query={QUERY}>
           Page 3
         </QueryLink>
       </NavigateProvider>,
     );
 
     expect(link().getAttribute("aria-current")).toBe("page");
+  });
+
+  // A sort option is one item of a set, not a page. The caller says which word
+  // it means and the link says exactly that, rather than one being assumed.
+  it("marks the current item of a set as such", () => {
+    render(
+      <NavigateProvider value={navigate}>
+        <QueryLink current="true" query={QUERY}>
+          Nearest
+        </QueryLink>
+      </NavigateProvider>,
+    );
+
+    expect(
+      screen.getByRole("link", { name: "Nearest" }).getAttribute("aria-current"),
+    ).toBe("true");
   });
 });
 
