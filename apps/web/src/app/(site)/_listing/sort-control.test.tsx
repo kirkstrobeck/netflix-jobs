@@ -5,6 +5,7 @@ import { readCss, rule as ruleIn } from "@/app/(site)/css-rule";
 import { SortControl } from "@/app/(site)/_listing/sort-control";
 import { NavigateProvider } from "@/app/(site)/_listing/use-query-navigation";
 import { EMPTY_QUERY, type JobQuery } from "@/lib/search/job-query";
+import { parseJobQuery } from "@/lib/search/parse-query";
 
 // This suite is not run with vitest's globals, so RTL's automatic cleanup is
 // never registered and renders would pile up across tests.
@@ -42,6 +43,29 @@ describe("SortControl", () => {
 
     expect(option("Nearest").getAttribute("aria-current")).toBe("true");
     expect(option("Newest").getAttribute("aria-current")).toBeNull();
+  });
+
+  /**
+   * Never neither, never both -- in every state a URL can put this control in.
+   *
+   * There is nothing else it could be: parseSort resolves a missing param, an
+   * old spelling and outright junk into one of two values, so one option
+   * matches and one does not, on the server and in the browser alike.
+   */
+  it.each([
+    ["nothing at all", {}],
+    ["the default, spelled out", { sort: "new" }],
+    ["a long spelling", { sort: "nearest" }],
+    ["the short one", { sort: "near" }],
+    ["junk", { sort: "banana" }],
+  ])("has exactly one option chosen for a URL saying %s", (_name, params) => {
+    mount(parseJobQuery(params));
+
+    const chosen = ["Newest", "Nearest"].filter(
+      (name) => option(name).getAttribute("aria-current") === "true",
+    );
+
+    expect(chosen).toHaveLength(1);
   });
 
   // Composition: the country and the facets already in the URL come along, so a

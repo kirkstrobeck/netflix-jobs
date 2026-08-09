@@ -113,15 +113,12 @@ describe("jobsHref", () => {
 
     expect(roundTrip(query)).toEqual(query);
   });
-});
 
-// The one word that must never appear in an address again. Everywhere is the
-// absence of a country filter, so it is spelled by leaving the param off --
-// the same way newest and page 1 are.
-describe("everywhere", () => {
-  it("is a bare path and never the word 'all'", () => {
-    expect(jobsHref(EMPTY_QUERY)).toBe("/");
-    expect(jobsHref({ ...EMPTY_QUERY, team: ["Engineering"] })).not.toContain("country=");
+  // Everywhere is the absence of a country filter, so it is spelled by leaving
+  // the param off -- the same way newest and page 1 are. The word `all` must
+  // never appear in an address again.
+  it("never writes a country for a listing that has none", () => {
+    expect(jobsHref({ ...EMPTY_QUERY, team: ["Engineering"] })).toBe("/?team=Engineering");
   });
 });
 
@@ -181,21 +178,16 @@ describe("mutations", () => {
     expect(removeKeyword(two, "design").keywords).toEqual(["senior"]);
   });
 
-  // What the collapsed filters toggle says out loud. Every ticked box and every
-  // chip counts once, so the number matches what opening the panel will show.
-  // Sort is not one: it reorders the list rather than narrowing it.
-  it("counts every applied filter and no controls that are not one", () => {
+  // What the collapsed filters toggle says out loud: every ticked box and every
+  // chip, once each. Sort and page are not filters -- one reorders the list and
+  // the other walks it.
+  it("counts every applied filter and nothing that is not one", () => {
+    const five = { ...EMPTY_QUERY, country: ["JP", "US"], site: ["us-remote"],
+      workType: ["Remote"], keywords: ["design"] };
+
     expect(appliedCount(EMPTY_QUERY)).toBe(0);
     expect(appliedCount({ ...EMPTY_QUERY, sort: "nearest", page: 3 })).toBe(0);
-    expect(
-      appliedCount({
-        ...EMPTY_QUERY,
-        country: ["JP", "US"],
-        site: ["us-remote"],
-        workType: ["Remote"],
-        keywords: ["design"],
-      }),
-    ).toBe(5);
+    expect(appliedCount(five)).toBe(5);
   });
 
   it("knows whether anything is filtering", () => {

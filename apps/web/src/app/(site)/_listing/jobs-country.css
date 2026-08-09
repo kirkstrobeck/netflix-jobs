@@ -32,13 +32,8 @@
   color: var(--ink);
 }
 
-/* The sentence that admits a country was applied without being asked for. Same
-   size and colour as .facet__pinned -- both are the panel explaining its own
-   behaviour, and they can appear one under the other. */
-.facet__detected {
-  margin: 0.5rem 0 0;
-  color: var(--ink-faint);
-  font-size: 0.75rem;
-  line-height: 1.4;
-  text-wrap: pretty;
-}
+/* .facet__detected styled the sentence that admitted a country had been applied
+   without being asked for. That sentence went when the filter stopped being
+   invisible -- it is in the address bar and ticked in this list -- and the rule
+   for it outlived it by a commit. Both are gone now, along with the last of the
+   panel's copy about its own behaviour. */

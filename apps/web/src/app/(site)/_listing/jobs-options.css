@@ -111,19 +111,8 @@
   color: var(--ink-muted);
 }
 
-/* The other half. Counts in a facet are deliberately blind to that facet's OWN
-   selections -- apply them and every unticked option in the list reads 0, since
-   no job is both Engineering and Marketing, which would make multi-select
-   pointless. But a number that does not move after a click looks broken, so
-   when a facet is active it says so, in place, rather than leaving the reader to
-   infer it. Shown only while that facet has a selection. */
-.facet__pinned {
-  margin: 0.5rem 0 0;
-  color: var(--ink-faint);
-  font-size: 0.75rem;
-  line-height: 1.4;
-  text-wrap: pretty;
-}
+/* .facet__pinned styled a sentence explaining how the counts were worked out.
+   The sentence is gone -- see facet-group.tsx -- and so is the rule for it. */
 
 /* Proof the click landed, on the facet itself: a live tally that changes every
    time a box is ticked, sitting next to the legend that names the group. */

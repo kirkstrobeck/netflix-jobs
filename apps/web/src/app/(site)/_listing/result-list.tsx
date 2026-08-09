@@ -7,8 +7,12 @@ function NoResults() {
   return (
     <div className="results-empty">
       <p className="results-empty__lede">No roles match these filters.</p>
+      {/* "in the panel beside this list" until the panel stopped always being
+          beside it: below 64rem it is a shut drawer above the results. A
+          sentence that names where a control is has to be re-checked every time
+          the layout moves, so it names the control instead. */}
       <p className="results-empty__hint">
-        Try removing a keyword, or widening a filter in the panel beside this list.
+        Try removing a keyword, or widening a filter.
       </p>
     </div>
   );
