@@ -99,3 +99,40 @@
   letter-spacing: 0.22em;
 }
 
+/* The masthead wordmark's hit area, and only its hit area: the anchor is 23.4px
+   of artwork sitting in the middle of a 72px bar, so two thirds of the height a
+   pointer aims at was dead space. This fills the bar.
+
+   A pseudo-element rather than align-self: stretch on the anchor, which would
+   grow the same target in one declaration. Stretching grows the anchor's BOX,
+   and the box is what .job-page :focus-visible outlines: the ring would jump
+   from hugging the mark to tracing the full bar, and at outline-offset: 3px its
+   top line would land 3px above the top of the document, where nothing paints.
+   An overlay leaves the anchor's box exactly where it was, so every painted
+   state -- resting, hover, focus ring -- is the pixel-for-pixel same. Only the
+   region that answers a click changes.
+
+   4.5rem is .site-header__inner's min-block-size, and job-shell.test.ts pins the
+   two together so this cannot quietly stop reaching the bar's edges. Centred on
+   the anchor rather than pinned to a corner because the anchor is itself centred
+   in the row (align-items: center above), so half the extra height belongs above
+   it and half below.
+
+   inset-inline: 0 keeps the target exactly as WIDE as the mark. The bar is a
+   .shell, so an inline stretch would hand the whole 76rem row to the logo link
+   and swallow clicks meant for the page.
+
+   It is inside the anchor, so it needs no accessible-name work and no second
+   tab stop: it is the same link, with a bigger door. */
+.site-header .wordmark {
+  position: relative;
+}
+
+.site-header .wordmark::after {
+  content: "";
+  position: absolute;
+  inset-block-start: 50%;
+  inset-inline: 0;
+  block-size: 4.5rem;
+  transform: translateY(-50%);
+}
