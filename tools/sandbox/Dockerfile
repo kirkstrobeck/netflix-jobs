@@ -58,6 +58,34 @@ RUN chmod +x /usr/local/bin/sandbox-entrypoint
 
 RUN install -d -o agent -g ${HOST_GID} /home/agent/.claude
 
+# Headless Chromium for the Lighthouse gate (pnpm test:lighthouse).
+#
+# Two halves, and they have to be split this way. The shared libraries are a
+# root-time apt install, so they belong in the image. The browser binary is a
+# 195MB download that must land on a filesystem where chmod works -- which rules
+# out /workspace, a virtiofs bind mount from the Mac -- so it goes to the agent's
+# own home and is fetched as that user, in the standard Playwright location.
+#
+# tools/chromium/install.sh does both of these again at runtime, without root,
+# for containers running an image built before this. When the image already
+# carries them it finds the browser, resolves zero missing packages, and exits.
+# The package list here is the same tools/chromium/packages.txt, kept in sync by
+# hand -- a COPY would pull the repo into the image, which it deliberately isn't.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      libasound2 libatk-bridge2.0-0 libatk1.0-0 libatspi2.0-0 libcairo2 \
+      libcups2 libdbus-1-3 libdrm2 libgbm1 libglib2.0-0 libnspr4 libnss3 \
+      libpango-1.0-0 libx11-6 libxcb1 libxcomposite1 libxdamage1 libxext6 \
+      libxfixes3 libxkbcommon0 libxrandr2 libfontconfig1 libfreetype6 \
+      fonts-liberation \
+    && rm -rf /var/lib/apt/lists/*
+
+ARG PLAYWRIGHT_VERSION=1.62.1
+USER agent
+RUN PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS=1 \
+      npx --yes playwright-core@${PLAYWRIGHT_VERSION} install chromium \
+    && /home/agent/.cache/ms-playwright/chromium-*/chrome-linux/chrome --version
+USER root
+
 # Bind-mounted host worktrees show ownership that doesn't always match the
 # container UID through Colima's filesystem layer. Trust everything; the
 # container is already the trust boundary.

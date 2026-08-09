@@ -36,3 +36,6 @@ tools/sandbox/.cache/
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# chromium sysroot + deb cache for the lighthouse gate
+.cache/

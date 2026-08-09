@@ -1,0 +1,34 @@
+# Debian 12 runtime libraries for headless Chromium.
+#
+# The chromium list is Playwright's own (nativeDeps.ts, debian12-x64 -> reused
+# verbatim for debian12-arm64); the font packages are added so text measures the
+# same here as it does anywhere else -- Lighthouse's contrast and tap-target
+# audits read rendered geometry, so a box that falls back to no font at all is
+# not the box a visitor sees.
+#
+# These are seeds. install.sh resolves the full dependency closure through apt,
+# so transitive libraries (libdrm-common, libsqlite3-0, ...) need no entry here.
+libasound2
+libatk-bridge2.0-0
+libatk1.0-0
+libatspi2.0-0
+libcairo2
+libcups2
+libdbus-1-3
+libdrm2
+libgbm1
+libglib2.0-0
+libnspr4
+libnss3
+libpango-1.0-0
+libx11-6
+libxcb1
+libxcomposite1
+libxdamage1
+libxext6
+libxfixes3
+libxkbcommon0
+libxrandr2
+libfontconfig1
+libfreetype6
+fonts-liberation
