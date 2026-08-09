@@ -65,7 +65,7 @@
    content bottom-aligned, and site-footer.css measures that content box at
    ~23rem against the 400px band -- so 4px more of wordmark spends slack the band
    has, rather than triggering fit-content. It does push the mark 4px further up
-   a bottom-anchored stack, which matters only against .job-footer__scrim's solid
+   a bottom-anchored stack, which matters only against the footer scrim's solid
    zone: that runs to 19rem (304px) and the wordmark sat ~18.5rem (296px) up, so
    at ~300px it is still inside the solid, with 4px of margin rather than the 2px
    1.75rem left. That is still the binding constraint on this number -- growing
@@ -82,7 +82,7 @@
 /* Masthead only, 10% off the shared 1.625rem. Scoped to .site-header rather
    than edited into the rule above, because that rule drives BOTH instances and
    the footer's size is load-bearing: the note above records the mark sitting
-   ~300px up a bottom-anchored stack against .job-footer__scrim's solid zone,
+   ~300px up a bottom-anchored stack against the footer scrim's solid zone,
    which runs to 304px. Shrinking the shared value would walk the footer
    wordmark back down through numbers that were measured, not chosen.
 

@@ -8,18 +8,36 @@
 
 .job-footer {
   position: relative;
+  /* The band is its own stacking context, which makes the two z-indexes in this
+     file -- the ::before scrim at 1, .job-footer__content at 2 -- footer-local
+     numbers that cannot rise over anything else on the page. They exist because
+     the scrim is a pseudo-element: ::before generates as the band's first child,
+     so at z-index: auto it would paint UNDER <Glow /> instead of over it. */
+  isolation: isolate;
   display: flex;
   align-items: flex-end;
-  /* clip, not hidden, and the margin is the whole point -- see the skirt rule
-     at the foot of this file. Both values clip; only clip lets a clip margin
-     release one edge's PAINT while still keeping every descendant out of the
-     document's scrollable overflow, which is what stops the skirt lengthening
-     the page. Nothing else in the band reaches the margin: the orbs are clipped
-     a second time, tighter, by .glow's own overflow: hidden on the same rect.
-     And because clip is still a clip, no descendant of this band can ever push
-     a horizontal scrollbar out through the page. */
+  /* clip, not hidden: hidden would make the band a scroll container, and a band
+     that scrolls its own content is a band that can hide a link behind a hidden
+     scrollbar. clip creates no scroll container, so nothing in here can ever
+     scroll or push a horizontal scrollbar out through the page. The orbs are
+     clipped a second time by .glow's own overflow: hidden on the same rect, so
+     this is the outer of two identical clips rather than the only one.
+
+     No overflow-clip-margin, and that is the whole fix. This rule used to carry
+     1000px of it, together with a ::after skirt hanging 1000px past the band, on
+     the theory that a clip margin releases one edge's PAINT while still keeping
+     the released content out of the document's scrollable overflow. That is not
+     what it does, measured: this box reported scrollHeight 1400 against
+     clientHeight 400 and the home page's documentElement.scrollHeight was 3707
+     instead of 2707 -- an extra 1000px of real, reachable, empty red at the end
+     of every page. The clip margin extends the clip rect, and the scrollable
+     overflow region extends with it; .job-page is overflow-y: visible, so it
+     propagated straight to the document.
+
+     Both are gone. The band's bottom colour is .glow::before now, inside the
+     glow's own box, so there is nothing left hanging past this edge to release
+     and the clip rect can stay at the padding box where it costs nothing. */
   overflow: clip;
-  overflow-clip-margin: 1000px;
   /* 400px, flat -- not the max(30rem, 100svh) viewport band this was. The glow
      costs nothing to rescale: .glow is inset: 0, its wash stops are percentages,
      and the orbs walk in cqw/cqh, so every part of the effect re-fits the box
@@ -82,10 +100,22 @@
    the content box being top padding that has nothing in it to protect. So:
    solid to 19rem covers every line including the wordmark, the fade finishes by
    23rem, and the top 2rem of the band stays untinted so --surface meets the page
-   above it without a seam. */
-.job-footer__scrim {
+   above it without a seam.
+
+   The z-index is the cost of the scrim being a pseudo-element at all: ::before
+   generates FIRST, ahead of <Glow /> in the band's child order, so at
+   z-index: auto the veil would paint under the light it exists to veil.
+
+   The 0.14 is also quoted by .glow::before in glow.generated.css, which mixes
+   the same 14% into --accent so the wash's ground agrees with the row the scrim
+   paints over it. Retune one and retune both. */
+.job-footer::before {
+  content: "";
   position: absolute;
   inset: 0;
+  /* Over <Glow /> and under .job-footer__content (2). <Glow /> stays at
+     z-index: auto, so it paints in the tree-order step, below both of these. */
+  z-index: 1;
   pointer-events: none;
   background: linear-gradient(
     to top,
@@ -97,45 +127,28 @@
 
 .job-footer__content {
   position: relative;
+  /* The top of the band's three layers. DOM order would already put it over the
+     glow, but not over a ::before scrim holding z-index: 1. */
+  z-index: 2;
   inline-size: 100%;
   display: grid;
   gap: 1.75rem;
   padding-block: 4.5rem 3rem;
 }
 
-/* The overscroll skirt: 1000px of the band's own bottom colour, hanging below
-   the band, for the rubber-band gutter a trackpad opens past the end of the
-   document. Without it that gutter is bare canvas -- near-black --surface under
-   a footer whose last pixel row is opaque red, which reads as the page having
-   come apart at the bottom.
+/* There is no skirt rule here any more, and that is deliberate.
 
-   It hangs off the BAND, not off .glow, and lands in exactly the same place:
+   The band's bottom colour is now .glow::before, in glow.generated.css: the
+   wash's own ground, pinned to the bottom edge of .glow and sized in .glow's
+   box. It lands in exactly the same place a footer pseudo-element would --
    .glow is position: absolute / inset: 0 in this box, so the glow's bottom edge
-   IS this box's bottom edge. .glow cannot own it -- that element's
-   overflow: hidden is what keeps the orbs inside the band, and the clip margin
-   this needs would let every one of them walk out.
+   IS this box's bottom edge -- and it belongs to the effect rather than to the
+   one component that happens to mount it.
 
-   Three things it must not do, and what stops each:
-
-   - Lengthen the page. It is out of flow, and the band clips: content beyond an
-     overflow: clip box does not reach an ancestor's scrollable overflow, so the
-     document's scroll length is the same 1000px later as it was before. The clip
-     margin extends where the box may PAINT, not what it contributes to scroll.
-   - Show a horizontal scrollbar. inset-inline: 0 makes it exactly as wide as the
-     band, which is the window -- so it is full window width without 100vw, which
-     measures the viewport INCLUDING the scrollbar gutter and would overhang by
-     that gutter's width on every platform that reserves one. The band's clip is
-     the second line of defence.
-   - Show a seam. The band's last painted row is not #e50914: .job-footer__scrim
-     is inset: 0, so it lays its 0.14 black over the wash right down to the
-     bottom edge. The skirt mixes the same 14% so the two meet with no step. If
-     the scrim's alpha ever moves, this number moves with it. */
-.job-footer::after {
-  content: "";
-  position: absolute;
-  inset-block-start: 100%;
-  inset-inline: 0;
-  block-size: 1000px;
-  pointer-events: none;
-  background: color-mix(in srgb, #000 14%, var(--accent));
-}
+   What neither version can do is colour the rubber-band gutter a trackpad opens
+   past the end of the document. That gutter is outside the document, where only
+   the canvas paints, so nothing in a footer can reach it and the honest answer
+   is that it shows black. Do not chase it from html or body: the root's
+   background propagates to the canvas at BOTH ends, and the top gutter would go
+   red too. The version that tried to reach it from here cost 1000px of empty
+   page -- see the overflow note at the top of this file. */

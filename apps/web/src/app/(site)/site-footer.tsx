@@ -34,13 +34,16 @@ const LINKS = [
 // stylesheet import, so the band works from the server HTML with no hydration
 // and no media to download. Reduced motion is CSS-only.
 //
-// Layer order is DOM order -- glow, scrim, content -- and every layer is
-// positioned with z-index: auto, so nothing here needs a z-index.
+// Layer order is glow, scrim, content -- and it is deliberately NOT DOM order.
+// The scrim is not an element here; it is .job-footer::before, which generates
+// as the band's FIRST child and would paint under <Glow />, i.e. a scrim veiling
+// nothing. site-footer.css puts it back with z-index -- scrim 1, content 2,
+// <Glow /> left at auto so it stays underneath both -- inside an
+// isolation: isolate on the band that keeps those two numbers footer-local.
 export function SiteFooter() {
   return (
     <footer className="job-footer">
       <Glow />
-      <div aria-hidden="true" className="job-footer__scrim" />
 
       <div className="shell job-footer__content">
         <h2 className="visually-hidden">Footer</h2>

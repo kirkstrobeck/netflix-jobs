@@ -13,6 +13,49 @@
   inset: 0;
   overflow: hidden;
 }
+/* The wash's ground. The wash is a gradient from opaque red to transparent, so
+   everywhere above its bottom stop the pixel you actually see is the wash
+   composited over WHATEVER IS BEHIND .glow -- the consumer's background, which
+   here is near-black --surface. This paints the band's own bottom colour there
+   instead, so the ramp lands on red rather than on the host page.
+
+   It is a ::before and not a fourth div because it takes no markup to say. That
+   also fixes its paint order for free: a ::before generates as .glow's FIRST
+   child, and every layer in here is position: absolute at z-index: auto, so it
+   paints below .glow__wash and .glow__orbs in tree order. That is the required
+   order, not an accident to be corrected -- this is the ground, and giving it a
+   z-index would lift it over the wash and replace the ramp with a flat slab.
+
+   No z-index is also what keeps the rule safe to reuse. .glow is
+   position: absolute / z-index: auto, so it is NOT a stacking context: any
+   z-index put here would compete inside the CONSUMER's stacking context, and in
+   the footer it wins against .job-footer::before -- the scrim would end up
+   veiling nothing. At auto it cannot reach out of the glow at all.
+
+   Sized in .glow's own box, so it rescales with the box like everything else
+   here: inset-inline: 0 for the band's exact width (never 100vw, which counts
+   the scrollbar gutter), inset-block-end: 0 to pin it to the bottom edge, and a
+   height of one wash stop -- 100/(WASH_STOPS - 1) percent, the first step of the
+   gradient above it. That is the zone the wash itself treats as fully red, which
+   is what makes the ground invisible rather than a second colour: measured
+   against a 400px band, the last painted row is rgb(195, 3, 13) with this rule
+   and without it. Take the height past one stop and the wash goes translucent
+   enough to show it, and the bottom of the band reddens.
+
+   The colour is the scrimmed accent, not the raw accent, because the band's last
+   row is not #e50914: .job-footer::before lays 0.14 black over the wash right
+   down to the bottom edge. Mixing the same 14% in here is what makes the ground
+   agree with the row above it. If that scrim's alpha moves, this moves with it.
+   The fallback keeps the rule standalone -- --accent is defined on .job-page,
+   and .glow is droppable anywhere. */
+.glow::before {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  inset-block-end: 0;
+  block-size: 2.08%;
+  background: color-mix(in srgb, #000 14%, var(--accent, #e50914));
+}
 .glow__wash {
   position: absolute;
   inset: 0;

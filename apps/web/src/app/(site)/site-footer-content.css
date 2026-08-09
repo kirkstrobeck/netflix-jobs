@@ -1,7 +1,7 @@
 /* The footer's content column: the wordmark, the accommodation notice and the
    link row. Split out of site-footer.css to stay under the 200-line limit --
-   that file keeps the band itself (its box, the glow's clip, the scrim and the
-   overscroll skirt), this one keeps everything painted on top of it. Same
+   that file keeps the band itself (its box, the glow's clip and the scrim),
+   this one keeps everything painted on top of it. Same
    tokens, same band; the split is a file-size line, not a design line. */
 
 /* The wordmark is Netflix's official mark, and the official mark is #e50914.

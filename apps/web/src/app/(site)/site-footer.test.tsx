@@ -1,3 +1,6 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
@@ -43,51 +46,89 @@ describe("SiteFooter", () => {
 });
 
 /**
- * Overscroll past the end of the document opens a rubber-band gutter below the
- * footer, and bare canvas there is near-black --surface under a band whose last
- * painted row is opaque red. The skirt fills that gutter with the band's own
- * bottom colour -- without lengthening the page, and without a scrollbar.
+ * The band's bottom edge. The red is .glow::before -- the wash's ground, inside
+ * the glow's own box -- and it is nowhere else. Not on the footer, which used to
+ * own it as a ::after skirt, and above all not on the root: a root background is
+ * propagated to the canvas, and the canvas paints the rubber-band gutter at BOTH
+ * ends of the document, so the top overscroll would go red too.
+ *
+ * Nothing inside the document can reach that gutter, and the price of trying was
+ * measured: with a 1000px clip margin releasing the skirt, the home page's
+ * documentElement.scrollHeight was 3707 against content ending at 2707. Sized in
+ * the glow's box instead, the ground costs nothing -- measured again, the home
+ * page's scrollHeight is 2707 against a footer whose rect bottom is 2707.
  */
-describe("the footer's overscroll skirt", () => {
-  it("hangs a 1000px block off the bottom edge of the band", () => {
-    const body = rule(footer, ".job-footer::after");
+const glow = stripComments(generateGlowCss());
+
+describe("the band's bottom edge", () => {
+  it("pins the ground to the bottom of the glow, in the glow's own box", () => {
+    const body = rule(glow, ".glow::before");
 
     expect(body).toContain("position: absolute");
-    expect(body).toContain("inset-block-start: 100%");
-    expect(body).toContain("block-size: 1000px");
+    expect(body).toContain("inset-block-end: 0");
+    expect(body).toContain("block-size: 2.08%");
   });
 
-  // clip, not hidden: hidden would clip the skirt away with the orbs, and
-  // visible would hand the document 1000px of scroll with nothing in it.
-  it("clips the band so the skirt costs no scroll length", () => {
+  // Whatever .glow::before does applies everywhere <Glow /> is mounted, so the
+  // footer may not be named in it and it may not carry a z-index: .glow is
+  // z-index: auto and so not a stacking context, which means any z-index here
+  // would compete inside the CONSUMER's stacking context -- and it would beat
+  // .job-footer::before, leaving the scrim veiling nothing.
+  it("stays a reusable rule: no z-index, no footer in the selector", () => {
+    const body = rule(glow, ".glow::before");
+
+    expect(body).not.toContain("z-index");
+    expect(glow).not.toContain("job-footer");
+  });
+
+  // The skirt is gone from the footer entirely -- not moved, not scoped down.
+  it("leaves no red on the footer itself", () => {
+    expect(footer).not.toContain(".job-footer::after");
+    expect(footer).not.toContain("color-mix");
+  });
+
+  // Nothing on html or body -- a root background is propagated to the canvas,
+  // and the canvas is both gutters, not just the low one.
+  it("leaves the root and the body black", () => {
+    const globals = stripComments(
+      readFileSync(join(process.cwd(), "src/app/globals.css"), "utf8"),
+    );
+
+    expect(globals).not.toContain("color-mix");
+    expect(rule(globals, "html, body")).toContain("background: #000000");
+  });
+
+  // clip, not hidden: hidden would make the band a scroll container. And no clip
+  // margin -- extending the clip rect extends the scrollable overflow with it,
+  // which is exactly the 1000px of empty page this used to cost.
+  it("clips the band without a clip margin, so the band costs no scroll length", () => {
     const body = rule(footer, ".job-footer");
 
     expect(body).toContain("overflow: clip");
-    expect(body).toContain("overflow-clip-margin: 1000px");
+    expect(body).not.toContain("overflow-clip-margin");
     expect(body).not.toContain("overflow: hidden");
   });
 
   // 100vw measures the scrollbar gutter too, so on any platform that reserves
-  // one it would overhang by exactly that width -- a horizontal scrollbar.
-  it("takes its width from the band, never from the viewport", () => {
-    const body = rule(footer, ".job-footer::after");
+  // one the ground would overhang by exactly that width -- a horizontal scrollbar.
+  it("takes its width from the glow, never from the viewport", () => {
+    const body = rule(glow, ".glow::before");
 
     expect(body).toContain("inset-inline: 0");
     expect(body).not.toContain("vw");
   });
 
-  // The band's clip margin releases every edge, so the glow's own clip is the
-  // only thing left holding the orbs inside the band.
+  // The band's clip is the outer of two; this is the one holding the orbs.
   it("leaves the orbs clipped by the glow's own box", () => {
-    expect(rule(stripComments(generateGlowCss()), ".glow")).toContain("overflow: hidden");
+    expect(rule(glow, ".glow")).toContain("overflow: hidden");
   });
 
-  // .job-footer__scrim is inset: 0, so the band's last painted row is the wash
-  // under 14% black, not #e50914. The skirt mixes the same 14% or it seams.
+  // The scrim ::before is inset: 0, so the band's last painted row is the wash
+  // under 14% black, not #e50914. The ground mixes the same 14% or it seams.
   it("matches the scrimmed bottom edge rather than the raw accent", () => {
-    expect(rule(footer, ".job-footer__scrim")).toContain("rgb(0 0 0 / 0.14)");
-    expect(rule(footer, ".job-footer::after")).toContain(
-      "color-mix(in srgb, #000 14%, var(--accent))",
+    expect(rule(footer, ".job-footer::before")).toContain("rgb(0 0 0 / 0.14)");
+    expect(rule(glow, ".glow::before")).toContain(
+      "color-mix(in srgb, #000 14%, var(--accent, #e50914))",
     );
   });
 });

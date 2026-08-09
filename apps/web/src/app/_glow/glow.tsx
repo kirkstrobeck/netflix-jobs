@@ -25,7 +25,12 @@ import "@/app/_glow/glow.generated.css";
 // The root is position: absolute / inset: 0 and contributes nothing to layout,
 // so it fills whichever positioned ancestor it is dropped into. Text placed over
 // it needs a scrim: the wash reaches opaque #e50914 at the bottom edge, which is
-// only 4.4:1 against --ink. See .job-footer__scrim.
+// only 4.4:1 against --ink. See .job-footer::before.
+//
+// One layer here has no element: .glow::before is the wash's ground, pinned to
+// the bottom edge of this box. It is a pseudo-element so it costs no markup, and
+// it carries no z-index so it stays under the wash and cannot reach out into the
+// consumer's stacking context. See the rule in generate-glow-css.ts.
 export function Glow() {
   return (
     <MotionRegion className="glow">
