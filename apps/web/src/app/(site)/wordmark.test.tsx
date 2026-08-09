@@ -114,6 +114,12 @@ describe("the wordmark on a filtered board", () => {
     expect(markHref(html)).toBe("/?country=JP");
   });
 
+  // Nothing in this file mocks next/navigation, so the board's mark renders
+  // here with no router above it -- which is the server's own situation, and a
+  // crawler's. useSearchParams answers null there and the href stays the one
+  // the server spelled. Every assertion in this describe is therefore also the
+  // assertion that following the URL on the client did not cost the server
+  // render; wordmark-link.test.tsx is the other half.
   it("stays a bare / when the board has nothing applied", async () => {
     const html = await renderFiltered({});
 

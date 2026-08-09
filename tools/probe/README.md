@@ -25,6 +25,15 @@ Then:
 | `cta.mjs`     | contrast of a control against an ANIMATED backdrop, worst frame   |
 | `share.mjs`   | the share control's fallback chain, one stubbed browser per rung  |
 | `where.mjs`   | whether the country from /api/where moves the page or filters it  |
+| `wordmark.mjs`| whether both marks still point at the board after a facet tick     |
+
+`wordmark.mjs` is the one that has to be a browser. The marks are served by the
+`@header`/`@footer` slots, which do not re-render for the panel's pushState, so
+the interesting states only exist after a real click on a real checkbox. It also
+clicks the mark afterwards, because the attribute is not the answer: `next/link`
+navigates to the href it was rendered with, not the one in the DOM, so an
+address that reads correctly on hover can still land somewhere else. Stash the
+fix and re-run it — steps 2 and 3 both report the stale board.
 
 `where.mjs` holds the `/api/where` response until the listing has settled, so
 the page can be read in the state it paints in and again once the refinement

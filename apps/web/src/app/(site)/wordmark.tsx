@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Suspense } from "react";
 
+import { BoardLink } from "@/app/(site)/wordmark-link";
 import { EMPTY_QUERY, jobsHref } from "@/lib/search/job-query";
 import { parseJobQuery, type RawSearchParams } from "@/lib/search/parse-query";
 
@@ -45,9 +46,23 @@ type MarkProps = {
   // that `loading="eager"` is the tool for this rather than `preload`, which is
   // for a single LCP hero.
   loading: "eager" | "lazy";
+  /**
+   * Whether this mark has to keep up with a URL that changes under it.
+   *
+   * Only the board's does. The facet panel filters with a pushState and no
+   * round trip, and these marks are in slots that do not re-render for one, so
+   * the board's href goes stale on the first tick unless it reads the URL
+   * itself. A posting's mark and the shell's fallback have no such URL: they
+   * point at the bare board and stay server-rendered markup with no hook in
+   * them, which is what keeps a posting's prerender out of this entirely.
+   */
+  live?: boolean;
 };
 
-type WordmarkProps = Omit<MarkProps, "href"> & {
+// "live" is not in it: whether the mark has to follow the URL is decided from
+// searchParams below, not asked of the caller. A masthead that could be handed
+// the query and told not to keep up with it is a mode nobody wants.
+type WordmarkProps = Omit<MarkProps, "href" | "live"> & {
   /**
    * The listing state this page is showing, if it is showing any.
    *
@@ -69,9 +84,12 @@ type WordmarkProps = Omit<MarkProps, "href"> & {
 // an image link with no accessible name is a genuine a11y failure -- so alt is
 // "Netflix" and the sibling "Jobs" completes it, giving the link the name
 // "Netflix Jobs" with no aria-label and no text duplicated for screen readers.
-function Mark({ className, href, loading }: MarkProps) {
-  return (
-    <Link className={className} href={href}>
+function Mark({ className, href, live, loading }: MarkProps) {
+  // Written once and handed to whichever anchor wraps it. The two branches
+  // differ in one thing -- whether the href is allowed to change after the
+  // document loaded -- and the accessible name must not be one of them.
+  const mark = (
+    <>
       <Image
         alt="Netflix"
         className="wordmark__mark"
@@ -81,6 +99,20 @@ function Mark({ className, href, loading }: MarkProps) {
         width={INTRINSIC_WIDTH}
       />
       <span className="wordmark__suffix">Jobs</span>
+    </>
+  );
+
+  if (live) {
+    return (
+      <BoardLink className={className} href={href}>
+        {mark}
+      </BoardLink>
+    );
+  }
+
+  return (
+    <Link className={className} href={href}>
+      {mark}
     </Link>
   );
 }
@@ -91,6 +123,12 @@ function Mark({ className, href, loading }: MarkProps) {
 // mark, the facet checkboxes and the pager all produce byte-identical URLs for
 // the same state and share one cache entry. Parsing on the way in is what makes
 // that true of a hand-typed `?country=us&country=US` as well.
+//
+// This is the whole of the href for a document load, and `live` is what keeps it
+// true afterwards: the panel filters with a pushState, so the URL this component
+// was rendered for stops being the URL the visitor is on. BoardLink re-reads it
+// from there. The string below is unchanged either way -- with JavaScript off it
+// is also the final one.
 async function BoardMark({
   className,
   loading,
@@ -98,7 +136,7 @@ async function BoardMark({
 }: Required<WordmarkProps>) {
   const query = parseJobQuery(await searchParams);
 
-  return <Mark className={className} href={jobsHref(query)} loading={loading} />;
+  return <Mark className={className} href={jobsHref(query)} live loading={loading} />;
 }
 
 // One component for both instances, because the accessible name and the address
