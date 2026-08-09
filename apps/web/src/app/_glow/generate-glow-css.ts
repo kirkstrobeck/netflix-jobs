@@ -27,7 +27,28 @@ function easedRedWash(): string {
 }
 
 function orbTransform(left: number, bottom: number): string {
-  return `translate3d(${left}cqw, ${-bottom}cqh, 0) translate(-50%, 0)`;
+  return `translate3d(${left}cqw, ${-bottom}cqh, 0)`;
+}
+
+/**
+ * The other half of centering an orb on its walk point. Every keyframe stop used
+ * to end in a literal `translate(-50%, 0)` -- the same 20 characters repeated
+ * across ~12,000 stops, a fifth of the whole stylesheet, saying a constant.
+ *
+ * A negative margin says it once. The orb is `position: absolute; left: 0` with
+ * a definite width and `right: auto`, so its border box starts at
+ * `left + margin-left`; half its own width to the left of the walk point is
+ * exactly where `translate(-50%, 0)` put it.
+ *
+ * The percentage case is equivalent for the same reason the transform was: with
+ * border-box sizing and no padding or border, `width: 54%` makes the border box
+ * 54% of the containing block, and a `margin-left` percentage resolves against
+ * that same containing block width -- so -27% is -50% of the box.
+ */
+function orbCentering(width: string): string {
+  const unit = width.endsWith("%") ? "%" : "rem";
+  const half = +(Number.parseFloat(width) / 2).toFixed(3);
+  return `-${half}${unit}`;
 }
 
 function orbKeyframes(
@@ -51,7 +72,7 @@ export function generateGlowCss(): string {
   const rules = orbs
     .map(
       (orb, i) =>
-        `.glow__orb--${i} { width: ${orb.width}; height: ${orb.height}%; animation: glow-orb-${i} ${orb.duration}s linear ${orb.delay}s infinite alternate; }`,
+        `.glow__orb--${i} { width: ${orb.width}; height: ${orb.height}%; margin-left: ${orbCentering(orb.width)}; animation: glow-orb-${i} ${orb.duration}s linear ${orb.delay}s infinite alternate; }`,
     )
     .join("\n");
 

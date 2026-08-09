@@ -3,8 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "build": "NODE_ENV=production next build",
-    "dev": "next dev",
+    "codegen:css": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON tools/write-generated-css.mjs",
+    "build": "pnpm codegen:css && NODE_ENV=production next build",
+    "dev": "pnpm codegen:css && next dev",
     "lint": "eslint",
     "start": "next start",
     "bench": "vitest bench --run",

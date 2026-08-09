@@ -30,9 +30,9 @@ const LINKS = [
   },
 ];
 
-// No "use client": <Glow /> is a server component emitting static markup and one
-// <style> tag, so the band works from the server HTML with no hydration and no
-// media to download. Reduced motion is CSS-only.
+// No "use client": <Glow /> is a server component emitting static markup and a
+// stylesheet import, so the band works from the server HTML with no hydration
+// and no media to download. Reduced motion is CSS-only.
 //
 // Layer order is DOM order -- glow, scrim, content -- and every layer is
 // positioned with z-index: auto, so nothing here needs a z-index.

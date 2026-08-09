@@ -16,6 +16,19 @@ describe("generateGlowCss", () => {
     expect(css).toContain("prefers-reduced-motion: reduce");
   });
 
+  // Centering an orb on its walk point is a constant, so it is stated once per
+  // orb as a negative margin instead of once per keyframe stop. There are ~12k
+  // stops; the literal `translate(-50%, 0)` they used to each carry was a fifth
+  // of the whole stylesheet.
+  it("centers each orb with a margin, not with a per-stop transform", () => {
+    const css = generateGlowCss();
+
+    expect(css).not.toContain("translate(-50%, 0)");
+    // width: 90% -> margin-left: -45%, which is the same -50% of the same box.
+    expect(css).toContain("width: 90%; height: 277%; margin-left: -45%;");
+    expect(css.match(/margin-left: -/g)?.length).toBe(ORB_COUNT);
+  });
+
   // Only the orbs stop. The wash is a static gradient, and pausing it would mean
   // the footer's red ground disappeared as you scrolled away from it.
   it("pauses the orbs while the region is idle, leaving the wash painted", () => {
