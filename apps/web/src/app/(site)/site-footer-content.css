@@ -1,0 +1,113 @@
+/* The footer's content column: the wordmark, the accommodation notice and the
+   link row. Split out of site-footer.css to stay under the 200-line limit --
+   that file keeps the band itself (its box, the glow's clip, the scrim and the
+   overscroll skirt), this one keeps everything painted on top of it. Same
+   tokens, same band; the split is a file-size line, not a design line. */
+
+/* The wordmark is Netflix's official mark, and the official mark is #e50914.
+   It is that here too -- the same file the masthead loads.
+
+   This rule used to carry a long argument for a WHITE mark in the footer, and
+   that argument was measured at the wrong height. It took the worst pixel the
+   band can paint -- flat opaque #e50914 at the BOTTOM edge -- and applied it to
+   the wordmark. The bottom edge is where the links sit. The wordmark is the
+   first item in the content grid, ~18.5rem up a 25rem band, and the wash is a
+   percentage ramp: at 74% of the band its alpha is ~0.012. Composited over
+   --surface and under the 0.14 scrim that is rgb(9,2,2), against which #e50914
+   measures 4.29:1 -- the masthead's own 4.30:1, to a rounding error.
+
+   The one case that is genuinely worse is an orb. Orbs are the same red, walk to
+   TOP_CEILING 92cqh, and peak at OPACITY_MAX 0.575, so one drifting directly
+   behind the mark takes the backdrop to rgb(117,5,11) and the mark to 2.46:1 --
+   under the 3:1 non-text floor, for the seconds it takes to pass. A logotype is
+   exempt from 1.4.11, and the "Jobs" suffix beside it is real text that stays
+   --ink and holds 10.8:1 even in that frame, so the link never loses its
+   accessible name. If that transient is ever worth closing, the lever is orb
+   opacity near the top of the band in _glow/glow-tunables.ts -- not this rule,
+   and not the colour of the mark.
+
+   The tone is baked into the SVG rather than set here because the mark is
+   delivered through next/image, which renders an <img>: `color` does not cross
+   into a replaced element, so a currentColor fill would resolve against the
+   image's own initial color and come out black. */
+.job-footer__wordmark {
+  justify-self: start;
+}
+
+/* Body copy, not fine print: full --ink, a readable measure, and the same accent
+   rule the prose uses for pulled-out text. */
+.job-footer__notice {
+  max-inline-size: 62ch;
+  margin: 0;
+  padding-inline-start: 1.25rem;
+  border-inline-start: 2px solid var(--accent);
+  color: var(--ink);
+  font-size: 1.0625rem;
+  line-height: 1.65;
+  text-wrap: pretty;
+}
+
+.job-footer__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.875rem 2rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* At rest these carry no underline; it comes back on hover and on focus.
+
+   The underline used to be load-bearing, and the note here used to say so: an
+   underline is the only thing marking a link inside a block of body copy, which
+   made it meaningful non-text UI held to 3:1 rather than decoration. That
+   argument was about links in prose. These four are not in prose -- they are a
+   <nav aria-label="Footer"> list, set apart from the notice by their own row,
+   their own weight, and their own size. A footer nav is a place a reader already
+   reads as links, so dropping the resting underline is not dropping the only
+   cue; it is the standard pattern for this one spot. The notice's inline prose,
+   if it ever gets a link, does not get this rule.
+
+   What did NOT change is the colour. Red at 0.9 was the original, and over the
+   glow red-on-red vanishes exactly where the band is brightest, taking the
+   affordance with it -- that is why it went white, and it stays white. Now that
+   the line only ever shows in an interaction state there is no reason to hold it
+   at 0.7 for restraint's sake, so it is full --ink: 5.64:1 against the worst
+   frame the wash can paint, 18.4:1 over the dark upper band.
+
+   :focus-visible is on the same rule as :hover so keyboard reaches every state
+   the mouse does. It is additive, not a replacement -- .job-page :focus-visible
+   already draws a 2px white outline, and this puts the underline back inside it
+   so a keyboard user sees the same link the mouse user does.
+
+   Transparent-to-white rather than none-to-underline: text-decoration-line does
+   not interpolate, so toggling it would snap. Holding the line always-present
+   and animating only its colour is what keeps the fade -- and a fully
+   transparent underline paints nothing and reserves nothing, so at rest this is
+   an unadorned link.
+
+   The transition is asymmetric, and which rule owns which direction is the whole
+   trick. An element animates using the transition declared on the state it is
+   moving TO, so the base rule below is the hover-OFF direction and the :hover
+   rule is the hover-ON direction. Entry is 0s -- the underline is simply there
+   the instant the pointer lands, because a fade-in on hover is the thing that
+   makes an interface feel slow. Exit keeps 150ms, which costs nothing: the
+   pointer has already left, so the gentle fade is not in anyone's way. */
+.job-footer__link {
+  color: var(--ink);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 0.22em;
+  /* Hover-OFF only. See the note above. */
+  transition: text-decoration-color 150ms ease;
+}
+
+.job-footer__link:hover,
+.job-footer__link:focus-visible {
+  text-decoration-color: var(--ink);
+  /* Hover-ON: instant, never a fade. */
+  transition-duration: 0s;
+}

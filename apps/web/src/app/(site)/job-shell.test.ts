@@ -1,28 +1,11 @@
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
-
 import { describe, expect, it } from "vitest";
 
-const read = (name: string) =>
-  readFileSync(join(process.cwd(), "src/app/(site)", name), "utf8").replace(
-    /\/\*[\s\S]*?\*\//g,
-    "",
-  );
+import { readCss as read, rule } from "@/app/(site)/css-rule";
 
 const shell = read("job-shell.css");
 const listing = read("_listing/jobs-listing.css");
 const facets = read("_listing/jobs-facets.css");
 const options = read("_listing/jobs-options.css");
-
-const rule = (css: string, selector: string) => {
-  const normalise = (value: string) => value.trim().replace(/\s+/g, " ");
-
-  return (
-    [...css.matchAll(/([^{}]+)\{([^{}]*)\}/g)]
-      .map((match) => ({ selector: normalise(match[1]), body: match[2] }))
-      .find((entry) => entry.selector === normalise(selector))?.body ?? ""
-  );
-};
 
 /**
  * .shell is a grid item, and CSS Box Alignment says an auto margin absorbs free
