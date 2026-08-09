@@ -1,0 +1,44 @@
+/* The country facet: the offices nested under a ticked country, and the note
+   that admits a country was matched from the request. Split from
+   jobs-options.css to stay under the 200-line limit; same tokens, same
+   interaction-state rule. */
+
+/* The offices inside a ticked country.
+
+   Indented to the width of the parent's checkbox plus its gap, so the nested
+   labels start where the country's LABEL starts rather than where its box does.
+   That is the whole hierarchy cue: the sub-list hangs off the name above it and
+   the two columns of checkboxes stay visibly different depths.
+
+   border-inline-start rather than a marker per row: one line says "these belong
+   to that" for however many rows there are, and it costs nothing to read. */
+.option__sites {
+  margin: 0.125rem 0 0.375rem 0.4375rem;
+  padding-inline-start: 0.5rem;
+  border-inline-start: 1px solid var(--hairline);
+  list-style: none;
+}
+
+/* A shade quieter than the country above it, so the two levels are told apart
+   at a glance and not only by the indent. The selected state still promotes to
+   full --ink through .option--on, which is what keeps a ticked office the
+   brightest thing in its own list. */
+.option__sites .option {
+  font-size: 0.8125rem;
+  color: var(--ink-faint);
+}
+
+.option__sites .option--on {
+  color: var(--ink);
+}
+
+/* The sentence that admits a country was applied without being asked for. Same
+   size and colour as .facet__pinned -- both are the panel explaining its own
+   behaviour, and they can appear one under the other. */
+.facet__detected {
+  margin: 0.5rem 0 0;
+  color: var(--ink-faint);
+  font-size: 0.75rem;
+  line-height: 1.4;
+  text-wrap: pretty;
+}

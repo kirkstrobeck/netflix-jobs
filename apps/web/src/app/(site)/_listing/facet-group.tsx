@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useState } from "react";
+import { useId, useState, type ReactNode } from "react";
 
 import { FacetOptions } from "@/app/(site)/_listing/facet-options";
 import { useQueryNavigation } from "@/app/(site)/_listing/use-query-navigation";
@@ -11,13 +11,25 @@ type FacetGroupProps = {
   facetKey: FacetKey;
   legend: string;
   options: FacetOption[];
-  /** The group's name as a plural noun: "teams", "work types", "locations". */
+  /** The group's name as a plural noun: "teams", "work types", "countries". */
   plural: string;
   query: JobQuery;
+  /**
+   * What ticking a box does, when it is not just "toggle this value".
+   *
+   * The country group passes one, because ticking a country also has to clear
+   * the offices inside it and set the everywhere flag -- see toggleCountry.
+   */
+  onToggle?: (value: string) => void;
+  /** Rendered under one option; the country group hangs its offices here. */
+  renderNested?: (option: FacetOption) => ReactNode;
+  /** Rendered last inside the fieldset, under the options. */
+  children?: ReactNode;
 };
 
 // A search bar over the options rather than a dropdown of all of them: there are
-// 40 locations, and the useful interaction is "type Tokyo", not "scroll".
+// 21 countries and 31 teams, and the useful interaction is "type Tokyo", not
+// "scroll".
 //
 // The search text is local state and never reaches the URL -- it narrows which
 // options are on screen, it does not filter any jobs. Only ticking a box does
@@ -28,6 +40,9 @@ export function FacetGroup({
   options,
   plural,
   query,
+  onToggle,
+  renderNested,
+  children,
 }: FacetGroupProps) {
   const [search, setSearch] = useState("");
   const navigate = useQueryNavigation();
@@ -37,6 +52,8 @@ export function FacetGroup({
   // Built from the same noun the disclosure below uses, so "Search teams" and
   // "Show all 31 teams" cannot drift into naming the same group two ways.
   const searchLabel = `Search ${plural}`;
+  const toggle =
+    onToggle ?? ((value: string) => navigate(toggleFacet(query, facetKey, value)));
 
   return (
     <fieldset className="facet">
@@ -68,9 +85,10 @@ export function FacetGroup({
         <p className="facet__none">No matches</p>
       ) : (
         <FacetOptions
-          onToggle={(value) => navigate(toggleFacet(query, facetKey, value))}
+          onToggle={toggle}
           options={visible}
           plural={plural}
+          renderNested={renderNested}
         />
       )}
 
@@ -82,6 +100,8 @@ export function FacetGroup({
           applied.
         </p>
       ) : null}
+
+      {children}
     </fieldset>
   );
 }

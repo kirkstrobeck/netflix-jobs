@@ -3,7 +3,12 @@ import "server-only";
 import { cacheLife, cacheTag } from "next/cache";
 
 import { JOBS_BOARD_TAG } from "@/lib/jobs/cache-tags";
-import { SUMMARY_COLUMNS, type JobSummary } from "@/lib/jobs/job-summary";
+import {
+  SUMMARY_COLUMNS,
+  toSummary,
+  type JobRow,
+  type JobSummary,
+} from "@/lib/jobs/job-summary";
 import { restGet } from "@/lib/supabase/rest";
 
 // PostgREST caps a request at its own max-rows setting, so the ceiling is stated
@@ -28,13 +33,19 @@ const MAX_ROWS = 2000;
 // says so rather than when a clock runs out -- see the `jobs` profile in
 // next.config.ts. At steady state this is one Supabase query per crawl, not per
 // visitor and not per period.
+//
+// The nested join is flattened HERE, on the way into the cache, so the shape
+// that crosses the cache boundary is the one every caller wants. Doing it after
+// the read would re-walk 670 rows on every cache hit to produce the same array.
 export async function listJobSummaries(): Promise<JobSummary[]> {
   "use cache";
   cacheLife("jobs");
   cacheTag(JOBS_BOARD_TAG);
 
-  return restGet<JobSummary[]>(
+  const rows = await restGet<JobRow[]>(
     `jobs?select=${SUMMARY_COLUMNS}&is_active=eq.true` +
       `&order=posting_date.desc.nullslast,position_id.desc&limit=${MAX_ROWS}`,
   );
+
+  return rows.map(toSummary);
 }

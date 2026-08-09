@@ -10,12 +10,6 @@
   list-style: none;
 }
 
-.facet__none {
-  margin: 0.75rem 0 0;
-  color: var(--ink-faint);
-  font-size: 0.875rem;
-}
-
 .option {
   display: flex;
   align-items: center;

@@ -4,12 +4,14 @@ import { describe, expect, it, vi } from "vitest";
 import { JobListing } from "@/app/(site)/_listing/job-listing";
 import Home from "@/app/(site)/page";
 import { boardVersion } from "@/lib/jobs/board-payload";
-import { summary } from "@/lib/jobs/job-summary.fixture";
+import { SITES, summary } from "@/lib/jobs/job-summary.fixture";
 import { listJobSummaries } from "@/lib/jobs/list-jobs";
-import type { RawSearchParams } from "@/lib/search/job-query";
+import { listSites } from "@/lib/jobs/list-sites";
 import { PAGE_SIZE } from "@/lib/search/paginate";
+import type { RawSearchParams } from "@/lib/search/parse-query";
 
 vi.mock("@/lib/jobs/list-jobs", () => ({ listJobSummaries: vi.fn() }));
+vi.mock("@/lib/jobs/list-sites", () => ({ listSites: vi.fn() }));
 vi.mock("@/lib/jobs/board-payload", () => ({ boardVersion: vi.fn() }));
 
 // A static render is the first paint: no effects, so the board fetch has not
@@ -19,8 +21,18 @@ vi.mock("next/navigation", () => ({
   useSearchParams: () => new URLSearchParams(),
 }));
 
+// A request with no geography on it, which the fallback reads as a US visitor.
+// Every posting below is in the United States, so the country resolves to one
+// that changes nothing and these assertions stay about paging and filtering.
+// What varies with the request is job-listing-country.test.tsx.
+vi.mock("next/headers", () => ({
+  headers: async () => new Headers(),
+  cookies: async () => ({ get: () => undefined }),
+}));
+
 const listMock = vi.mocked(listJobSummaries);
 vi.mocked(boardVersion).mockResolvedValue("bo4rdv3rs10n");
+vi.mocked(listSites).mockResolvedValue(SITES);
 
 // 25 jobs across two teams: enough for two pages and a facet worth counting.
 const BOARD = Array.from({ length: 25 }, (_, i) =>
@@ -96,7 +108,9 @@ describe("JobListing", () => {
   it("links every page as a URL, not a button", async () => {
     const html = await renderListing({});
 
-    expect(html).toContain('href="/?page=2"');
+    // With the country the request resolved to on it: what the server rendered
+    // is what the link has to reproduce, or page 2 is a different listing.
+    expect(html).toContain('href="/?country=US&amp;page=2"');
     expect(html).not.toContain("<button class=\"pager__link\"");
   });
 

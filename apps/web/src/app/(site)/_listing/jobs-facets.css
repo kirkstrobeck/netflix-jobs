@@ -125,3 +125,11 @@
   transition-duration: 0s;
 }
 
+/* "No matches" -- what the option search says when it has narrowed a group
+   down to nothing. It sits where the option list would, so it lives with the
+   group rather than with the options it is standing in for. */
+.facet__none {
+  margin: 0.75rem 0 0;
+  color: var(--ink-faint);
+  font-size: 0.875rem;
+}

@@ -1,69 +1,46 @@
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { useSyncExternalStore } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { Listing } from "@/app/(site)/_listing/listing";
-import { summary } from "@/lib/jobs/job-summary.fixture";
+import {
+  push,
+  pushState,
+  resetHistory,
+  travel,
+  url,
+} from "@/app/(site)/_listing/history.fixture";
+import { board as asBoard, summary } from "@/lib/jobs/job-summary.fixture";
+import type { CountryDefault } from "@/lib/search/geo-query";
 import { EMPTY_QUERY, type JobQuery } from "@/lib/search/job-query";
 import { deriveListing } from "@/lib/search/listing-view";
 
-// A stand-in for the pairing this whole feature rests on: Next patches
-// history.pushState so that useSearchParams holds the pushed URL, and restores
-// the same way on popstate. The stack below is a real one -- push truncates the
-// forward entries, back walks the cursor -- so "the URL fully restores state"
-// is tested against something that can actually get it wrong.
-const listeners = new Set<() => void>();
-let stack = ["/"];
-let cursor = 0;
+vi.mock("next/navigation", async () => {
+  const { navigationMock } = await import("@/app/(site)/_listing/history.fixture");
 
-const url = () => stack[cursor];
-const announce = () => listeners.forEach((notify) => notify());
-
-const push = vi.fn();
-const pushState = vi.fn((_state: unknown, _title: string, next: string) => {
-  stack = [...stack.slice(0, cursor + 1), next];
-  cursor += 1;
-  announce();
+  return navigationMock();
 });
 
-const travel = async (step: number) => {
-  await act(async () => {
-    cursor += step;
-    announce();
-  });
-};
-
-vi.mock("next/navigation", () => ({
-  useRouter: () => ({ push }),
-  useSearchParams: () =>
-    new URLSearchParams(
-      useSyncExternalStore(
-        (notify: () => void) => {
-          listeners.add(notify);
-          return () => listeners.delete(notify);
-        },
-        () => url().split("?")[1] ?? "",
-        () => "",
-      ),
-    ),
-}));
-
-// 25 roles over two teams: two pages, and a facet worth counting.
-const BOARD = Array.from({ length: 25 }, (_, i) =>
-  summary({
-    title: `Role ${i}`,
-    team: i < 10 ? "Engineering" : "Marketing",
-    work_type: i % 2 === 0 ? "Onsite" : "Remote",
-  }),
+// 25 roles over two teams: two pages, and a facet worth counting. All of them
+// are in the United States, which is also what the request below was matched
+// to -- so the country is present in every URL and narrows nothing, and the
+// assertions stay about the control that was actually clicked.
+const BOARD = asBoard(
+  Array.from({ length: 25 }, (_, i) =>
+    summary({
+      title: `Role ${i}`,
+      team: i < 10 ? "Engineering" : "Marketing",
+      work_type: i % 2 === 0 ? "Onsite" : "Remote",
+    }),
+  ),
 );
+
+// What the server resolved the request to, handed down as a prop.
+const DETECTED: CountryDefault = { countries: ["US"], from: "detected" };
 
 let fetchMock: ReturnType<typeof vi.fn>;
 
 beforeEach(() => {
-  stack = ["/"];
-  cursor = 0;
-  push.mockClear();
-  pushState.mockClear();
+  resetHistory();
   vi.stubGlobal("fetch", (fetchMock = vi.fn(async () => ({
     ok: true,
     status: 200,
@@ -78,11 +55,14 @@ afterEach(() => {
 });
 
 function mount(query: JobQuery = EMPTY_QUERY) {
+  const applied = { ...query, country: DETECTED.countries };
+
   return render(
     <Listing
       boardVersion="v1"
-      initialQuery={query}
-      initialView={deriveListing(BOARD, query)}
+      countryDefault={DETECTED}
+      initialQuery={applied}
+      initialView={deriveListing(BOARD, applied)}
     />,
   );
 }
@@ -118,7 +98,7 @@ describe("before the board arrives", () => {
 
     fireEvent.click(screen.getByRole("checkbox", { name: /Engineering/ }));
 
-    expect(push).toHaveBeenCalledWith("/?team=Engineering", { scroll: false });
+    expect(push).toHaveBeenCalledWith("/?country=US&team=Engineering", { scroll: false });
     expect(pushState).not.toHaveBeenCalled();
   });
 });
@@ -141,7 +121,7 @@ describe("once the board is in memory", () => {
     fireEvent.click(await tick("Marketing"));
 
     await waitFor(() => expect(titles()).toEqual(MARKETING));
-    expect(pushState).toHaveBeenCalledWith(null, "", "/?team=Marketing");
+    expect(pushState).toHaveBeenCalledWith(null, "", "/?country=US&team=Marketing");
     expect(fetchMock).not.toHaveBeenCalled();
     expect(push).not.toHaveBeenCalled();
   });
@@ -154,7 +134,7 @@ describe("once the board is in memory", () => {
     fireEvent.click(screen.getByRole("link", { name: "2" }));
 
     await waitFor(() => expect(titles()[0]).toBe("Role 20"));
-    expect(url()).toBe("/?page=2");
+    expect(url()).toBe("/?country=US&page=2");
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
@@ -173,7 +153,7 @@ describe("once the board is in memory", () => {
 
     await travel(1);
 
-    expect(url()).toBe("/?team=Marketing");
+    expect(url()).toBe("/?country=US&team=Marketing");
     expect(titles()).toEqual(MARKETING);
   });
 
@@ -197,7 +177,7 @@ describe("once the board is in memory", () => {
     fireEvent.change(screen.getByLabelText("Keywords"), { target: { value: "Role 24" } });
     fireEvent.click(screen.getByRole("button", { name: "Add" }));
 
-    await waitFor(() => expect(url()).toBe("/?q=Role+24"));
+    await waitFor(() => expect(url()).toBe("/?country=US&q=Role+24"));
     expect(titles()).toEqual(["Role 24"]);
   });
 });

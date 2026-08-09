@@ -2,93 +2,61 @@
 // that knows how it is spelled there, so a link, a facet toggle and the server
 // render all agree by construction rather than by convention.
 
-export type FacetKey = "team" | "workType" | "location";
+export type FacetKey = "team" | "workType" | "country" | "site";
 
 export type JobQuery = {
   team: string[];
   workType: string[];
-  location: string[];
+  /** ISO-3166-1 alpha-2 codes, upper case. */
+  country: string[];
+  /** public.locations slugs, always inside a selected country. */
+  site: string[];
+  /**
+   * The visitor asked for EVERY country, and said so out loud.
+   *
+   * This is not the same as `country` being empty, and the difference is the
+   * whole of "detection must never fight the user". An empty country list means
+   * the URL has not answered the question, so the country detected from the
+   * request is allowed to answer it. This flag means the question was answered
+   * with "everywhere" -- by unticking the last country, or by following the
+   * link under the facet -- and detection has to keep its hands off.
+   *
+   * It is spelled `?country=all` in the URL, so the distinction survives being
+   * copied into a message and opened on someone else's machine.
+   */
+  everywhere: boolean;
   keywords: string[];
   page: number;
 };
 
-// Short keys, because a location value is already long enough to dominate the
-// query string. `q` repeats, one per keyword chip.
+// Short keys, because a site slug is already long enough to dominate the query
+// string. `q` repeats, one per keyword chip.
 export const PARAM: Record<FacetKey | "keywords" | "page", string> = {
   team: "team",
   workType: "type",
-  location: "location",
+  country: "country",
+  site: "site",
   keywords: "q",
   page: "page",
 };
 
-export const FACET_KEYS: FacetKey[] = ["team", "workType", "location"];
+/** The value of `?country=` that means "every country, and I mean it". */
+export const EVERYWHERE = "all";
+
+// Country before site, and both before the rest: the order here is the order
+// the facets are counted in and the order the params are written in, and the
+// country is the question the panel now leads with.
+export const FACET_KEYS: FacetKey[] = ["country", "site", "workType", "team"];
 
 export const EMPTY_QUERY: JobQuery = {
   team: [],
   workType: [],
-  location: [],
+  country: [],
+  site: [],
+  everywhere: false,
   keywords: [],
   page: 1,
 };
-
-export type RawSearchParams = Record<string, string | string[] | undefined>;
-
-// A repeated param arrives as an array, a single one as a string, an absent one
-// as undefined -- all three collapse to a list here. Blank entries are dropped
-// so `?team=` does not become a facet nobody can match, and the result is sorted
-// and de-duplicated so two URLs selecting the same set are the same URL.
-function readList(raw: string | string[] | undefined): string[] {
-  const values = Array.isArray(raw) ? raw : [raw];
-  const cleaned = values
-    .filter((value): value is string => typeof value === "string")
-    .map((value) => value.trim())
-    .filter(Boolean);
-
-  return [...new Set(cleaned)].sort((a, b) => a.localeCompare(b));
-}
-
-// Anything that is not a whole number at or above 1 is page 1. The upper bound
-// belongs to the result count, not the URL, so clamping to the last page happens
-// in paginate() where the total is known.
-function readPage(raw: string | string[] | undefined): number {
-  const value = Array.isArray(raw) ? raw[0] : raw;
-  const page = Number(value);
-
-  if (!Number.isInteger(page) || page < 1) {
-    return 1;
-  }
-
-  return page;
-}
-
-export function parseJobQuery(params: RawSearchParams): JobQuery {
-  return {
-    team: readList(params[PARAM.team]),
-    workType: readList(params[PARAM.workType]),
-    location: readList(params[PARAM.location]),
-    // Keywords keep their own casing for display in the chip; matching lowers
-    // both sides. De-duplication is therefore case-sensitive here on purpose:
-    // "Remote" and "remote" look different in a chip, so they stay two chips.
-    keywords: readList(params[PARAM.keywords]),
-    page: readPage(params[PARAM.page]),
-  };
-}
-
-// The browser hands the same information as URLSearchParams rather than as the
-// plain object Next gives the server. It is converted into that object and run
-// through the SAME parse, because "what does this URL mean" has to have one
-// answer -- a second reader here is how a back button lands on a state the
-// server would have rendered differently.
-export function readSearchParams(params: URLSearchParams): JobQuery {
-  const raw: RawSearchParams = {};
-
-  params.forEach((_value, key) => {
-    raw[key] = params.getAll(key);
-  });
-
-  return parseJobQuery(raw);
-}
 
 // Written in a fixed order -- facets, then keywords, then page -- so the same
 // state always produces byte-identical URLs and a copied link is stable.
@@ -98,6 +66,13 @@ export function toSearchParams(query: JobQuery): URLSearchParams {
   FACET_KEYS.forEach((key) => {
     query[key].forEach((value) => params.append(PARAM[key], value));
   });
+
+  // Only when there is no country to name. `?country=all&country=US` would be
+  // two answers to one question, and the specific one is the answer.
+  if (query.everywhere && query.country.length === 0) {
+    params.append(PARAM.country, EVERYWHERE);
+  }
+
   query.keywords.forEach((value) => params.append(PARAM.keywords, value));
 
   // Page 1 is the default, so it is left out. / and /?page=1 are the
@@ -160,6 +135,9 @@ export function withPage(query: JobQuery, page: number): JobQuery {
   return { ...query, page };
 }
 
+// `everywhere` is deliberately absent: it is the ABSENCE of a country filter,
+// stated out loud. Counting it as a filter would put a "Clear all" link next to
+// a listing that shows every role there is.
 export function isFiltered(query: JobQuery): boolean {
   return (
     FACET_KEYS.some((key) => query[key].length > 0) || query.keywords.length > 0

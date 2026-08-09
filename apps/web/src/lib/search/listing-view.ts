@@ -1,3 +1,4 @@
+import { siteCatalog, type Board } from "@/lib/jobs/board";
 import type { JobSummary } from "@/lib/jobs/job-summary";
 import { facetOptions, type FacetOption } from "@/lib/search/facet-counts";
 import { filterJobs } from "@/lib/search/filter-jobs";
@@ -23,16 +24,22 @@ export type ListingView = {
  * changing under you when the payload lands, or a shared link not matching what
  * the person who shared it saw. There is nothing to keep in step here because
  * there is only one of it.
+ *
+ * The country the server detected is NOT an input. Detection resolves to a
+ * query before this is called (see applyCountryDefault), so what reaches here
+ * is only ever "these filters" -- which is why the same call on the client, over
+ * the same board, reproduces the server's screen exactly.
  */
-export function deriveListing(jobs: JobSummary[], query: JobQuery): ListingView {
-  const results = filterJobs(jobs, query);
+export function deriveListing(board: Board, query: JobQuery): ListingView {
+  const catalog = siteCatalog(board.sites);
+  const results = filterJobs(board.jobs, query, catalog);
   // paginate() clamps, so `window.page` is the page that actually exists -- the
   // one the pagination links have to be built from. `query.page` is only ever
   // what was asked for.
   const window = paginate(results.length, query.page);
 
   const facets = Object.fromEntries(
-    FACET_KEYS.map((key) => [key, facetOptions(jobs, query, key)]),
+    FACET_KEYS.map((key) => [key, facetOptions(board.jobs, query, key, catalog)]),
   ) as Record<FacetKey, FacetOption[]>;
 
   return { jobs: pageSlice(results, window), window, facets };

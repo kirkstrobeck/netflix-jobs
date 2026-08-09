@@ -2,25 +2,36 @@
 
 import { useEffect, useState } from "react";
 
-import type { JobSummary } from "@/lib/jobs/job-summary";
+import type { Board } from "@/lib/jobs/board";
 
-async function loadBoard(version: string, signal: AbortSignal): Promise<JobSummary[]> {
+// A 200 that is not the board is a captive portal or a proxy's error page.
+// Treating it as one would hand lib/search something it cannot filter, and a
+// board with no sites would silently empty every country facet -- so the shape
+// is checked before it is believed, and the listing stays on the server path.
+function isBoard(value: unknown): value is Board {
+  if (typeof value !== "object" || value === null) {
+    return false;
+  }
+
+  const { sites, jobs } = value as Partial<Board>;
+
+  return Array.isArray(sites) && Array.isArray(jobs);
+}
+
+async function loadBoard(version: string, signal: AbortSignal): Promise<Board> {
   const response = await fetch(`/api/board?v=${encodeURIComponent(version)}`, { signal });
 
   if (!response.ok) {
     throw new Error(`GET /api/board -> ${response.status}`);
   }
 
-  const jobs: unknown = await response.json();
+  const board: unknown = await response.json();
 
-  // A 200 that is not an array is a captive portal or a proxy's error page, not
-  // a board. Treating it as one would hand lib/search something it cannot
-  // filter; throwing here keeps the listing on the server path instead.
-  if (!Array.isArray(jobs)) {
-    throw new Error("GET /api/board -> not an array");
+  if (!isBoard(board)) {
+    throw new Error("GET /api/board -> not a board");
   }
 
-  return jobs as JobSummary[];
+  return board;
 }
 
 /**
@@ -35,8 +46,8 @@ async function loadBoard(version: string, signal: AbortSignal): Promise<JobSumma
  * every control still works, it just costs a round trip, which is precisely
  * what the site did before any of this existed.
  */
-export function useBoard(version: string): JobSummary[] | null {
-  const [board, setBoard] = useState<JobSummary[] | null>(null);
+export function useBoard(version: string): Board | null {
+  const [board, setBoard] = useState<Board | null>(null);
 
   useEffect(() => {
     const controller = new AbortController();

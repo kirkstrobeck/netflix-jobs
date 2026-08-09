@@ -1,4 +1,6 @@
+import type { Board } from "@/lib/jobs/board";
 import type { JobSummary } from "@/lib/jobs/job-summary";
+import type { Site } from "@/lib/jobs/site";
 
 let nextId = 1;
 
@@ -12,38 +14,88 @@ export function summary(overrides: Partial<JobSummary> = {}): JobSummary {
     display_job_id: `JR${nextId}`,
     title: "Software engineer",
     team: "Engineering",
-    location: "Los Gatos,California,United States of America",
-    locations: ["Los Gatos,California,United States of America"],
+    sites: ["us-los-gatos"],
     work_type: "Onsite",
     posting_date: "2026-01-15",
     ...overrides,
   };
 }
 
+function place(slug: string, city: string, country: [string, string], region?: string): Site {
+  return {
+    slug,
+    city,
+    region: region ?? null,
+    country_code: country[0],
+    country: country[1],
+    is_remote: false,
+    display_name: [city, region, country[1]].filter(Boolean).join(", "),
+  };
+}
+
+function remote(slug: string, country: [string, string]): Site {
+  return {
+    slug,
+    city: null,
+    region: null,
+    country_code: country[0],
+    country: country[1],
+    is_remote: true,
+    display_name: `Remote, ${country[1]}`,
+  };
+}
+
+const US: [string, string] = ["US", "United States"];
+const JP: [string, string] = ["JP", "Japan"];
+const CA: [string, string] = ["CA", "Canada"];
+
+// The seven sites the fixtures below draw on, in the shape the database
+// returns. Three countries, one of them (the US) with several offices and a
+// remote scope -- which is the arrangement every interesting case in the
+// country facet needs: a country worth nesting, a country not worth nesting,
+// and a remote scope that has to stay inside its country.
+export const SITES: Site[] = [
+  place("us-los-gatos", "Los Gatos", US, "California"),
+  place("us-los-angeles", "Los Angeles", US, "California"),
+  place("us-new-york", "New York", US),
+  remote("us-remote", US),
+  place("jp-tokyo", "Tokyo", JP),
+  place("ca-vancouver", "Vancouver", CA, "British Columbia"),
+  remote("ca-remote", CA),
+];
+
 // A board with a known shape, mirroring the real data's proportions: teams of
-// different sizes, two work types, and one job posted in several locations.
+// different sizes, two work types, and one job posted at several sites.
 //
 //   team      Engineering 3, Marketing 2
 //   workType  Onsite 3, Remote 2
-//   location  Los Gatos 2, USA - Remote 2, Tokyo 1, New York 1
-export const BOARD: JobSummary[] = [
+//   country   US 4, JP 1
+//   site      us-los-gatos 2, us-remote 2, jp-tokyo 1, us-new-york 1
+export const JOBS: JobSummary[] = [
   summary({ title: "Senior software engineer", team: "Engineering" }),
   summary({ title: "Staff software engineer", team: "Engineering" }),
   summary({
     title: "Engineering manager, playback",
     team: "Engineering",
     work_type: "Remote",
-    locations: ["USA - Remote"],
+    sites: ["us-remote"],
   }),
   summary({
     title: "Marketing manager",
     team: "Marketing",
-    locations: ["Tokyo,Japan"],
+    sites: ["jp-tokyo"],
   }),
   summary({
     title: "Brand designer",
     team: "Marketing",
     work_type: "Remote",
-    locations: ["USA - Remote", "New York,New York,United States of America"],
+    sites: ["us-new-york", "us-remote"],
   }),
 ];
+
+export const BOARD: Board = { sites: SITES, jobs: JOBS };
+
+/** A board around a given set of postings, sharing the fixture catalog. */
+export function board(jobs: JobSummary[]): Board {
+  return { sites: SITES, jobs };
+}

@@ -7,8 +7,15 @@ export type JobSummary = {
   display_job_id: string | null;
   title: string;
   team: string | null;
-  location: string;
-  locations: string[];
+  /**
+   * public.locations slugs, sorted. The raw `location` / `locations[]` strings
+   * the board writes are NOT here: 'Los Angeles,California,United States of
+   * America' spells the same site five different ways across the crawl, and
+   * every question the listing asks -- which country, which office, is it
+   * remote -- is a question about the site record, not about the string. The
+   * slugs resolve against Board.sites.
+   */
+  sites: string[];
   work_type: string | null;
   posting_date: string | null;
 };
@@ -18,19 +25,29 @@ export const SUMMARY_COLUMNS = [
   "display_job_id",
   "title",
   "team",
-  "location",
-  "locations",
   "work_type",
   "posting_date",
+  // The join, embedded rather than fetched separately: PostgREST resolves it
+  // from the foreign key on job_locations.job_position_id, so 670 rows arrive
+  // with the postings they belong to instead of as a second round trip that
+  // could be one crawl out of step with the first.
+  "job_locations(location_slug)",
 ].join(",");
 
-// `locations` is NOT NULL with a '{}' default, so a row with no array falls back
-// to the scalar column. Every facet and filter reads locations through here, so
-// the two-column arrangement is handled once rather than at each call site.
-export function jobLocations(job: JobSummary): string[] {
-  if (job.locations.length > 0) {
-    return job.locations;
-  }
+/** A posting as PostgREST returns it, with the join still nested. */
+export type JobRow = Omit<JobSummary, "sites"> & {
+  job_locations: { location_slug: string }[];
+};
 
-  return job.location ? [job.location] : [];
+// Sorted, because PostgREST does not promise an order for an embedded resource
+// and boardVersion() is a digest of these exact bytes -- an unordered array
+// would change the digest, and therefore bust every browser's copy of the
+// board, on a crawl that changed nothing.
+export function toSummary(row: JobRow): JobSummary {
+  const { job_locations: joined, ...job } = row;
+
+  return {
+    ...job,
+    sites: joined.map((entry) => entry.location_slug).sort(),
+  };
 }

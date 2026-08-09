@@ -5,7 +5,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { FacetGroup } from "@/app/(site)/_listing/facet-group";
 import { KeywordFacet } from "@/app/(site)/_listing/keyword-facet";
 import { NavigateProvider } from "@/app/(site)/_listing/use-query-navigation";
-import { BOARD } from "@/lib/jobs/job-summary.fixture";
+import { siteCatalog } from "@/lib/jobs/board";
+import { JOBS, SITES } from "@/lib/jobs/job-summary.fixture";
 import { facetOptions } from "@/lib/search/facet-counts";
 import { EMPTY_QUERY, jobsHref, toggleFacet, type JobQuery } from "@/lib/search/job-query";
 
@@ -32,7 +33,7 @@ function renderTeams(query: JobQuery = EMPTY_QUERY) {
     <FacetGroup
       facetKey="team"
       legend="Team"
-      options={facetOptions(BOARD, query, "team")}
+      options={facetOptions(JOBS, query, "team", siteCatalog(SITES))}
       plural="teams"
       query={query}
     />,
@@ -78,7 +79,7 @@ describe("facet to URL", () => {
 
     fireEvent.click(checkbox(/Marketing/));
 
-    expect(navigatedTo()).toBe("/?team=Marketing&type=Remote&q=design");
+    expect(navigatedTo()).toBe("/?type=Remote&team=Marketing&q=design");
   });
 
   it("shows each option with its count and its checked state", () => {

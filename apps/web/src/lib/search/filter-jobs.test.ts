@@ -1,14 +1,18 @@
 import { describe, expect, it } from "vitest";
 
-import { BOARD, summary } from "@/lib/jobs/job-summary.fixture";
+import { siteCatalog } from "@/lib/jobs/board";
+import { JOBS, SITES, summary } from "@/lib/jobs/job-summary.fixture";
 import { filterJobs } from "@/lib/search/filter-jobs";
 import { EMPTY_QUERY, toggleFacet, type JobQuery } from "@/lib/search/job-query";
 
+const catalog = siteCatalog(SITES);
 const titles = (jobs: { title: string }[]) => jobs.map((job) => job.title).sort();
+const filter = (query: JobQuery, ignore?: Parameters<typeof filterJobs>[3]) =>
+  filterJobs(JOBS, query, catalog, ignore);
 
 describe("filterJobs", () => {
   it("returns everything for an empty query", () => {
-    expect(filterJobs(BOARD, EMPTY_QUERY)).toHaveLength(5);
+    expect(filter(EMPTY_QUERY)).toHaveLength(5);
   });
 
   // Two boxes ticked in one list is a request to widen, not to narrow to zero.
@@ -19,7 +23,7 @@ describe("filterJobs", () => {
       "Marketing",
     );
 
-    expect(filterJobs(BOARD, query)).toHaveLength(5);
+    expect(filter(query)).toHaveLength(5);
   });
 
   it("ANDs across facets", () => {
@@ -29,56 +33,47 @@ describe("filterJobs", () => {
       "Remote",
     );
 
-    expect(titles(filterJobs(BOARD, query))).toEqual(["Engineering manager, playback"]);
-  });
-
-  it("matches a job on any one of its locations", () => {
-    const query = toggleFacet(EMPTY_QUERY, "location", "USA - Remote");
-
-    expect(titles(filterJobs(BOARD, query))).toEqual([
-      "Brand designer",
-      "Engineering manager, playback",
-    ]);
+    expect(titles(filter(query))).toEqual(["Engineering manager, playback"]);
   });
 
   it("ANDs the keywords, so each chip narrows", () => {
     const one: JobQuery = { ...EMPTY_QUERY, keywords: ["engineer"] };
     const two: JobQuery = { ...EMPTY_QUERY, keywords: ["engineer", "staff"] };
 
-    expect(filterJobs(BOARD, one)).toHaveLength(3);
-    expect(titles(filterJobs(BOARD, two))).toEqual(["Staff software engineer"]);
+    expect(filter(one)).toHaveLength(3);
+    expect(titles(filter(two))).toEqual(["Staff software engineer"]);
   });
 
   it("matches keywords case-insensitively and ignores surrounding space", () => {
     const query: JobQuery = { ...EMPTY_QUERY, keywords: ["  BRAND  "] };
 
-    expect(titles(filterJobs(BOARD, query))).toEqual(["Brand designer"]);
+    expect(titles(filter(query))).toEqual(["Brand designer"]);
   });
 
   it("searches the team, the work type and the job code as well as the title", () => {
     const job = summary({ title: "Analyst", team: "Legal", display_job_id: "JR9182" });
+    const one = (keyword: string) =>
+      filterJobs([job], { ...EMPTY_QUERY, keywords: [keyword] }, catalog);
 
-    expect(filterJobs([job], { ...EMPTY_QUERY, keywords: ["legal"] })).toHaveLength(1);
-    expect(filterJobs([job], { ...EMPTY_QUERY, keywords: ["onsite"] })).toHaveLength(1);
-    expect(filterJobs([job], { ...EMPTY_QUERY, keywords: ["jr9182"] })).toHaveLength(1);
+    expect(one("legal")).toHaveLength(1);
+    expect(one("onsite")).toHaveLength(1);
+    expect(one("jr9182")).toHaveLength(1);
   });
 
-  // "New York" is stored as "New York,New York,United States of America", so
-  // matching only the raw string would miss the way anyone would type it.
-  it("finds a location by its readable form as well as its stored one", () => {
-    const query: JobQuery = { ...EMPTY_QUERY, keywords: ["York, New York"] };
+  it("finds a posting by the readable name of one of its sites", () => {
+    const query: JobQuery = { ...EMPTY_QUERY, keywords: ["new york"] };
 
-    expect(titles(filterJobs(BOARD, query))).toEqual(["Brand designer"]);
+    expect(titles(filter(query))).toEqual(["Brand designer"]);
   });
 
   it("returns nothing when a keyword matches nothing", () => {
-    expect(filterJobs(BOARD, { ...EMPTY_QUERY, keywords: ["atlantis"] })).toEqual([]);
+    expect(filter({ ...EMPTY_QUERY, keywords: ["atlantis"] })).toEqual([]);
   });
 
   // A keyword of nothing but space matches everything, so it is dropped rather
   // than scanned: the answer is the same and the board is not walked for it.
   it("ignores a keyword that is only whitespace", () => {
-    expect(filterJobs(BOARD, { ...EMPTY_QUERY, keywords: ["   "] })).toHaveLength(5);
+    expect(filter({ ...EMPTY_QUERY, keywords: ["   "] })).toHaveLength(5);
   });
 
   // A row with every optional column null must still be searchable by title
@@ -89,12 +84,13 @@ describe("filterJobs", () => {
       team: null,
       work_type: null,
       display_job_id: null,
-      locations: [],
-      location: "",
+      sites: [],
     });
+    const one = (keyword: string) =>
+      filterJobs([job], { ...EMPTY_QUERY, keywords: [keyword] }, catalog);
 
-    expect(filterJobs([job], { ...EMPTY_QUERY, keywords: ["archivist"] })).toHaveLength(1);
-    expect(filterJobs([job], { ...EMPTY_QUERY, keywords: ["engineering"] })).toEqual([]);
+    expect(one("archivist")).toHaveLength(1);
+    expect(one("engineering")).toEqual([]);
   });
 
   // `ignore` is what lets a facet count its own options while its selections
@@ -102,8 +98,8 @@ describe("filterJobs", () => {
   it("can drop one facet from the test", () => {
     const query = toggleFacet(EMPTY_QUERY, "team", "Engineering");
 
-    expect(filterJobs(BOARD, query)).toHaveLength(3);
-    expect(filterJobs(BOARD, query, "team")).toHaveLength(5);
+    expect(filter(query)).toHaveLength(3);
+    expect(filter(query, "team")).toHaveLength(5);
   });
 
   it("still applies the other facets when one is ignored", () => {
@@ -113,7 +109,7 @@ describe("filterJobs", () => {
       "Remote",
     );
 
-    expect(titles(filterJobs(BOARD, query, "team"))).toEqual([
+    expect(titles(filter(query, "team"))).toEqual([
       "Brand designer",
       "Engineering manager, playback",
     ]);

@@ -1,7 +1,7 @@
 import { cacheTag } from "next/cache";
 import { describe, expect, it, vi } from "vitest";
 
-import { jobLocations } from "@/lib/jobs/job-summary";
+import { toSummary, type JobRow } from "@/lib/jobs/job-summary";
 import { summary } from "@/lib/jobs/job-summary.fixture";
 import { listJobSummaries } from "@/lib/jobs/list-jobs";
 import { restGet } from "@/lib/supabase/rest";
@@ -10,12 +10,30 @@ vi.mock("@/lib/supabase/rest", () => ({ restGet: vi.fn() }));
 
 const restGetMock = vi.mocked(restGet);
 
-describe("listJobSummaries", () => {
-  it("returns the rows the database sent", async () => {
-    const rows = [summary(), summary()];
-    restGetMock.mockResolvedValue(rows);
+// A posting as PostgREST hands it over, with the join still nested and the
+// flattened `sites` not there yet.
+const row = (...slugs: string[]): JobRow => {
+  const { sites, ...job } = summary();
+  void sites;
 
-    await expect(listJobSummaries()).resolves.toBe(rows);
+  return { ...job, job_locations: slugs.map((slug) => ({ location_slug: slug })) };
+};
+
+describe("listJobSummaries", () => {
+  it("flattens the join into the slugs the listing filters on", async () => {
+    restGetMock.mockResolvedValue([row("us-los-gatos", "us-remote")]);
+
+    await expect(listJobSummaries()).resolves.toEqual([
+      expect.objectContaining({ sites: ["us-los-gatos", "us-remote"] }),
+    ]);
+  });
+
+  it("carries no join column into the flattened row", async () => {
+    restGetMock.mockResolvedValue([row("jp-tokyo")]);
+
+    const [job] = await listJobSummaries();
+
+    expect(job).not.toHaveProperty("job_locations");
   });
 
   it("is tagged so one revalidation flushes the board", async () => {
@@ -49,22 +67,32 @@ describe("listJobSummaries", () => {
 
     expect(restGetMock.mock.calls[0][0]).not.toContain("description");
   });
+
+  // The slugs are what makes a country answerable at all, so they have to come
+  // back with the postings rather than as a second request that could be one
+  // crawl out of step with the first.
+  it("embeds the location join in the same request", async () => {
+    restGetMock.mockResolvedValue([]);
+
+    await listJobSummaries();
+
+    expect(restGetMock.mock.calls[0][0]).toContain("job_locations(location_slug)");
+  });
 });
 
-describe("jobLocations", () => {
-  it("prefers the array", () => {
-    expect(jobLocations(summary({ locations: ["Tokyo,Japan"] }))).toEqual([
-      "Tokyo,Japan",
+describe("toSummary", () => {
+  // PostgREST does not promise an order for an embedded resource, and
+  // boardVersion() is a digest of these exact bytes -- an unordered array would
+  // bust every browser's copy of the board on a crawl that changed nothing.
+  it("sorts the slugs, whatever order the join returned them in", () => {
+    expect(toSummary(row("us-remote", "jp-tokyo", "us-los-gatos")).sites).toEqual([
+      "jp-tokyo",
+      "us-los-gatos",
+      "us-remote",
     ]);
   });
 
-  it("falls back to the scalar column when the array is empty", () => {
-    expect(jobLocations(summary({ locations: [], location: "Tokyo,Japan" }))).toEqual([
-      "Tokyo,Japan",
-    ]);
-  });
-
-  it("is empty when neither column has anything", () => {
-    expect(jobLocations(summary({ locations: [], location: "" }))).toEqual([]);
+  it("is an empty list for a posting with no location rows", () => {
+    expect(toSummary(row()).sites).toEqual([]);
   });
 });

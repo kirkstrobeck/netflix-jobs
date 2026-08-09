@@ -4,7 +4,7 @@ import { createHash } from "node:crypto";
 import { cacheLife, cacheTag } from "next/cache";
 
 import { JOBS_BOARD_TAG } from "@/lib/jobs/cache-tags";
-import { listJobSummaries } from "@/lib/jobs/list-jobs";
+import { loadBoard } from "@/lib/jobs/load-board";
 
 /**
  * The whole board, serialised once per cache entry, for the client to filter.
@@ -21,13 +21,21 @@ import { listJobSummaries } from "@/lib/jobs/list-jobs";
  *
  * TRANSFERRED SIZE
  *
- * 481 rows, 143,495 bytes of JSON, 14,704 bytes gzipped and 11,276 brotli
- * (measured with zlib over the live board; `compress: true` in next.config.ts
- * does the encoding). A columnar {keys, rows[][]} encoding was measured too:
- * 97,427 raw but only 13,761 gzipped -- 6% off the wire for an encoder and a
- * decoder that can disagree with each other, and rows that no longer arrive as
- * the JobSummary shape lib/search already takes. Not worth it; the repeated keys
- * that make the raw number look bad are exactly what a compressor eats.
+ * 481 postings and 36 sites, 107,714 bytes of JSON, 15,014 gzipped and 11,484
+ * brotli (measured with zlib over the live board; `compress: true` in
+ * next.config.ts does the encoding). A columnar {keys, rows[][]} encoding was
+ * measured too: 6% off the wire for an encoder and a decoder that can disagree
+ * with each other, and rows that no longer arrive as the JobSummary shape
+ * lib/search already takes. Not worth it; the repeated keys that make the raw
+ * number look bad are exactly what a compressor eats.
+ *
+ * Slugs replaced the raw location strings here, and the raw payload fell 25%
+ * (143,495 -> 107,714) because 'Los Angeles,California,United States of
+ * America' became 'us-los-angeles'. Compressed it is 2% BIGGER: those long
+ * strings repeated across 670 rows were exactly what gzip was best at, and 36
+ * site records had to be added to resolve the slugs. The trade is taken anyway
+ * -- the client needs a country per posting, and deriving one from a string the
+ * board spells five ways is the parsing the ingestor already did once.
  *
  * FRESHNESS
  *
@@ -41,7 +49,7 @@ export async function boardBody(): Promise<string> {
   cacheLife("jobs");
   cacheTag(JOBS_BOARD_TAG);
 
-  return JSON.stringify(await listJobSummaries());
+  return JSON.stringify(await loadBoard());
 }
 
 /**

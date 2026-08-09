@@ -66,17 +66,31 @@ describe("Pagination", () => {
     expect(hrefs(markup(44, 99))).toContain("/?page=2");
   });
 
+  // The country included. Paging is the one control that is worked repeatedly,
+  // and a page link that dropped it would widen the listing back to the world
+  // on the visitor's second click.
   it("carries every active facet and keyword into each page link", () => {
     const query: JobQuery = {
       ...EMPTY_QUERY,
+      country: ["US"],
+      site: ["us-los-gatos"],
       team: ["Engineering"],
       workType: ["Remote"],
       keywords: ["design"],
     };
 
     expect(hrefs(markup(100, 2, query))).toContain(
-      "/?team=Engineering&type=Remote&q=design&page=3",
+      "/?country=US&site=us-los-gatos&type=Remote&team=Engineering&q=design&page=3",
     );
+  });
+
+  // `?country=all` is a choice, not the absence of one, so it has to survive
+  // paging exactly like a named country does -- otherwise page 2 of "every
+  // country" is a URL that invites detection to answer the question again.
+  it("carries an explicit everywhere into each page link", () => {
+    const query: JobQuery = { ...EMPTY_QUERY, everywhere: true };
+
+    expect(hrefs(markup(100, 2, query))).toContain("/?country=all&page=3");
   });
 
   // 25 pages must not render 25 links.

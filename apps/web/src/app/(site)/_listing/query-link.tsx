@@ -9,6 +9,14 @@ type QueryLinkProps = {
   query: JobQuery;
   className?: string;
   current?: boolean;
+  /**
+   * What a plain click does, when the default navigate is not the whole of it.
+   *
+   * The country links pass useCountryChoice, which navigates AND remembers.
+   * Same href either way -- this only replaces the intercepted click, so the
+   * JavaScript-off path is untouched.
+   */
+  onFollow?: (query: JobQuery) => void;
   children: ReactNode;
 };
 
@@ -34,8 +42,15 @@ function isPlainClick(event: MouseEvent<HTMLAnchorElement>): boolean {
  * bookmarkable, middle-clickable, and works with JavaScript off; the handler is
  * only what stops the round trip when JavaScript is there.
  */
-export function QueryLink({ query, className, current, children }: QueryLinkProps) {
+export function QueryLink({
+  query,
+  className,
+  current,
+  onFollow,
+  children,
+}: QueryLinkProps) {
   const navigate = useQueryNavigation();
+  const follow = onFollow ?? navigate;
 
   const click = (event: MouseEvent<HTMLAnchorElement>) => {
     if (!isPlainClick(event)) {
@@ -43,7 +58,7 @@ export function QueryLink({ query, className, current, children }: QueryLinkProp
     }
 
     event.preventDefault();
-    navigate(query);
+    follow(query);
   };
 
   return (

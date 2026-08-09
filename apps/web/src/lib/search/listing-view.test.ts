@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { BOARD } from "@/lib/jobs/job-summary.fixture";
+import { toggleCountry } from "@/lib/search/geo-query";
 import { deriveListing } from "@/lib/search/listing-view";
 import { EMPTY_QUERY, toggleFacet, withPage } from "@/lib/search/job-query";
 
@@ -10,7 +11,22 @@ describe("deriveListing", () => {
 
     expect(view.jobs).toHaveLength(5);
     expect(view.window.total).toBe(5);
-    expect(Object.keys(view.facets).sort()).toEqual(["location", "team", "workType"]);
+    expect(Object.keys(view.facets).sort()).toEqual([
+      "country",
+      "site",
+      "team",
+      "workType",
+    ]);
+  });
+
+  // Detection resolves to a query BEFORE this is called, so what arrives here
+  // is only ever "these filters" -- which is what lets the same call on the
+  // client, over the same board, reproduce the server's screen exactly.
+  it("takes a country only as a query, never as a request", () => {
+    const view = deriveListing(BOARD, toggleCountry(EMPTY_QUERY, "JP"));
+
+    expect(view.window.total).toBe(1);
+    expect(view.jobs.map((job) => job.title)).toEqual(["Marketing manager"]);
   });
 
   it("filters the page and the window together", () => {

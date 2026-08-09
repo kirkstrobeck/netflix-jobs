@@ -2,9 +2,9 @@ import { renderHook, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { useBoard } from "@/app/(site)/_listing/use-board";
-import { summary } from "@/lib/jobs/job-summary.fixture";
+import { board, summary } from "@/lib/jobs/job-summary.fixture";
 
-const ROWS = [summary({ title: "Staff engineer" })];
+const ROWS = board([summary({ title: "Staff engineer" })]);
 
 function respond(body: unknown, ok = true) {
   const fetchMock = vi.fn(async (url: string) => ({
@@ -59,8 +59,31 @@ describe("useBoard", () => {
     expect(result.current).toBeNull();
   });
 
-  it("stays null when the response is not an array", async () => {
+  it("stays null when the response is not a board", async () => {
     respond({ error: "captive portal" });
+
+    const { result } = renderHook(() => useBoard("v1"));
+
+    await waitFor(() => expect(fetch).toHaveBeenCalled());
+    expect(result.current).toBeNull();
+  });
+
+  // The old payload WAS the job array, so a browser holding a stale copy of it
+  // -- or a proxy replaying one -- would otherwise be handed to lib/search as a
+  // board with no sites, and every country facet would silently come back empty.
+  it("stays null for a bare array, which is the old payload", async () => {
+    respond([summary()]);
+
+    const { result } = renderHook(() => useBoard("v1"));
+
+    await waitFor(() => expect(fetch).toHaveBeenCalled());
+    expect(result.current).toBeNull();
+  });
+
+  // `typeof null` is "object", so null has to be ruled out by name or it walks
+  // straight through the shape check and throws on the first property read.
+  it("stays null for a literal null body", async () => {
+    respond(null);
 
     const { result } = renderHook(() => useBoard("v1"));
 
