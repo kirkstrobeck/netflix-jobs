@@ -1,9 +1,25 @@
 /* The result row and its interaction state. Split from jobs-listing.css to stay
    under the 200-line limit; same tokens and the same interaction rule. */
 
+/* THE SET OF ROWS IS A BOUNDED BLOCK, AND THE BOTTOM RULE BELONGS TO IT.
+
+   A rule above the first row and a rule below the last one, with the
+   between-row hairlines in between: the list reads as one thing with a top and
+   a bottom rather than as rows that trail off.
+
+   The bottom rule is HERE, on the list, and that is the fix rather than a
+   detail. It used to be .listing__foot's border-block-start -- a rule belonging
+   to the count line, drawn 2rem below the last row and separated from it by
+   that gap. On screen it read as the last row having grown some padding and
+   then a stray line under it, because it was answering to an element the reader
+   cannot see. Owned by the list, it lands exactly where the list ends.
+
+   No doubling where the two meet: rows carry border-block-START only, so the
+   last row's edge has nothing on it for this to sit on top of. */
 .results {
   margin: 0;
   padding: 0;
+  border-block-end: 1px solid var(--hairline);
   list-style: none;
 }
 

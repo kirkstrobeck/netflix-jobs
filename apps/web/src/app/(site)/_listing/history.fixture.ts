@@ -64,7 +64,12 @@ export function navigationMock() {
             listeners.add(notify);
             return () => listeners.delete(notify);
           },
-          () => url().split("?")[1] ?? "",
+          // Parsed rather than split on "?", because a page link ends in
+          // `#open-roles` and a naive split hands the fragment to the last
+          // param as part of its value. The real useSearchParams never sees a
+          // fragment -- it is not sent to a server and is not query state --
+          // so neither does this.
+          () => new URL(url(), "https://jobs.example").search.slice(1),
         ),
       ),
   };

@@ -120,19 +120,26 @@ export function useListing(
   }, [board, deferredQuery, initialView, nearest.buckets]);
 
   const navigate = useCallback(
-    (next: JobQuery) => {
+    (next: JobQuery, fragment?: string) => {
+      const href = jobsHref(next);
+      // The fragment is part of the address, so it goes in the address. It is
+      // NOT part of the state: useSearchParams never sees it, `seen` is tracked
+      // without it, and nothing below re-reads it.
+      const url = fragment ? `${href}#${fragment}` : href;
+
       // No board: the URL is still the only way to change anything, exactly as
       // it was before any of this. router.push, not a hard link, so the app
-      // router still handles it.
+      // router still handles it -- and it is the one path where Next does the
+      // scrolling, since the page is re-rendered rather than re-sliced. scroll
+      // is therefore on exactly when there is somewhere to scroll TO; a facet
+      // change still must not throw the visitor back to the masthead.
       if (!board) {
-        router.push(jobsHref(next), { scroll: false });
+        router.push(url, { scroll: Boolean(fragment) });
         return;
       }
 
-      const url = jobsHref(next);
-
       setQuery(next);
-      setSeen(url);
+      setSeen(href);
       // The native History API, which Next patches to keep usePathname and
       // useSearchParams in step without fetching anything. push, not replace,
       // so every filter change is a back-button step -- ticking a box is a

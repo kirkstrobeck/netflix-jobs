@@ -105,7 +105,7 @@ describe("JobListing", () => {
     // has to reproduce the WHOLE query or page 2 is a different listing.
     const html = await renderListing({ country: "US" });
 
-    expect(html).toContain('href="/?country=US&amp;page=2"');
+    expect(html).toContain('href="/?country=US&amp;page=2#open-roles"');
     expect(html).not.toContain("<button class=\"pager__link\"");
   });
 
@@ -142,7 +142,7 @@ describe("Home", () => {
 
     expect(html).toContain(
       '<main class="listing__results"><header class="listing-hero">' +
-        '<h2 class="listing-title">Open roles</h2>',
+        '<h2 class="listing-title" id="open-roles">Open roles</h2>',
     );
     // The sort control is the header's second child, on the same line.
     expect(html.indexOf('class="sort"')).toBeGreaterThan(

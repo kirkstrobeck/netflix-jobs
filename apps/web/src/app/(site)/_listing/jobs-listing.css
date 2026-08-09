@@ -62,6 +62,17 @@
    outline a screen reader walks is untouched. */
 .listing-title {
   margin: 0;
+  /* Where a page change lands. Every pager link ends in #open-roles, and this
+     is the only thing standing between the heading and the top edge of the
+     viewport when the browser jumps to it.
+
+     2rem, and it is a judgement rather than a measurement: nothing on this page
+     is sticky -- the site header scrolls away with everything else -- so there
+     is no fixed obstruction to clear, only the difference between a heading
+     jammed against the edge of the screen and one that reads as the top of
+     something. If anything ever IS pinned above the listing, its height belongs
+     in this number. */
+  scroll-margin-block-start: 2rem;
   color: var(--ink-muted);
   font-size: 0.8125rem;
   font-weight: 500;
@@ -99,6 +110,10 @@
 .results-empty {
   min-block-size: 16rem;
   padding-block: 4rem 3rem;
+  /* The same bottom rule .results carries. The empty state stands in for the
+     list, so it is bounded like the list -- otherwise the block loses its floor
+     on exactly the screen where there is nothing else to give it one. */
+  border-block-end: 1px solid var(--hairline);
 }
 
 /* pretty, not balance: this is running copy, and pretty is the algorithm that

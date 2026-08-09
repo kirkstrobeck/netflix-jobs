@@ -3,6 +3,7 @@
 import { FacetsPanel } from "@/app/(site)/_listing/facets-panel";
 import { Pagination } from "@/app/(site)/_listing/pagination";
 import { ResultCount } from "@/app/(site)/_listing/result-count";
+import { RESULTS_ANCHOR } from "@/app/(site)/_listing/results-anchor";
 import { ResultList } from "@/app/(site)/_listing/result-list";
 import { SortControl } from "@/app/(site)/_listing/sort-control";
 import { SortStatus } from "@/app/(site)/_listing/sort-status";
@@ -47,7 +48,13 @@ export function Listing({ boardVersion, initialQuery, initialView }: ListingProp
 
               h2, not h1 -- the masthead owns the page's only h1. */}
           <header className="listing-hero">
-            <h2 className="listing-title">Open roles</h2>
+            {/* The id is what every page link ends in, so changing page puts
+                this line at the top of the viewport instead of leaving the
+                visitor at the bottom of a list that has just been replaced.
+                The offset is scroll-margin-block-start in jobs-listing.css. */}
+            <h2 className="listing-title" id={RESULTS_ANCHOR}>
+              Open roles
+            </h2>
 
             {/* Inside the header and after the heading, so it reads as "these
                 roles, ordered like this" and lands on the same line. It is the

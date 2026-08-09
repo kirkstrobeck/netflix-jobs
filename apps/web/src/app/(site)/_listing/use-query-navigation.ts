@@ -12,7 +12,7 @@ import type { JobQuery } from "@/lib/search/job-query";
  * whether the board has arrived. A facet, a chip and a page link are the same
  * call, so they cannot drift apart in how they navigate.
  */
-export type Navigate = (query: JobQuery) => void;
+export type Navigate = (query: JobQuery, fragment?: string) => void;
 
 const NavigateContext = createContext<Navigate | null>(null);
 

@@ -25,6 +25,14 @@ type QueryLinkProps = {
    * JavaScript-off path is untouched.
    */
   onFollow?: (query: JobQuery) => void;
+  /**
+   * An id on this page to land on, appended to the href.
+   *
+   * The pager passes one, and it is the whole of "a new page starts at the top
+   * of the list". See the click handler below for why a link with a fragment is
+   * the one case that is NOT intercepted outright.
+   */
+  fragment?: string;
   children: ReactNode;
 };
 
@@ -55,13 +63,38 @@ export function QueryLink({
   className,
   current,
   onFollow,
+  fragment,
   children,
 }: QueryLinkProps) {
   const navigate = useQueryNavigation();
   const follow = onFollow ?? navigate;
+  const href = fragment ? `${jobsHref(query)}#${fragment}` : jobsHref(query);
 
+  /**
+   * WHY THE FRAGMENT CASE DOES NOT preventDefault
+   *
+   * A link with a fragment has two jobs: change the query, and put the target
+   * on screen. The first is ours -- the board is in memory, so it costs a
+   * pushState and no round trip. The second is the browser's, and the browser
+   * will only do it for a real navigation.
+   *
+   * So the order is: push the new URL, fragment and all, then stand back. By
+   * the time the default action runs, the document's URL is already exactly
+   * what this anchor points at -- and navigating to the URL you are already on
+   * is a fragment navigation that REPLACES rather than pushes. One history
+   * entry, at the right address, and the scroll is the browser's own, honouring
+   * scroll-margin like any other `#` link.
+   *
+   * Calling preventDefault here instead and then scrolling by hand is the
+   * version that needs to know how tall the header is.
+   */
   const click = (event: MouseEvent<HTMLAnchorElement>) => {
     if (!isPlainClick(event)) {
+      return;
+    }
+
+    if (fragment) {
+      follow(query, fragment);
       return;
     }
 
@@ -70,12 +103,7 @@ export function QueryLink({
   };
 
   return (
-    <a
-      aria-current={current}
-      className={className}
-      href={jobsHref(query)}
-      onClick={click}
-    >
+    <a aria-current={current} className={className} href={href} onClick={click}>
       {children}
     </a>
   );

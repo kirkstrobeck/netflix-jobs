@@ -4,12 +4,21 @@
 
 /* ---- count and pagination --------------------------------------------- */
 
+/* OUTSIDE THE LIST, AND SAYING SO BY BEING OUTSIDE IT.
+
+   The count and the pager are facts ABOUT the list, so they sit below the rule
+   that closes it with nothing but air between. The rule they used to draw is
+   now .results' own border-block-end -- it was never theirs; it just happened
+   to be the line under the last row, which is why the gap above it read as the
+   last row having grown some padding.
+
+   1.25rem, not the 2rem + 1.5rem of margin and padding that straddled the old
+   border: there is one gap to set now instead of two, and the pair sits close
+   enough under the list to belong to it. */
 .listing__foot {
   display: grid;
   gap: 1.25rem;
-  margin-block-start: 2rem;
-  padding-block-start: 1.5rem;
-  border-block-start: 1px solid var(--hairline);
+  margin-block-start: 1.25rem;
 }
 
 @media (min-width: 48rem) {
@@ -26,13 +35,46 @@
   font-size: 0.875rem;
 }
 
-.pager__list {
+/* THREE TRACKS, TWO OF WHICH ARE OFTEN EMPTY.
+
+   Previous is not rendered on page one and Next is not rendered on the last
+   page -- there is no such control, rather than a greyed-out one. That is only
+   safe if the row does not move when one of them is missing: otherwise page one
+   would put Next where the numbers sit on page two, and walking through the
+   list would slide the control out from under the pointer.
+
+   So the space is reserved rather than the control. Each of the three is placed
+   in a named track, and an absent one leaves its track standing and empty.
+   5.5rem is "Previous" at 0.875rem plus the 0.75rem of inline padding either
+   side -- the wider of the two words, so both edges take the same width and the
+   numbers stay centred between them.
+
+   justify-self pushes each step outward, so Previous sits at the left edge of
+   the row and Next at the right whatever the numbers do between them. */
+.pager {
+  display: grid;
+  grid-template-columns: 5.5rem auto 5.5rem;
+  align-items: center;
+}
+
+.pager__step--prev {
+  grid-column: 1;
+  justify-self: start;
+}
+
+.pager__pages {
   display: flex;
   flex-wrap: wrap;
+  grid-column: 2;
   gap: 0.25rem;
   margin: 0;
   padding: 0;
   list-style: none;
+}
+
+.pager__step--next {
+  grid-column: 3;
+  justify-self: end;
 }
 
 .pager__link {
@@ -59,14 +101,16 @@
   transition-duration: 0s;
 }
 
+/* The page you are on. A <span>, not a link -- an href pointing at the address
+   you are already at is one more control with nothing to do -- so it is styled
+   off the ARIA attribute that says which page this is, which is the attribute
+   that actually has to be right.
+
+   .pager__link--off went with the dead edges it styled. */
 .pager__link[aria-current="page"] {
   background: var(--accent);
   color: #fff;
   font-weight: 700;
-}
-
-.pager__link--off {
-  color: var(--ink-faint);
   cursor: default;
 }
 

@@ -122,7 +122,10 @@ describe("once the board is in memory", () => {
     expect(push).not.toHaveBeenCalled();
   });
 
-  it("pages without a request", async () => {
+  // The address carries the heading the browser is about to jump to, so the URL
+  // in the bar is the one that reproduces the screen -- fragment included -- if
+  // it is copied to someone else.
+  it("pages without a request, landing on the results heading", async () => {
     mount();
     await board();
     fetchMock.mockClear();
@@ -130,7 +133,7 @@ describe("once the board is in memory", () => {
     fireEvent.click(screen.getByRole("link", { name: "2" }));
 
     await waitFor(() => expect(titles()[0]).toBe("Role 20"));
-    expect(url()).toBe("/?country=US&page=2");
+    expect(url()).toBe("/?country=US&page=2#open-roles");
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
