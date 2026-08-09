@@ -5,7 +5,7 @@
    or by "Show all" below it; a scrollbar inside a sidebar is a second place to
    get lost in, and it was also what clipped the search input's focus ring. */
 .facet__options {
-  margin: 0.75rem 0 0;
+  margin: var(--facet-inner) 0 0;
   padding: 0;
   list-style: none;
 }

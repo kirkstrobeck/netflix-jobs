@@ -12,9 +12,31 @@
    3px-offset focus ring on the full-width search inputs at their left and right
    edges -- leaving a bar above and below the field and nothing at the sides.
    Nothing here scrolls now, so the ring draws whole. */
+/* THE PANEL'S ONE SPACING SCALE
+
+   Three steps, declared here and read everywhere below, because the grouping is
+   what the spacing has to express and per-element nudges cannot express it
+   consistently across four groups.
+
+   The rule: the space ABOVE a group heading is clearly larger than the space
+   below it, so each heading binds to the group it names rather than to the one
+   it follows. It used to be 28px above and 9px below -- a ratio of about 2:1,
+   which sounds sufficient and is not, because the gap below the heading is not
+   empty. A filled, bordered search field sits in it, and a heavy edge that
+   close reads as a boundary; the heading ended up looking like the last line of
+   the group above rather than the first line of the group below.
+
+   So the two numbers are pushed apart to 5:1 and the middle step sits between
+   them: 8px binds a heading to its own controls, 12px separates controls inside
+   one group, 40px separates the groups themselves. Ascending, unambiguous, and
+   the same three numbers in every group. */
 .facets {
+  --facet-lead: 0.5rem;
+  --facet-inner: 0.75rem;
+  --facet-gap: 2.5rem;
+
   display: grid;
-  gap: 1.75rem;
+  gap: var(--facet-gap);
   align-content: start;
 }
 
@@ -34,6 +56,16 @@
   border-block-end: 1px solid var(--hairline);
 }
 
+/* The heading and its tally, grouped left, so .facets__head's space-between has
+   two things to push apart rather than three to spread. baseline, not center:
+   the tally is a different size and it should sit ON the heading's line. */
+.facets__title {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  min-inline-size: 0;
+}
+
 .facets__heading {
   margin: 0;
   font-size: 0.8125rem;
@@ -41,6 +73,20 @@
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--ink-muted);
+}
+
+/* How many filters are on, at both widths. Deliberately NOT the heading's
+   treatment: no tracking, no uppercase, smaller, and it keeps the number
+   legible as a number. It reads as a piece of state attached to the heading
+   rather than as a second label competing with it. */
+.facets__applied {
+  margin: 0;
+  color: var(--ink-faint);
+  font-size: 0.75rem;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+  font-variant-numeric: tabular-nums;
 }
 
 .facets__clear {
@@ -70,9 +116,13 @@
   border: 0;
 }
 
+/* The tightest step in the scale. A heading binds hardest to the thing it
+   names, so the distance from it to its own first control is smaller than the
+   distance between controls inside the group -- and far smaller than the gap to
+   the group above. */
 .facet__legend {
   display: block;
-  margin-block-end: 0.625rem;
+  margin-block-end: var(--facet-lead);
   padding: 0;
   color: var(--ink);
   font-size: 0.875rem;
