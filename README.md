@@ -67,14 +67,30 @@ container needs no preparation. The median run's full report lands in
 `.cache/lighthouse/`, pass or fail; drop it into the Lighthouse Viewer to read
 it. Settings and the reasoning behind them are in `tools/lighthouse/config.mjs`.
 
+## Structured data and llms.txt
+
+Every job page carries a schema.org `JobPosting` and a `BreadcrumbList`; the
+listing carries the Netflix `Organization` node once, and no `ItemList` — Google
+supports carousels for four content types and JobPosting is not one of them, and
+its JobPosting guidelines separately forbid job markup on list pages.
+
+`pnpm test:structured-data` builds the JSON-LD for **all 481 active postings**
+with the same code the pages use and checks it against rules transcribed from
+Google's and llmstxt.org's published specs, not against a fixture of our own
+output. `pnpm test:types` is the other half: `schema-dts` types the builders, so
+a property schema.org does not define fails `tsc`. Details and the reasoning are
+in [tools/structured-data/README.md](tools/structured-data/README.md).
+
 ## Commands
 
 - `pnpm dev` — start development tasks
 - `pnpm build` — build all workspaces
 - `pnpm lint` — lint all workspaces
 - `pnpm test` — unit suites for `web` and the ingestor
+- `pnpm test:types` — `tsc --noEmit`, which is what makes `schema-dts` bite
+- `pnpm test:structured-data` — JSON-LD and llms.txt against their specs (above)
 - `pnpm test:lighthouse` — the 100-in-every-category gate (above)
-- `pnpm test:all` — both of the above
+- `pnpm test:all` — all four
 - `pnpm db:start` / `pnpm db:stop` / `pnpm db:reset` — local Supabase
 - `pnpm db:forward` — loopback port forwarder, only needed inside the sandbox container
 - `pnpm ingest` — crawl the Netflix careers board into Supabase
