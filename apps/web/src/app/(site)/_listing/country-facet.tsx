@@ -9,6 +9,19 @@ import type { JobQuery } from "@/lib/search/job-query";
 /**
  * Country first, offices under the country that was ticked.
  *
+ * IT IS CALLED LOCATION, AND IT IS COUNTED BY COUNTRY
+ *
+ * The group's heading names the whole question -- where is the work -- and the
+ * two depths inside it are how that question is answered, not two questions.
+ * "Country" named the top level only, which made the offices under it look like
+ * a second facet that had lost its own heading. There is deliberately no
+ * heading over the nested offices for the same reason: they are the answer
+ * continuing, not a new list starting.
+ *
+ * The URL is untouched by this. It still says `?country=US`, because a
+ * parameter is a key that people have already shared and a heading is a label;
+ * renaming the key would break every link that exists to buy a word.
+ *
  * The old panel had one flat list of 40 location strings, which meant that
  * asking for "roles in the US" was ticking Los Angeles and Los Gatos and New
  * York and Seattle and New Jersey and Washington DC and Burbank and Beckwourth
@@ -89,10 +102,10 @@ export function CountryFacet({ countries, sites, query }: CountryFacetProps) {
   return (
     <FacetGroup
       facetKey="country"
-      legend="Country"
+      legend="Location"
       onToggle={(code) => choose(toggleCountry(query, code, sitesIn(code).map((o) => o.value)))}
       options={countries}
-      plural="countries"
+      plural="locations"
       query={query}
       renderNested={nested}
     />

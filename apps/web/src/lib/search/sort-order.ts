@@ -22,10 +22,21 @@ export type SortOrder = "newest" | "nearest";
  */
 export const DEFAULT_SORT: SortOrder = "newest";
 
-/** What each order is called in the query string. Short, like the facet keys. */
+/**
+ * What each order is called in the query string. Short, like the facet keys.
+ *
+ * The long forms are READ and never written. Nothing produces them -- `near` is
+ * the only value a link of ours carries, and newest is carried by leaving the
+ * param off -- but they are the obvious guesses for someone editing the address
+ * by hand, and `?sort=nearest` meaning "newest" would be the worst possible
+ * reading of a typed word. canonical-search.ts folds them onto the short forms
+ * in the address bar, so honouring one costs no second URL.
+ */
 const SPELLINGS: Record<string, SortOrder> = {
   new: "newest",
+  newest: "newest",
   near: "nearest",
+  nearest: "nearest",
 };
 
 const PARAMS: Record<SortOrder, string> = {

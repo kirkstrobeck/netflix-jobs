@@ -53,24 +53,18 @@ describe("parseJobQuery", () => {
   });
 
   /**
-   * `?country=all` and no country param at all are the two states that look
-   * identical in a listing and are opposite in intent. The first is a visitor
-   * who asked for everywhere; the second is a visitor who has not been asked.
-   * Detection is allowed to answer only the second.
+   * `?country=all` used to mean "everywhere, and I mean it" -- an answer the
+   * URL could give that a bare `/` could not. The URL has no word for it now:
+   * an old link carrying it reads as a URL that names no country, which is
+   * exactly what `/` is. The cookie is what remembers the answer instead.
    */
-  it("tells 'every country' apart from 'no country named'", () => {
-    expect(parseJobQuery({ country: "all" })).toMatchObject({
-      country: [],
-      everywhere: true,
-    });
-    expect(parseJobQuery({})).toMatchObject({ country: [], everywhere: false });
+  it("reads an old ?country=all as naming no country at all", () => {
+    expect(parseJobQuery({ country: "all" })).toMatchObject({ country: [] });
+    expect(parseJobQuery({})).toMatchObject({ country: [] });
   });
 
   it("never lets the sentinel through as a country to match on", () => {
-    const query = parseJobQuery({ country: ["all", "JP"] });
-
-    expect(query.country).toEqual(["JP"]);
-    expect(query.everywhere).toBe(true);
+    expect(parseJobQuery({ country: ["all", "JP"] }).country).toEqual(["JP"]);
   });
 
   // Anything that is not a whole page number is page 1 rather than an error.
@@ -120,15 +114,13 @@ describe("jobsHref", () => {
   });
 });
 
-// The flag only ever means "no country, and that is the answer". Writing both
-// would be two answers to one question, so the specific one wins and the state
-// normalises on the way through the URL.
-describe("every-country flag beside a named country", () => {
-  it("writes only the country", () => {
-    const query: JobQuery = { ...EMPTY_QUERY, country: ["JP"], everywhere: true };
-
-    expect(jobsHref(query)).toBe("/?country=JP");
-    expect(roundTrip(query)).toEqual({ ...query, everywhere: false });
+// The one word that must never appear in an address again. Everywhere is the
+// absence of a country filter, so it is spelled by leaving the param off --
+// the same way newest and page 1 are.
+describe("everywhere", () => {
+  it("is a bare path and never the word 'all'", () => {
+    expect(jobsHref(EMPTY_QUERY)).toBe("/");
+    expect(jobsHref({ ...EMPTY_QUERY, team: ["Engineering"] })).not.toContain("country=");
   });
 });
 
@@ -136,7 +128,6 @@ describe("round trip", () => {
   it.each([
     ["empty", EMPTY_QUERY],
     ["one facet", { ...EMPTY_QUERY, team: ["Engineering"] }],
-    ["every country, chosen", { ...EMPTY_QUERY, everywhere: true }],
     ["a sort", { ...EMPTY_QUERY, sort: "nearest" }],
     [
       "every facet plus keywords, a sort and a page",
@@ -145,7 +136,6 @@ describe("round trip", () => {
         workType: ["Remote"],
         country: ["JP", "US"],
         site: ["jp-tokyo", "us-remote"],
-        everywhere: false,
         keywords: ["design", "senior"],
         sort: "nearest",
         page: 7,

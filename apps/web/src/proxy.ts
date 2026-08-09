@@ -7,12 +7,19 @@ import {
   GEO_HEADER,
 } from "@/lib/geo/country-default";
 import { countryRedirect } from "@/lib/geo/country-redirect";
+import { canonicalSearch } from "@/lib/search/canonical-search";
 
-// TWO JOBS, IN ORDER: canonicalize the path, then make the URL admit which
-// country the listing is about to be filtered by. Both happen here for the same
-// reason -- this file runs BEFORE anything is rendered, so an answer given here
-// is the first thing the browser hears rather than a correction to something it
-// has already painted.
+// THREE JOBS, IN ORDER: canonicalize the path, canonicalize the query, then
+// make the URL admit which country the listing is about to be filtered by. All
+// three happen here for the same reason -- this file runs BEFORE anything is
+// rendered, so an answer given here is the first thing the browser hears rather
+// than a correction to something it has already painted.
+//
+// The order is not arbitrary. The first two are facts about the URL alone and
+// are the same answer for everybody, so they are permanent and cacheable; the
+// third is read off a cookie and an IP address and is nobody's answer but this
+// visitor's. Doing the cheap universal ones first means the private hop only
+// ever runs on an address that is already spelled correctly.
 
 // Canonicalize the request path so each page has one address instead of one per
 // casing. Canonical is: static route segments lowercase, and the job code
@@ -98,6 +105,24 @@ export function proxy(request: NextRequest) {
     // nothing else, so this answer is the same for everyone and is left
     // cacheable.
     return NextResponse.redirect(url, 308);
+  }
+
+  // Only the listing has a query worth spelling. `?sort=` on a posting means
+  // nothing, and tidying a URL nobody filters is a redirect for its own sake.
+  if (pathname === LISTING) {
+    const spelling = canonicalSearch(request.nextUrl.searchParams);
+
+    // "" is a real target -- `/?country=all` canonicalises to `/` -- so this
+    // tests for the null that means "already canonical", not for emptiness.
+    if (spelling !== null) {
+      url.search = spelling;
+
+      // 308, like the casing hop above and for the same reason: which words a
+      // URL spells its own defaults with is a property of the URL and of
+      // nothing else, so the answer is the same for every visitor and every
+      // cache is welcome to keep it.
+      return NextResponse.redirect(url, 308);
+    }
   }
 
   const search = countryHop(request);

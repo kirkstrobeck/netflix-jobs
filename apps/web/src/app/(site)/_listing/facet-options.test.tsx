@@ -112,26 +112,27 @@ describe("option list length", () => {
   });
 });
 
-// The counts in an active facet are deliberately blind to that facet's own
-// selections. That is right, but a number that will not move after a click looks
-// broken -- so the facet says what it is doing instead of leaving it to be
-// inferred.
+// A tally, and NOTHING ELSE. The panel used to also carry a sentence about how
+// the counts are worked out -- "Counts ignore this filter so you can widen it"
+// -- which is the panel explaining its own machinery to someone who came here
+// to find a job. The number says what clicking does; if that needs a paragraph
+// of defence, the number is the thing to fix.
 describe("active facet feedback", () => {
   it("says nothing extra while the facet is not filtering", () => {
     renderGroup(OPTIONS);
 
     expect(screen.queryByText(/selected/)).toBeNull();
-    expect(screen.queryByText(/Counts ignore this filter/)).toBeNull();
   });
 
-  it("shows a live tally and explains the pinned counts once it is", () => {
+  it("shows a live tally once it is, and no explanation of the counts", () => {
     const options = OPTIONS.map((option, i) =>
       i < 2 ? { ...option, selected: true } : option,
     );
     renderGroup(options, { ...EMPTY_QUERY, team: ["Team 0", "Team 1"] });
 
     expect(screen.getByText("2 selected")).toBeTruthy();
-    expect(screen.getByText(/Counts ignore this filter so you can widen it/)).toBeTruthy();
+    expect(screen.queryByText(/Counts ignore/)).toBeNull();
+    expect(screen.queryByText(/filter is applied/)).toBeNull();
   });
 
   it("marks the selected rows as on, not merely ticked", () => {

@@ -40,6 +40,28 @@ const OPTIONS: { sort: SortOrder; label: string }[] = [
  * aria-current="true", not "page": these are items in a set, not the page you
  * are on. The pager uses "page" for the thing that genuinely is one.
  *
+ * EXACTLY ONE IS ALWAYS CHOSEN
+ *
+ * `query.sort` is a two-valued enum that parseSort resolves everything into --
+ * a missing param, an old spelling, junk -- so one option matches and one does
+ * not, on the server, on the client, and with JavaScript off. There is no
+ * "neither" state to render and no way to reach a "both".
+ *
+ * Newest is the one spelled by SILENCE: it is the default, so its href is the
+ * URL with no sort param at all, and only `?sort=near` is ever written. That is
+ * what makes the pair readable from a bare `/`.
+ *
+ * WHEN NEAREST IS CHOSEN AND THE LIST IS NOT SORTED BY DISTANCE
+ *
+ * The control still reads Nearest, and SortStatus under it says the list is
+ * ordered newest first and why. The alternative -- rewriting the address to
+ * newest when the position is refused -- was rejected: it is the page overruling
+ * a choice the visitor made, on the strength of a permission answer, and it
+ * would quietly rewrite a shared `?sort=near` link into one that no longer asks
+ * for anything. The URL records what was ASKED for, this control reads it back,
+ * and the status line says what is actually on screen. Nothing lies, and nothing
+ * the visitor did is undone behind their back.
+ *
  * A CONTROL, NOT A HEADING
  *
  * "Open roles" is a 0.8125rem uppercase label naming the column. This has to

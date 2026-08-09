@@ -27,9 +27,12 @@ const MESSAGES: Partial<Record<NearestStatus, string>> = {
     "This browser cannot share a location, so roles are ordered newest first.",
   failed: "We could not work out what is near you, so roles are ordered newest first.",
   // `idle` is the shared-link case: the URL asks for Nearest, the permission
-  // has not been given, and nothing has been asked for yet. It says what to do
-  // rather than what went wrong, because nothing has.
-  idle: "Nearest needs your location. Choose Nearest to share it.",
+  // has not been given, and nothing has been asked for yet. It says what is on
+  // screen first and what to do second, because nothing has gone wrong -- and
+  // because Nearest is already the chosen option, so a sentence that only said
+  // "choose Nearest" would be pointing at a control that already reads as
+  // chosen.
+  idle: "Nearest needs your location, so roles are ordered newest first. Choose Nearest to share it.",
 };
 
 /**

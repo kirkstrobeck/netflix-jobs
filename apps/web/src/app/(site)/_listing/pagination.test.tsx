@@ -84,13 +84,14 @@ describe("Pagination", () => {
     );
   });
 
-  // `?country=all` is a choice, not the absence of one, so it has to survive
-  // paging exactly like a named country does -- otherwise page 2 of "every
-  // country" is a URL that invites detection to answer the question again.
-  it("carries an explicit everywhere into each page link", () => {
-    const query: JobQuery = { ...EMPTY_QUERY, everywhere: true };
+  // Everywhere is spelled by leaving the param off, so page 3 of an unfiltered
+  // listing is `?page=3` and nothing else. The word `all` is gone from the
+  // vocabulary and no link may reintroduce it.
+  it("never writes a country into an unfiltered page link", () => {
+    const links = hrefs(markup(100, 2, EMPTY_QUERY));
 
-    expect(hrefs(markup(100, 2, query))).toContain("/?country=all&page=3");
+    expect(links).toContain("/?page=3");
+    expect(links.join(" ")).not.toContain("country=");
   });
 
   // 25 pages must not render 25 links.

@@ -13,20 +13,6 @@ export type JobQuery = {
   country: string[];
   /** public.locations slugs, always inside a selected country. */
   site: string[];
-  /**
-   * The visitor asked for EVERY country, and said so out loud.
-   *
-   * This is not the same as `country` being empty, and the difference is the
-   * whole of "detection must never fight the user". An empty country list means
-   * the URL has not answered the question, so the country detected from the
-   * request is allowed to answer it. This flag means the question was answered
-   * with "everywhere" -- by unticking the last country, or by following the
-   * link under the facet -- and detection has to keep its hands off.
-   *
-   * It is spelled `?country=all` in the URL, so the distinction survives being
-   * copied into a message and opened on someone else's machine.
-   */
-  everywhere: boolean;
   keywords: string[];
   /**
    * How the results are ordered. NOT a facet -- it changes no result, only the
@@ -53,7 +39,19 @@ export const PARAM: Record<FacetKey | "keywords" | "sort" | "page", string> = {
   page: "page",
 };
 
-/** The value of `?country=` that means "every country, and I mean it". */
+/**
+ * "Every country, and I mean it" -- the answer, not a country.
+ *
+ * It is NOT a URL value any more. `?country=all` used to be how the URL said
+ * that the question had been answered with "everywhere", which put a word in
+ * the address bar that names no country and duplicates what a bare `/` already
+ * shows. The answer now lives in the cookie, which is the only reader that has
+ * to tell "chose everywhere" apart from "has not been asked" -- see
+ * country-cookie.ts, and canonical-search.ts for how an old link is unspelled.
+ *
+ * It survives here because both of those still need one string for the idea,
+ * and because parse-query has to keep dropping it from arriving URLs.
+ */
 export const EVERYWHERE = "all";
 
 // Country before site, and both before the rest: the order here is the order
@@ -66,7 +64,6 @@ export const EMPTY_QUERY: JobQuery = {
   workType: [],
   country: [],
   site: [],
-  everywhere: false,
   keywords: [],
   sort: DEFAULT_SORT,
   page: 1,
@@ -82,18 +79,20 @@ export function toSearchParams(query: JobQuery): URLSearchParams {
     query[key].forEach((value) => params.append(PARAM[key], value));
   });
 
-  // Only when there is no country to name. `?country=all&country=US` would be
-  // two answers to one question, and the specific one is the answer.
-  if (query.everywhere && query.country.length === 0) {
-    params.append(PARAM.country, EVERYWHERE);
-  }
+  // Nothing is written for "every country". Everywhere is the ABSENCE of a
+  // country filter, and a bare `/` is already the address of that -- so it is
+  // spelled by leaving the param off, exactly as newest and page 1 are below.
+  // What that costs is the difference between "chose everywhere" and "has not
+  // been asked", which the URL can no longer carry; the cookie carries it
+  // instead, and country-cookie.ts is where it is written down.
 
   query.keywords.forEach((value) => params.append(PARAM.keywords, value));
 
   // Newest is the default and the board's own order, so it is left out for the
   // same reason page 1 is: / and /?sort=new are one list and should not be two
   // URLs. Which also means an unsorted first load has nothing to say about sort
-  // at all, and the server never sees the parameter.
+  // at all, and the server never sees the parameter. `near` is therefore the
+  // only sort value this ever writes.
   if (query.sort !== DEFAULT_SORT) {
     params.set(PARAM.sort, sortParam(query.sort));
   }
@@ -166,11 +165,18 @@ export function withSort(query: JobQuery, sort: SortOrder): JobQuery {
   return { ...query, sort, page: 1 };
 }
 
-// `everywhere` is deliberately absent: it is the ABSENCE of a country filter,
-// stated out loud. Counting it as a filter would put a "Clear all" link next to
-// a listing that shows every role there is.
+// How many separate answers the visitor has given. Every ticked box and every
+// keyword chip counts once, which is what the filters toggle says out loud on a
+// narrow screen -- a panel that is collapsed by default has to admit when it is
+// hiding something that is changing the list. Sort is not in it: it reorders
+// the list rather than narrowing it, and it has its own control on the line
+// above the results.
+export function appliedCount(query: JobQuery): number {
+  const facets = FACET_KEYS.reduce((total, key) => total + query[key].length, 0);
+
+  return facets + query.keywords.length;
+}
+
 export function isFiltered(query: JobQuery): boolean {
-  return (
-    FACET_KEYS.some((key) => query[key].length > 0) || query.keywords.length > 0
-  );
+  return appliedCount(query) > 0;
 }

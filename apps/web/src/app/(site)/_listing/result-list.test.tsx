@@ -6,7 +6,6 @@ import { ListingSkeleton } from "@/app/(site)/_listing/listing-skeleton";
 import { ResultList } from "@/app/(site)/_listing/result-list";
 import { NavigateProvider } from "@/app/(site)/_listing/use-query-navigation";
 import { BOARD, JOBS, summary } from "@/lib/jobs/job-summary.fixture";
-import { everyCountry } from "@/lib/search/geo-query";
 import { EMPTY_QUERY, toggleFacet, type JobQuery } from "@/lib/search/job-query";
 import { deriveListing } from "@/lib/search/listing-view";
 import { PAGE_SIZE } from "@/lib/search/paginate";
@@ -104,10 +103,20 @@ describe("FacetsPanel", () => {
     const html = panel(EMPTY_QUERY);
 
     expect(html).toContain("Keywords");
-    expect(html).toContain("Country");
+    expect(html).toContain("Location");
     expect(html).toContain("Team");
     expect(html).toContain("Work type");
     expect(html).toContain("Engineering");
+  });
+
+  // The group asks one question -- where is the work -- at two depths. Calling
+  // the whole thing Country named only the top of it and left the offices
+  // underneath looking like a second facet with its heading missing.
+  it("calls the country group Location", () => {
+    const html = panel(EMPTY_QUERY);
+
+    expect(html).toContain(">Location");
+    expect(html).not.toContain(">Country");
   });
 
   // The country names the countries, not a list of the offices in them: that is
@@ -119,13 +128,17 @@ describe("FacetsPanel", () => {
     expect(html).not.toContain("Los Gatos");
   });
 
-  // A country can arrive ALREADY TICKED, matched to the request, so a filter
-  // that applied itself has to be the first group rather than the third.
-  it("puts country above work type and team", () => {
+  // Keywords, work type, location, team: the questions people arrive with, in
+  // the order they arrive with them. Work type is two values and answers half
+  // the location question for the roles that are remote, which is why it is
+  // asked before the place rather than after it.
+  it("orders the groups keywords, work type, location, team", () => {
     const html = panel(EMPTY_QUERY);
+    const at = (legend: string) => html.indexOf(`>${legend}`);
 
-    expect(html.indexOf("Country")).toBeLessThan(html.indexOf("Work type"));
-    expect(html.indexOf("Work type")).toBeLessThan(html.indexOf("Team"));
+    expect(at("Keywords")).toBeLessThan(at("Work type"));
+    expect(at("Work type")).toBeLessThan(at("Location"));
+    expect(at("Location")).toBeLessThan(at("Team"));
   });
 
   // Nothing to clear, no control offering to clear it.
@@ -138,14 +151,12 @@ describe("FacetsPanel", () => {
   });
 
   /**
-   * Clear goes to `?country=all`, not to `/`.
-   *
-   * A bare `/` leaves the country question unanswered, which is the one state
-   * that invites detection to answer it -- so the next load would put the
-   * visitor's own country straight back on and the button would look like it
-   * had not worked.
+   * Clear goes to a bare `/`, and the answer it stands for is written to the
+   * cookie by useCountryChoice on the same click -- which is what stops the
+   * next load detecting the country back on. The href carries no `country=` at
+   * all, because there is no longer a word for "everywhere" in an address.
    */
-  it("clears to every country, explicitly, rather than to a bare listing", () => {
+  it("clears to the bare listing and names no country", () => {
     const html = panel({
       ...EMPTY_QUERY,
       country: ["US"],
@@ -154,14 +165,14 @@ describe("FacetsPanel", () => {
       page: 4,
     });
 
-    expect(html).toContain('href="/?country=all"');
-    expect(html).not.toContain('href="/"');
+    expect(html).toContain('href="/"');
+    expect(html).not.toContain("country=all");
   });
 
-  // `everywhere` is the ABSENCE of a country filter, said out loud. Counting it
-  // as a filter would put a Clear all beside a listing showing every role.
-  it("does not call an explicit everywhere a filter", () => {
-    expect(panel(everyCountry(EMPTY_QUERY))).not.toContain("Clear all");
+  // Everywhere is the ABSENCE of a filter. Counting it as one would put a Clear
+  // all beside a listing showing every role there is.
+  it("does not call an unfiltered listing filtered", () => {
+    expect(panel(EMPTY_QUERY)).not.toContain("Clear all");
   });
 });
 

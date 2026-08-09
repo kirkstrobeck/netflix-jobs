@@ -35,10 +35,11 @@ describe("the country hop", () => {
     expect(at("country=JP")).toBeNull();
   });
 
-  // The one state that looks identical to a first load and is its opposite:
-  // the visitor said "every country" out loud, and it is an answer.
-  it("leaves an explicit everywhere alone", () => {
-    expect(at("country=all")).toBeNull();
+  // `?country=all` is not a URL any more -- canonical-search.ts unspells it one
+  // step earlier, so what reaches here is the bare listing it becomes. A URL
+  // that names no country has not answered, and is owed the hop.
+  it("hops a URL that names no country", () => {
+    expect(at("country=all")).toBe("?country=US");
   });
 
   // Nothing would be applied, so there is nothing the URL is failing to say.

@@ -93,12 +93,13 @@ describe("the country, in the browser", () => {
   });
 
   /**
-   * `?country=all` and a country-filtered URL render different lists and are
-   * different addresses, and neither is ever quietly turned into the other.
+   * A bare `/` is everywhere. It is also what a visitor who has not been asked
+   * lands on -- the two are the same address on purpose, and what tells them
+   * apart is the cookie, one hop before this renders.
    */
-  it("reads an explicit everywhere as everywhere", async () => {
-    resetHistory("/?country=all");
-    mount({ ...EMPTY_QUERY, everywhere: true });
+  it("reads a URL that names no country as everywhere", async () => {
+    resetHistory("/");
+    mount(EMPTY_QUERY);
     await board();
 
     expect(screen.getByText(/of 26 roles/)).toBeTruthy();
@@ -107,13 +108,18 @@ describe("the country, in the browser", () => {
   // The visitor's own change wins and is written down, so the NEXT request
   // carries it instead of asking the edge again. This is the line between a
   // country they picked and one that was picked for them.
-  it("remembers a country the visitor unticks", async () => {
+  //
+  // The URL it lands on is a bare `/` -- there is no `?country=all` to leave
+  // behind -- so the cookie is carrying the whole of "and I meant it". Without
+  // the write, reloading this address would detect the country again and put
+  // the visitor straight back where they just left.
+  it("remembers everywhere when the visitor unticks their last country", async () => {
     mount({ ...EMPTY_QUERY, country: ["US"] });
     await board();
 
     fireEvent.click(await tick("United States"));
 
-    await waitFor(() => expect(url()).toBe("/?country=all"));
+    await waitFor(() => expect(url()).toBe("/"));
     expect(document.cookie).toContain("nfj_country=all");
     expect(screen.getByText(/of 26 roles/)).toBeTruthy();
   });

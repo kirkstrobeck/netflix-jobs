@@ -24,12 +24,19 @@ import { readSearchParams } from "@/lib/search/parse-query";
  *
  * Every target this returns carries `country`, so running it again on that
  * target hits `countryChosen` and returns null. There is no second hop and no
- * loop, and that holds for the two cases that look like exceptions:
+ * loop, and that holds for the case that looks like an exception: an empty
+ * default returns null rather than a redirect, because "no country" is not a
+ * filter and `/` is already the address of an unfiltered listing.
  *
- * - `?country=all` is an ANSWER -- "everywhere, and I mean it" -- so it is
- *   already chosen and never redirected away.
- * - an empty default returns null rather than a redirect, because "no country"
- *   is not a filter and `/` is already the address of an unfiltered listing.
+ * WHICH IS ALSO HOW "EVERYWHERE" IS SPELLED NOW
+ *
+ * A visitor who unticks their last country is answering the question with
+ * "everywhere", and the URL they land on is a bare `/` -- indistinguishable
+ * from a URL that has never been asked. The difference is the cookie: theirs
+ * says `all`, so countryDefault returns an empty list, so this returns null and
+ * the bare `/` renders unfiltered and stays. A visitor with no cookie gets the
+ * hop. The two states are told apart one hop before this, which is why nothing
+ * about it is visible here.
  */
 export function countryRedirect(
   search: URLSearchParams,

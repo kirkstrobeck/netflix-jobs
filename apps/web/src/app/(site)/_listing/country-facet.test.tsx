@@ -58,14 +58,16 @@ describe("country first", () => {
     expect(navigatedTo()).toBe("/?country=US");
   });
 
-  // Unticking the last country is an explicit "everywhere", not a return to
-  // the unanswered state -- otherwise the next load would detect over it.
-  it("clears to an explicit everywhere rather than to nothing", () => {
+  // Unticking the last country lands on the bare listing -- there is no word
+  // for "everywhere" in the URL any more. What keeps the next load from
+  // detecting over it is the cookie, written by the same click; the address bar
+  // is only asked to stop saying a country that is no longer ticked.
+  it("clears to the bare listing", () => {
     facet(toggleCountry(EMPTY_QUERY, "US"));
 
     fireEvent.click(box(/United States/));
 
-    expect(navigatedTo()).toBe("/?country=all");
+    expect(navigatedTo()).toBe("/");
   });
 });
 
@@ -114,7 +116,7 @@ describe("the offices under a ticked country", () => {
 
     fireEvent.click(box(/United States/));
 
-    expect(navigatedTo()).toBe("/?country=all");
+    expect(navigatedTo()).toBe("/");
   });
 
   /**

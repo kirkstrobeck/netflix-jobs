@@ -62,9 +62,14 @@ export function parseJobQuery(params: RawSearchParams): JobQuery {
     // 'ALL' is not a country code, so it can never collide with a real one, and
     // it is dropped from the list here rather than filtered downstream --
     // nothing should ever see it as a value to match postings against.
+    //
+    // Dropped, and nothing else: it used to also set an `everywhere` flag, so
+    // that an old `?country=all` link meant "everywhere, and I mean it". The URL
+    // no longer has a word for that, so what is left of such a link is a URL
+    // that names no country -- which is the same as a bare `/`, and is answered
+    // the same way. canonical-search.ts unspells it in the address bar.
     country: countries.filter((code) => code !== ALL),
     site: readList(params[PARAM.site]),
-    everywhere: countries.includes(ALL),
     // Keywords keep their own casing for display in the chip; matching lowers
     // both sides. De-duplication is therefore case-sensitive here on purpose:
     // "Remote" and "remote" look different in a chip, so they stay two chips.

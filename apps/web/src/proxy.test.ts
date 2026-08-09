@@ -64,6 +64,52 @@ describe("canonical casing", () => {
 });
 
 /**
+ * The query's spelling, settled before anything is rendered.
+ *
+ * canonicalSearch is pinned on its own; what is pinned here is that the proxy
+ * issues the hop, on the listing only, permanently -- and that it does it
+ * BEFORE the country hop, so the private per-visitor answer is only ever worked
+ * out for an address that is already spelled correctly.
+ */
+describe("the canonical query", () => {
+  const target = () =>
+    vi.mocked(NextResponse.redirect).mock.calls[0]![0] as unknown as { search: string };
+
+  it("unspells a default the URL said out loud", () => {
+    proxy(makeRequest({ path: "/", search: "?sort=new&country=US" }));
+
+    expect(target().search).toBe("?country=US");
+    expect(NextResponse.redirect).toHaveBeenCalledWith(expect.anything(), 308);
+  });
+
+  // The word is gone from the vocabulary, and the bare listing it becomes is
+  // then owed its own country hop on the next request -- which is exactly what
+  // an old "every country" link now means to someone who has no cookie.
+  it("takes country=all out of the address", () => {
+    proxy(makeRequest({ path: "/", search: "?country=all", geo: "JP" }));
+
+    expect(NextResponse.redirect).toHaveBeenCalledTimes(1);
+    expect(target().search).toBe("");
+  });
+
+  it("leaves a URL that is already spelled right alone", () => {
+    const result = proxy(makeRequest({ path: "/", search: "?country=US&sort=near" }));
+
+    expect(NextResponse.redirect).not.toHaveBeenCalled();
+    expect(result).toEqual({ type: "next" });
+  });
+
+  // `?sort=` on a posting means nothing, so tidying it would be a redirect for
+  // its own sake in front of a page a visitor was sent a link to.
+  it("never touches a job posting's query", () => {
+    const result = proxy(makeRequest({ path: "/jobs/JR41912", search: "?sort=new" }));
+
+    expect(NextResponse.redirect).not.toHaveBeenCalled();
+    expect(result).toEqual({ type: "next" });
+  });
+});
+
+/**
  * The country lands in the address bar before the listing exists.
  *
  * countryDefault and countryRedirect are pinned on their own; what is pinned

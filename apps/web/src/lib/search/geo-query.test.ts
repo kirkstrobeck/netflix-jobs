@@ -1,18 +1,12 @@
 import { describe, expect, it } from "vitest";
 
-import {
-  countryChosen,
-  everyCountry,
-  toggleCountry,
-  toggleSite,
-} from "@/lib/search/geo-query";
+import { countryChosen, toggleCountry, toggleSite } from "@/lib/search/geo-query";
 import { EMPTY_QUERY, withPage, type JobQuery } from "@/lib/search/job-query";
 
 describe("countryChosen", () => {
-  it("is false only when the URL has not answered", () => {
+  it("is true only when the URL names a country", () => {
     expect(countryChosen(EMPTY_QUERY)).toBe(false);
     expect(countryChosen({ ...EMPTY_QUERY, country: ["US"] })).toBe(true);
-    expect(countryChosen({ ...EMPTY_QUERY, everywhere: true })).toBe(true);
   });
 });
 
@@ -25,23 +19,17 @@ describe("toggleCountry", () => {
   });
 
   /**
-   * The heart of "detection must never fight the user". Clearing the last
-   * country leaves a listing that looks exactly like a first load, and if it
-   * WERE a first load the country would be filled back in from the request --
-   * so the state has to record that the visitor cleared it on purpose.
+   * Unticking the last country is a visitor asking for everywhere, and the
+   * query it produces is indistinguishable from a first load -- deliberately,
+   * because "everywhere" has no spelling in the URL any more. What stops the
+   * next load filling the country back in from the request is the cookie, which
+   * useCountryChoice writes on the same click. See use-country-choice.test.tsx.
    */
-  it("turns unticking the last country into an explicit everywhere", () => {
+  it("leaves nothing behind when the last country comes off", () => {
     const on = toggleCountry(EMPTY_QUERY, "US");
 
-    expect(toggleCountry(on, "US").everywhere).toBe(true);
-    expect(countryChosen(toggleCountry(on, "US"))).toBe(true);
-  });
-
-  it("stops being everywhere as soon as a country is ticked", () => {
-    expect(toggleCountry(everyCountry(EMPTY_QUERY), "JP")).toMatchObject({
-      country: ["JP"],
-      everywhere: false,
-    });
+    expect(toggleCountry(on, "US")).toMatchObject({ country: [], site: [] });
+    expect(countryChosen(toggleCountry(on, "US"))).toBe(false);
   });
 
   it("takes the country's own offices off with it", () => {
@@ -75,7 +63,6 @@ describe("toggleSite", () => {
     expect(toggleSite(EMPTY_QUERY, "jp-tokyo", "JP")).toMatchObject({
       country: ["JP"],
       site: ["jp-tokyo"],
-      everywhere: false,
     });
   });
 
@@ -102,15 +89,3 @@ describe("toggleSite", () => {
   });
 });
 
-describe("everyCountry", () => {
-  it("clears both levels and says so", () => {
-    const query: JobQuery = { ...EMPTY_QUERY, country: ["US"], site: ["us-remote"] };
-
-    expect(everyCountry(query)).toMatchObject({
-      country: [],
-      site: [],
-      everywhere: true,
-      page: 1,
-    });
-  });
-});

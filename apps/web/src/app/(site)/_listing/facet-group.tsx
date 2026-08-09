@@ -18,7 +18,7 @@ type FacetGroupProps = {
    * What ticking a box does, when it is not just "toggle this value".
    *
    * The country group passes one, because ticking a country also has to clear
-   * the offices inside it and set the everywhere flag -- see toggleCountry.
+   * the offices inside it -- see toggleCountry.
    */
   onToggle?: (value: string) => void;
   /** Rendered under one option; the country group hangs its offices here. */
@@ -92,14 +92,21 @@ export function FacetGroup({
         />
       )}
 
-      {/* Only while this facet is filtering -- which is exactly when its own
-          counts stop moving and start looking broken. */}
-      {selected > 0 ? (
-        <p className="facet__pinned">
-          Counts ignore this filter so you can widen it. Every other filter is
-          applied.
-        </p>
-      ) : null}
+      {/* WHERE THE NOTE ABOUT THE COUNTS WENT
+
+          It said "Counts ignore this filter so you can widen it. Every other
+          filter is applied.", and it was here whenever this group had a
+          selection. It is deleted rather than reworded.
+
+          A number that needs a paragraph defending it is a number that is
+          wrong, and this one is not: the count beside an option is what
+          CLICKING it does. Beside an unticked Japan it is the roles Japan would
+          add, which is why it does not go to zero when the United States is
+          ticked -- ticking Japan there really does return Japan's roles, and a
+          zero would be a lie about a box that demonstrably works. Beside a
+          ticked option it is what that option is currently contributing. That
+          is one rule, it is true in every state, and a sentence explaining the
+          machinery underneath it only teaches the reader to distrust it. */}
 
       {children}
     </fieldset>
