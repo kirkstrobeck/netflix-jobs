@@ -72,12 +72,10 @@
 
 /* The prerendered shell. No pulse animation: it is on screen for the length of
    one database read, and something blinking for 200ms is worse than something
-   still. */
-.result--ghost {
-  display: grid;
-  gap: 0.75rem;
-}
+   still.
 
+   One bar per row, because a row is now one title. The facts bar under it went
+   with the facts. */
 .ghost {
   display: block;
   border-radius: 3px;
@@ -86,11 +84,9 @@
 
 .ghost--title {
   inline-size: min(24rem, 70%);
-  block-size: 1.25rem;
-}
-
-.ghost--facts {
-  block-size: 2.5rem;
+  /* The line box a 1.125rem title occupies, so the shell is the height the real
+     list will be and the page does not jump when it arrives. */
+  block-size: 1.6rem;
 }
 
 .ghost--panel {

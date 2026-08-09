@@ -12,7 +12,7 @@ const css = readFileSync(
 
 // Split into rules and look them up by their EXACT selector text. Matching by
 // substring instead would let ".result" find ".results", and ".result::after"
-// find the ".result::before, .result::after" group.
+// find a grouped rule that merely mentions it.
 const normalise = (selector: string) => selector.trim().replace(/\s+/g, " ");
 
 const RULES = [...css.matchAll(/([^{}]+)\{([^{}]*)\}/g)].map((match) => ({
@@ -26,17 +26,12 @@ const rule = (selector: string) =>
 const ON = ".result:is(:hover, :has(.result__link:focus-visible))";
 
 // Every rule that paints the hovered state, keyed by the selector it is
-// actually written under -- the two pseudo-elements share one grouped rule.
-const STATE_RULES = [
-  `${ON}::before, ${ON}::after`,
-  `${ON} .result__link`,
-  `${ON} .result__value`,
-  `${ON} .result__label`,
-];
+// actually written under.
+const STATE_RULES = [`${ON}::after`, `${ON} .result__link`, `${ON} .result__date`];
 
 describe("result row hover treatment", () => {
   // The whole row is the target. Scoping the state to .result means hovering
-  // the facts lights the row exactly as hovering the title does.
+  // the date lights the row exactly as hovering the title does.
   it("keys every part of the state off the row, not the title link", () => {
     STATE_RULES.forEach((selector) => {
       expect(rule(selector)).not.toBe("");
@@ -53,11 +48,10 @@ describe("result row hover treatment", () => {
   });
 
   it("gives pointer and keyboard the identical treatment", () => {
-    // Both live in one :is(), so they cannot drift apart.
+    // Both live in one :is(), so they cannot drift apart. One per state rule,
+    // plus the rule that holds "Not listed" faint through the state.
     const paired = css.match(/:is\(:hover, :has\(\.result__link:focus-visible\)\)/g);
 
-    // One per state rule, plus one extra because the pseudo-elements' rule
-    // spells the row selector twice -- once for ::before, once for ::after.
     expect(paired?.length).toBe(STATE_RULES.length + 1);
   });
 
@@ -65,28 +59,29 @@ describe("result row hover treatment", () => {
   // duration; the state rule owns the way in and zeroes it.
   it("appears instantly and only fades on the way out", () => {
     expect(rule(".result__link")).toContain("transition: text-decoration-color 150ms ease");
-    expect(rule(".result__value")).toContain("transition: color 150ms ease");
-    expect(rule(".result__label")).toContain("transition: color 150ms ease");
+    expect(rule(".result__date")).toContain("transition: color 150ms ease");
+    expect(rule(".result::after")).toContain("transition: opacity 150ms ease");
 
     STATE_RULES.forEach((selector) => {
       expect(rule(selector)).toContain("transition-duration: 0s");
     });
   });
 
-  // A flat fill would put its edges on the text edges and turn the row into a
-  // card, which is what the list is built to avoid.
-  it("is a gutter mark and a dissolving wash, not a background swap", () => {
-    expect(rule(".result::before")).toContain("linear-gradient");
+  // Re-judged for a one-line row: the wash that lit the old four-line block is
+  // gone, because a fill behind a single line is a menu highlight -- a card at
+  // reduced height, which is what this list exists not to be.
+  it("is a gutter mark and an underline, with no wash behind the row", () => {
     expect(rule(".result::after")).toContain("background: var(--accent)");
-    expect(rule(".result::before,\n.result::after")).toContain("inset-inline-start: -0.75rem");
+    expect(rule(".result::after")).toContain("inset-inline-start: -0.75rem");
+    expect(css).not.toContain("linear-gradient");
+    expect(css).not.toContain("::before");
   });
 
-  // z-index: -1 keeps the layers under the row's text; isolation keeps that
-  // negative layer from escaping to an ancestor stacking context.
-  it("keeps the drawn layers behind the row's own text", () => {
-    expect(rule(".result::before,\n.result::after")).toContain("z-index: -1");
-    expect(rule(".result")).toContain("isolation: isolate");
-    expect(rule(".result")).toContain("position: relative");
+  // Both marks are --accent, so the state reads as one gesture: the mark says
+  // which row, the underline says what will open.
+  it("underlines the title in the same accent the mark uses", () => {
+    expect(rule(`${ON} .result__link`)).toContain("text-decoration-color: var(--accent)");
+    expect(rule(".result__link")).toContain("text-decoration-color: transparent");
   });
 
   // Nothing animated may reflow: no padding, margin, border or size changes.
@@ -96,11 +91,12 @@ describe("result row hover treatment", () => {
     });
   });
 
-  it("drops the movement under reduced motion but keeps the mark", () => {
-    expect(css).toContain("prefers-reduced-motion: reduce");
-
-    const reduced = css.match(/prefers-reduced-motion: reduce\)\s*\{([\s\S]*?)\n\}/)?.[1] ?? "";
-    expect(reduced).toContain("transform: none");
+  // Opacity and colour only. The mark's scaleY retract went with the wash: over
+  // one line it was a twitch, and twenty rows of it would leave a trail of
+  // movement behind a pointer running down the list.
+  it("moves nothing, so it needs no reduced-motion branch", () => {
+    expect(css).not.toContain("transform");
+    expect(css).not.toContain("prefers-reduced-motion");
   });
 
   // The list separates with hairlines and nothing else; a hovered row must not

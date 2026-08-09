@@ -142,22 +142,40 @@
   text-transform: none;
 }
 
-/* "Show all 31" rather than "Show more": the count is the useful part of the
-   promise, and it is the difference between opening two more rows and opening
-   twenty-nine. Full width so it reads as the end of the list rather than a
-   button floating beside it. */
+/* Everything past the fifth option lives in a <details>: no button, no state, no
+   script -- the browser gives it the keyboard behaviour and the
+   expanded/collapsed announcement for free.
+
+   The list inside gets no top margin, since the summary above it is already the
+   gap. Opening the group has to look like the list continuing, not like a
+   second list starting. */
+.facet__options--rest {
+  margin-block-start: 0;
+}
+
+/* "Show all 31 teams" rather than "Show more": the count is the useful part of
+   the promise, and the noun says which list it opens -- which is what a screen
+   reader needs when the summary is read out of context.
+
+   list-item, said out loud, because it is the UA default and `display: block`
+   would silently take it away: a block box generates no ::marker, which is the
+   documented way to DELETE a disclosure triangle. The marker is the one part of
+   this control every reader already knows how to read, and it turns with the
+   element at no cost, so it stays.
+
+   `inside` rather than the default `outside`: outside hangs the marker in the
+   margin, and this list sits in a 19rem sidebar with no inline padding to hang
+   it into. Inside, the triangle lands in the same column as the option
+   checkboxes above it and the hover background covers it. */
 .facet__more {
-  inline-size: 100%;
+  display: list-item;
+  list-style-position: inside;
   margin-block-start: 0.375rem;
   padding: 0.4375rem 0.25rem;
-  border: 0;
   border-radius: 3px;
-  background: none;
   color: var(--ink-muted);
-  font: inherit;
   font-size: 0.8125rem;
   font-weight: 500;
-  text-align: start;
   cursor: pointer;
   /* Hover-OFF only. */
   transition: background-color 150ms ease, color 150ms ease;
@@ -169,4 +187,19 @@
   color: var(--ink);
   /* Hover-ON: instant. */
   transition-duration: 0s;
+}
+
+/* Both labels are in the markup and CSS picks the true one: a single label would
+   keep saying "Show all 31 teams" with all 31 on screen, and swapping it in
+   JavaScript would be state held for a string. */
+.facet__more-fewer {
+  display: none;
+}
+
+.facet__rest[open] .facet__more-all {
+  display: none;
+}
+
+.facet__rest[open] .facet__more-fewer {
+  display: inline;
 }

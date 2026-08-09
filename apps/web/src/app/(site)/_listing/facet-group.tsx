@@ -11,8 +11,9 @@ type FacetGroupProps = {
   facetKey: FacetKey;
   legend: string;
   options: FacetOption[];
+  /** The group's name as a plural noun: "teams", "work types", "locations". */
+  plural: string;
   query: JobQuery;
-  searchLabel: string;
 };
 
 // A search bar over the options rather than a dropdown of all of them: there are
@@ -25,14 +26,17 @@ export function FacetGroup({
   facetKey,
   legend,
   options,
+  plural,
   query,
-  searchLabel,
 }: FacetGroupProps) {
   const [search, setSearch] = useState("");
   const navigate = useQueryNavigation();
   const searchId = useId();
   const visible = matchOptions(options, search);
   const selected = query[facetKey].length;
+  // Built from the same noun the disclosure below uses, so "Search teams" and
+  // "Show all 31 teams" cannot drift into naming the same group two ways.
+  const searchLabel = `Search ${plural}`;
 
   return (
     <fieldset className="facet">
@@ -64,9 +68,9 @@ export function FacetGroup({
         <p className="facet__none">No matches</p>
       ) : (
         <FacetOptions
-          legend={legend}
           onToggle={(value) => navigate(toggleFacet(query, facetKey, value))}
           options={visible}
+          plural={plural}
         />
       )}
 

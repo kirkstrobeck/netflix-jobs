@@ -14,7 +14,6 @@ export function ListingSkeleton() {
           {Array.from({ length: PAGE_SIZE }, (_, i) => (
             <li className="result result--ghost" key={i}>
               <span className="ghost ghost--title" />
-              <span className="ghost ghost--facts" />
             </li>
           ))}
         </ol>

@@ -3,24 +3,27 @@
 import { memo } from "react";
 
 import { PostedDate } from "@/app/(site)/jobs/[jobid]/posted-date";
-import { formatLocations } from "@/lib/format/location";
 import { formatPostedDate } from "@/lib/format/posted-date";
-import { jobLocations, type JobSummary } from "@/lib/jobs/job-summary";
+import type { JobSummary } from "@/lib/jobs/job-summary";
 
-// A result reads as one line of information, not a table row: the title is the
-// link and the facts sit under it in fixed columns, so team lines up with team
-// down the page without any of the furniture -- rules, headers, stripes -- that
-// would make it a table.
+// A result is one line: the title, and how long it has been open. Team,
+// location and work type were three more columns of text per row, repeated
+// twenty times down the page, and every one of them is already a filter in the
+// panel beside this list -- so the row was answering a question the visitor had
+// just answered themselves. What is left is the thing being chosen between.
+//
+// The posted date stays because it is the one fact the filters do not carry and
+// the only one that ages: it is what says which of two similar-looking roles is
+// worth opening first.
 //
 // memo, and the only prop is the row itself. Filtering rebuilds the page ARRAY
 // on every keystroke, but the rows in it are the same objects out of the same
 // board, so a row that survived the change is === the row that was already
-// there and React skips it. Paging from 1 to 2 re-renders ten rows because ten
-// rows changed; narrowing a facet from 40 results to 30 re-renders none of the
-// ones that stayed. Each row formats two dates and mounts a PostedDate that
+// there and React skips it. Paging from 1 to 2 re-renders twenty rows because
+// twenty rows changed; narrowing a facet from 40 results to 30 re-renders none
+// of the ones that stayed. Each row formats a date and mounts a PostedDate that
 // runs its own effect, so skipping is worth the comparison.
 function Row({ job }: { job: JobSummary }) {
-  const locations = formatLocations(jobLocations(job), job.location);
   const posted = formatPostedDate(job.posting_date);
 
   return (
@@ -34,37 +37,22 @@ function Row({ job }: { job: JobSummary }) {
         </a>
       </h3>
 
-      <dl className="result__facts">
-        <div className="result__fact result__fact--team">
-          <dt className="result__label">Team</dt>
-          <dd className="result__value">{job.team ?? "Not listed"}</dd>
-        </div>
-
-        <div className="result__fact result__fact--location">
-          <dt className="result__label">Location</dt>
-          <dd className="result__value">
-            {locations.length > 0 ? locations.join(" · ") : "To be confirmed"}
+      {/* Still a <dl>: one date is still a named value, and the name is what
+          makes "3 days ago" mean posted rather than closing. The name is
+          visually hidden because it no longer earns its place on screen -- it
+          was a column caption, and there is only one column left to caption. */}
+      <dl className="result__posted">
+        <dt className="visually-hidden">Posted</dt>
+        {posted ? (
+          <dd className="result__date">
+            {/* Same treatment as the detail page: the server sends the absolute
+                date, the client swaps in relative time, and the New badge comes
+                with it for anything inside its first week. */}
+            <PostedDate absolute={posted} iso={job.posting_date!} />
           </dd>
-        </div>
-
-        <div className="result__fact result__fact--type">
-          <dt className="result__label">Work type</dt>
-          <dd className="result__value">{job.work_type ?? "Not listed"}</dd>
-        </div>
-
-        <div className="result__fact result__fact--posted">
-          <dt className="result__label">Posted</dt>
-          <dd className="result__value">
-            {posted ? (
-              // Same treatment as the detail page: the server sends the absolute
-              // date, the client swaps in relative time, and the New badge comes
-              // with it for anything inside its first week.
-              <PostedDate absolute={posted} iso={job.posting_date!} />
-            ) : (
-              <span className="result__empty">Not listed</span>
-            )}
-          </dd>
-        </div>
+        ) : (
+          <dd className="result__date result__date--empty">Not listed</dd>
+        )}
       </dl>
     </li>
   );

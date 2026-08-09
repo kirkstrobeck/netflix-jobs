@@ -33,8 +33,8 @@ function renderTeams(query: JobQuery = EMPTY_QUERY) {
       facetKey="team"
       legend="Team"
       options={facetOptions(BOARD, query, "team")}
+      plural="teams"
       query={query}
-      searchLabel="Search teams"
     />,
   );
 }
@@ -119,6 +119,8 @@ describe("facet option search", () => {
     expect(screen.queryByRole("checkbox")).toBeNull();
   });
 
+  // The search label is built from the same plural noun the disclosure below
+  // uses, so the two cannot end up naming the same group different things.
   it("gives the group a name and the search box a real label", () => {
     renderTeams();
 

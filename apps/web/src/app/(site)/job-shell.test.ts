@@ -78,11 +78,12 @@ describe("line balancing", () => {
     expect(rule(options, ".option__label")).toContain("text-wrap: balance");
   });
 
+  // The result row's own case for pretty was the joined location list, which is
+  // running text of unpredictable length. The row is one title and one date now,
+  // and neither is prose, so the empty state carries this on its own.
   it("uses pretty for running copy, where balance would even out prose", () => {
-    expect(rule(read("_listing/result-row.css"), ".result__value")).toContain(
-      "text-wrap: pretty",
-    );
     expect(rule(listing, ".results-empty__hint")).toContain("text-wrap: pretty");
+    expect(rule(listing, ".results-empty__lede")).toContain("text-wrap: pretty");
   });
 
   // A 19rem column and one unbreakable string would otherwise push through it.

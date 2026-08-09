@@ -26,12 +26,12 @@ const hrefs = (html: string) =>
 describe("Pagination", () => {
   // Nothing to paginate is not a control with one button in it.
   it("renders nothing when everything fits on one page", () => {
-    expect(markup(10, 1)).toBe("");
+    expect(markup(20, 1)).toBe("");
     expect(markup(0, 1)).toBe("");
   });
 
   it("marks the current page and links every other one", () => {
-    const html = markup(50, 3);
+    const html = markup(100, 3);
 
     expect(html).toContain('aria-current="page"');
     expect(hrefs(html)).toContain("/?page=2");
@@ -40,13 +40,13 @@ describe("Pagination", () => {
 
   // Page 1 is the bare URL, not ?page=1 -- the same page must not have two URLs.
   it("links back to page 1 without a page param", () => {
-    expect(hrefs(markup(50, 2))).toContain("/");
+    expect(hrefs(markup(100, 2))).toContain("/");
   });
 
   // A dead <a href> is not focusable and is not announced as a link, so the
   // unavailable edge is a span instead.
   it("has no previous link on the first page", () => {
-    const html = markup(50, 1);
+    const html = markup(100, 1);
 
     expect(html).toContain('aria-disabled="true"');
     expect(html).not.toContain(">Previous</a>");
@@ -54,7 +54,7 @@ describe("Pagination", () => {
   });
 
   it("has no next link on the last page", () => {
-    const html = markup(50, 5);
+    const html = markup(100, 5);
 
     expect(html).toContain('aria-disabled="true"');
     expect(html).not.toContain(">Next</a>");
@@ -62,8 +62,8 @@ describe("Pagination", () => {
   });
 
   it("builds its links from the clamped page, not the requested one", () => {
-    // 24 results is 3 pages; page 99 clamps to 3, whose previous is 2.
-    expect(hrefs(markup(24, 99))).toContain("/?page=2");
+    // 44 results is 3 pages; page 99 clamps to 3, whose previous is 2.
+    expect(hrefs(markup(44, 99))).toContain("/?page=2");
   });
 
   it("carries every active facet and keyword into each page link", () => {
@@ -74,23 +74,23 @@ describe("Pagination", () => {
       keywords: ["design"],
     };
 
-    expect(hrefs(markup(50, 2, query))).toContain(
+    expect(hrefs(markup(100, 2, query))).toContain(
       "/?team=Engineering&type=Remote&q=design&page=3",
     );
   });
 
-  // 49 pages must not render 49 links.
+  // 25 pages must not render 25 links.
   it("shows a fixed window of page numbers however long the list is", () => {
     const numbered = (html: string) =>
       [...html.matchAll(/>(\d+)<\/(?:a|span)>/g)].map((m) => Number(m[1]));
 
-    expect(numbered(markup(481, 25))).toEqual([23, 24, 25, 26, 27]);
+    expect(numbered(markup(481, 13))).toEqual([11, 12, 13, 14, 15]);
     expect(numbered(markup(481, 1))).toEqual([1, 2, 3, 4, 5]);
-    expect(numbered(markup(481, 49))).toEqual([45, 46, 47, 48, 49]);
+    expect(numbered(markup(481, 25))).toEqual([21, 22, 23, 24, 25]);
   });
 
   it("names the landmark so it is reachable as a navigation region", () => {
-    expect(markup(50, 1)).toContain('aria-label="Pagination"');
+    expect(markup(100, 1)).toContain('aria-label="Pagination"');
   });
 });
 
@@ -99,11 +99,11 @@ describe("ResultCount", () => {
     renderToStaticMarkup(<ResultCount window={paginate(total, page)} />);
 
   it("reports the window and the total", () => {
-    expect(count(481, 1)).toContain("Showing 1 thru 10 of 481 roles");
+    expect(count(481, 1)).toContain("Showing 1 thru 20 of 481 roles");
   });
 
   it("reports a partial last page", () => {
-    expect(count(24, 3)).toContain("21 thru 24");
+    expect(count(44, 3)).toContain("41 thru 44");
   });
 
   it("says so when nothing matched", () => {

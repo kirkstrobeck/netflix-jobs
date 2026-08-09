@@ -48,7 +48,7 @@ vi.mock("next/navigation", () => ({
     ),
 }));
 
-// 25 roles over two teams: three pages, and a facet worth counting.
+// 25 roles over two teams: two pages, and a facet worth counting.
 const BOARD = Array.from({ length: 25 }, (_, i) =>
   summary({
     title: `Role ${i}`,
@@ -92,8 +92,8 @@ const titles = () =>
 
 const tick = (name: string) => screen.findByRole("checkbox", { name: new RegExp(name) });
 
-// Page one of the Marketing results: indices 10-24, ten to a page.
-const MARKETING = Array.from({ length: 10 }, (_, i) => `Role ${i + 10}`);
+// The Marketing results: indices 10-24, and all fifteen fit on one page.
+const MARKETING = Array.from({ length: 15 }, (_, i) => `Role ${i + 10}`);
 
 // Nothing on screen changes when the board lands -- that is the point -- so
 // there is no rendered thing to wait for. Flushing the fetch's microtasks
@@ -109,8 +109,8 @@ describe("before the board arrives", () => {
   it("shows the view the server derived", () => {
     mount();
 
-    expect(titles()).toHaveLength(10);
-    expect(screen.getByText(/Showing 1 thru 10 of 25 roles/)).toBeTruthy();
+    expect(titles()).toHaveLength(20);
+    expect(screen.getByText(/Showing 1 thru 20 of 25 roles/)).toBeTruthy();
   });
 
   it("falls back to the router when a facet is ticked", () => {
@@ -153,7 +153,7 @@ describe("once the board is in memory", () => {
 
     fireEvent.click(screen.getByRole("link", { name: "2" }));
 
-    await waitFor(() => expect(titles()[0]).toBe("Role 10"));
+    await waitFor(() => expect(titles()[0]).toBe("Role 20"));
     expect(url()).toBe("/?page=2");
     expect(fetchMock).not.toHaveBeenCalled();
   });

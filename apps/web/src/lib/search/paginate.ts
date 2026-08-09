@@ -1,4 +1,16 @@
-export const PAGE_SIZE = 10;
+/**
+ * Rows per page.
+ *
+ * 20, not 10, because a row is now one title on one line rather than a title
+ * over a four-column block of facts. Ten of the old rows and twenty of these
+ * take about the same vertical space, so the page did not get longer -- it got
+ * twice as much of what anyone actually scans. 481 postings is 25 pages.
+ *
+ * Paging is resolved in the browser from the board that is already in memory,
+ * so a bigger page costs no extra request and no extra SSR variant: the server
+ * renders one page for the first paint and nothing after it.
+ */
+export const PAGE_SIZE = 20;
 
 export type PageWindow = {
   /** The page actually shown, clamped into range. */

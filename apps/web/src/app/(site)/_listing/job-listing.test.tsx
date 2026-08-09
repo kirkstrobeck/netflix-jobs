@@ -22,7 +22,7 @@ vi.mock("next/navigation", () => ({
 const listMock = vi.mocked(listJobSummaries);
 vi.mocked(boardVersion).mockResolvedValue("bo4rdv3rs10n");
 
-// 25 jobs across two teams: enough for three pages and a facet worth counting.
+// 25 jobs across two teams: enough for two pages and a facet worth counting.
 const BOARD = Array.from({ length: 25 }, (_, i) =>
   summary({
     title: `Role ${i}`,
@@ -40,15 +40,15 @@ async function renderListing(params: RawSearchParams) {
 }
 
 describe("JobListing", () => {
-  it("shows the first page of ten and the total", async () => {
+  it("shows the first page of twenty and the total", async () => {
     const html = await renderListing({});
 
-    expect(html.match(/class="result"/g)).toHaveLength(10);
-    expect(html).toContain("Showing 1 thru 10 of 25 roles");
+    expect(html.match(/class="result"/g)).toHaveLength(20);
+    expect(html).toContain("Showing 1 thru 20 of 25 roles");
   });
 
   it("renders the page the URL asks for", async () => {
-    const html = await renderListing({ page: "3" });
+    const html = await renderListing({ page: "2" });
 
     expect(html).toContain("Showing 21 thru 25 of 25 roles");
     expect(html.match(/class="result"/g)).toHaveLength(5);
@@ -105,7 +105,7 @@ describe("JobListing", () => {
   it("sends the derived view, never the board", async () => {
     const html = await renderListing({});
 
-    // Ten rows on page one, and the fifteen behind them nowhere in the document
+    // Twenty rows on page one, and the five behind them nowhere in the document
     // -- not as markup and not as serialised props.
     expect(html.match(/Role \d+/g)).toHaveLength(PAGE_SIZE);
     expect(html).not.toContain("Role 24");

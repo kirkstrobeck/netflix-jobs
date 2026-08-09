@@ -9,10 +9,20 @@ import { EMPTY_QUERY, isFiltered, type FacetKey, type JobQuery } from "@/lib/sea
 // The options arrive counted. deriveListing does it once for all three groups,
 // over the whole board, so the panel is a layout and the arithmetic has exactly
 // one home -- the same one the server render uses.
-const GROUPS: { key: FacetKey; legend: string; searchLabel: string }[] = [
-  { key: "team", legend: "Team", searchLabel: "Search teams" },
-  { key: "workType", legend: "Work type", searchLabel: "Search work types" },
-  { key: "location", legend: "Location", searchLabel: "Search locations" },
+//
+// Work type leads. It is the coarsest cut anyone makes -- onsite or remote is
+// usually decided before a team is -- and it is the only group short enough
+// (two values, 377 onsite and 104 remote) to show everything it has, so putting
+// it first means the panel opens with a complete question rather than with the
+// top five of thirty-one teams.
+//
+// `plural` is the group's name as a noun, and the only place it is written: the
+// option search's label and the disclosure that opens the rest of the list are
+// both built from it.
+const GROUPS: { key: FacetKey; legend: string; plural: string }[] = [
+  { key: "workType", legend: "Work type", plural: "work types" },
+  { key: "team", legend: "Team", plural: "teams" },
+  { key: "location", legend: "Location", plural: "locations" },
 ];
 
 type FacetsPanelProps = {
@@ -46,8 +56,8 @@ export function FacetsPanel({ facets, query, draft, onDraft }: FacetsPanelProps)
           key={group.key}
           legend={group.legend}
           options={facets[group.key]}
+          plural={group.plural}
           query={query}
-          searchLabel={group.searchLabel}
         />
       ))}
     </aside>

@@ -43,43 +43,36 @@ describe("ResultList", () => {
     expect(html).not.toContain("<th");
   });
 
-  it("shows the facts each row aligns on", () => {
+  // The row is the title and how old the posting is, and nothing else: team,
+  // location and work type are all filters in the panel beside the list, so
+  // repeating them down every row answered a question the visitor had just
+  // answered themselves.
+  it("carries the title and the posted date, and no other facts", () => {
+    const html = renderToStaticMarkup(
+      <ResultList jobs={[summary({ title: "Staff designer" })]} />,
+    );
+
+    expect(html).toContain("Staff designer");
+    expect(html).toContain("Posted");
+    expect(html).not.toContain("Team");
+    expect(html).not.toContain("Work type");
+    expect(html).not.toContain("Los Gatos");
+  });
+
+  // Hidden, not dropped: "3 days ago" on its own does not say posted, and the
+  // <dt> is what makes it a named value rather than a loose date.
+  it("keeps the date's name for a screen reader, off screen", () => {
     const html = renderToStaticMarkup(<ResultList jobs={[summary()]} />);
 
-    expect(html).toContain("Team");
-    expect(html).toContain("Location");
-    expect(html).toContain("Work type");
-    expect(html).toContain("Posted");
+    expect(html).toContain('<dt class="visually-hidden">Posted</dt>');
   });
 
-  it("joins several locations rather than dropping any", () => {
-    const job = summary({
-      locations: ["Tokyo,Japan", "Seoul,Korea, Republic of"],
-    });
-
-    expect(renderToStaticMarkup(<ResultList jobs={[job]} />)).toContain(
-      "Tokyo, Japan · Seoul, Korea, Republic of",
+  it("names a missing date instead of leaving a blank", () => {
+    const html = renderToStaticMarkup(
+      <ResultList jobs={[summary({ posting_date: null })]} />,
     );
-  });
 
-  it("falls back to the scalar location when the array is empty", () => {
-    const job = summary({ locations: [], location: "Tokyo,Japan" });
-
-    expect(renderToStaticMarkup(<ResultList jobs={[job]} />)).toContain("Tokyo, Japan");
-  });
-
-  it("names the missing values instead of leaving blanks", () => {
-    const job = summary({
-      team: null,
-      work_type: null,
-      posting_date: null,
-      locations: [],
-      location: "",
-    });
-    const html = renderToStaticMarkup(<ResultList jobs={[job]} />);
-
-    expect(html).toContain("To be confirmed");
-    expect(html.match(/Not listed/g)?.length).toBe(3);
+    expect(html.match(/Not listed/g)?.length).toBe(1);
   });
 
   // The posted date is the detail page's component, so relative time, the
@@ -113,6 +106,15 @@ describe("FacetsPanel", () => {
     expect(html).toContain("Engineering");
   });
 
+  // Onsite or remote is the coarsest cut anyone makes, and it is the only group
+  // short enough to show everything it has, so it opens the panel.
+  it("puts work type above team and location", () => {
+    const html = panel(EMPTY_QUERY);
+
+    expect(html.indexOf("Work type")).toBeLessThan(html.indexOf("Team"));
+    expect(html.indexOf("Team")).toBeLessThan(html.indexOf("Location"));
+  });
+
   // Nothing to clear, no control offering to clear it.
   it("offers Clear all only once something is filtering", () => {
     const clean = panel(EMPTY_QUERY);
@@ -135,7 +137,7 @@ describe("FacetsPanel", () => {
 });
 
 describe("ListingSkeleton", () => {
-  // A placeholder announcing ten empty rows is worse than silence.
+  // A placeholder announcing a page of empty rows is worse than silence.
   it("is a full page of rows and is hidden from assistive tech", () => {
     const html = renderToStaticMarkup(<ListingSkeleton />);
 
