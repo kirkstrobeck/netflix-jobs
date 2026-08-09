@@ -87,15 +87,28 @@ describe("the band's bottom edge", () => {
     expect(footer).not.toContain("color-mix");
   });
 
-  // Nothing on html or body -- a root background is propagated to the canvas,
-  // and the canvas is both gutters, not just the low one.
-  it("leaves the root and the body black", () => {
+  // Nothing RESTING on html or body -- a root background is propagated to the
+  // canvas, and the canvas is both gutters, not just the low one. This read
+  // "globals.css contains no color-mix", which was never about the function: it
+  // was a proxy for "no red reaches the root", back when the mix was the only
+  // way this codebase spelled the band's red. The end-of-page gutter rule now
+  // spells it that way on purpose, so the proxy has to become the thing it stood
+  // for -- the red exists in exactly one place, the keyframe that step-end holds
+  // off until scroll progress 100%, which is the low gutter and nothing else.
+  // The declarations that paint at rest, and the frame the top gutter reads at
+  // progress 0%, are still flat black.
+  it("leaves the root and the body black, and lets red in only at the page's end", () => {
     const globals = stripComments(
       readFileSync(join(process.cwd(), "src/app/globals.css"), "utf8"),
     );
+    const RED = "color-mix(in srgb, #000 14%, #e50914)";
 
-    expect(globals).not.toContain("color-mix");
     expect(rule(globals, "html, body")).toContain("background: #000000");
+    expect(rule(globals, "html, body")).not.toContain("color-mix");
+    expect(globals.match(/color-mix/g)?.length).toBe(1);
+    expect(rule(globals, "to")).toContain(`background-color: ${RED}`);
+    expect(rule(globals, "from")).toContain("background-color: #000000");
+    expect(rule(globals, "html")).toContain("animation: page-end-gutter step-end");
   });
 
   // clip, not hidden: hidden would make the band a scroll container. And no clip
