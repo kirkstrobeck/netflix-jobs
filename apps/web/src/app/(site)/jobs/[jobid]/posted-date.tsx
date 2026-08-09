@@ -45,7 +45,16 @@ export function PostedDate({ absolute, iso }: PostedDateProps) {
       <time dateTime={iso} title={absolute}>
         {recency ? recency.label : absolute}
       </time>
-      {recency?.isNew ? <NewBadge /> : null}
+      {/* The space is in the markup for the same reason it is in the facet
+          legend: without it these two runs are adjacent in the DOM and only
+          .posted-badge's margin holds them apart, so the text copies and reads
+          as "2 days agoNew". */}
+      {recency?.isNew ? (
+        <>
+          {" "}
+          <NewBadge />
+        </>
+      ) : null}
     </>
   );
 }

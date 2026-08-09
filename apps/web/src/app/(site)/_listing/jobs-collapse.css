@@ -15,18 +15,21 @@
    second copy of the markup to keep in step. */
 
 /* The groups. Its own grid so the panel is one child of .facets that can be
-   hidden whole, with the same 1.75rem rhythm between groups that .facets used
-   to set directly. */
+   hidden whole, on the same between-groups step the rest of the panel uses. */
 .facets__panel {
   display: grid;
-  gap: 1.75rem;
+  gap: var(--facet-gap);
 }
 
-/* Desktop-first for this one property, deliberately: the toggle is the
-   exception and the sidebar is the rule, so the wide layout is what the plain
-   selectors say and the narrow one is the override below. */
-.facets__toggle,
-.facets__applied,
+/* The heading is the label, so there is nothing here to hide any more -- only a
+   chevron to withhold. .facets__toggle and .facets__applied used to be
+   display: none at this width and visible below it, which is what made the word
+   "Filters" exist twice in the markup; see facets-panel.tsx. The word is now
+   written once, so the wide layout shows the label as plain heading text and
+   the narrow layout is what adds the box.
+
+   Desktop-first for this one property, deliberately: the chevron is the
+   exception and the sidebar is the rule. */
 .facets__chevron {
   display: none;
 }
@@ -41,14 +44,13 @@
     order: -1;
   }
 
-  /* Not a column heading when there is one column. The toggle carries the word
-     instead, so this would be the same label twice. */
-  .facets__heading {
-    display: none;
-  }
+  /* The heading becomes the face of the checkbox above it. 2.75rem is the 44px
+     hit target the pager and .apply-button already use.
 
-  /* The face of the checkbox above it. 2.75rem is the 44px hit target the
-     pager and .apply-button already use. */
+     The box is on the LABEL rather than on the h2, so the pressable area is
+     exactly the word plus the chevron -- an h2 is a block and would stretch its
+     box across the column, giving a 19rem-wide button whose left half does
+     nothing visible. */
   .facets__toggle {
     display: inline-flex;
     align-items: center;
@@ -59,8 +61,6 @@
     border-radius: 3px;
     background: var(--surface-raised);
     color: var(--ink);
-    font-size: 0.875rem;
-    font-weight: 500;
     cursor: pointer;
     /* Hover-OFF only. */
     transition: background-color 150ms ease, border-color 150ms ease;
@@ -72,19 +72,15 @@
     transition-duration: 0s;
   }
 
-  /* A filter that is applied while the panel is shut is an invisible filter,
-     which is the thing this codebase spends the most effort not doing. So the
-     shut drawer says how many. */
-  .facets__applied {
-    display: inline;
-    color: var(--ink-muted);
-    font-weight: 400;
+  /* Centred against the box rather than sitting on the heading's baseline: next
+     to a 2.75rem control, baseline alignment drops the tally below the middle
+     of it and the pair stops reading as one line. */
+  .facets__title {
+    align-items: center;
   }
 
   /* Open or shut, drawn. The checkbox announces it -- this is the same fact for
-     the eye, and it is the reason the toggle's WORD never changes: a label that
-     said "Show" then "Hide" would be an accessible name that moves under a
-     screen reader while the control stays put. */
+     the eye. */
   .facets__chevron {
     display: inline-block;
     inline-size: 0;
@@ -103,7 +99,7 @@
   }
 
   /* No margin to undo when it shuts: a display: none element is not a grid item
-     at all, so .facets' own 1.75rem gap appears with the panel and goes with
+     at all, so .facets' own --facet-gap appears with the panel and goes with
      it. */
   .facets__switch:checked ~ .facets__panel {
     display: grid;
@@ -124,9 +120,12 @@
   }
 }
 
-/* Nothing to toggle where the panel is always open: the control is gone AND the
-   checkbox stops being focusable, so a keyboard walking the wide layout never
-   lands on a control with no visible face and nothing to do. */
+/* Nothing to toggle where the panel is always open. The checkbox stops being
+   focusable, so a keyboard walking the wide layout never lands on a control
+   with nothing to do -- and its label, which is the heading here, keeps no
+   pointer cursor and no box, because every rule that gives it those is inside
+   the narrow media query above. A stray click on the heading toggles a checkbox
+   that no selector is reading at this width, which is to say it does nothing. */
 @media (min-width: 64rem) {
   .facets__switch {
     display: none;

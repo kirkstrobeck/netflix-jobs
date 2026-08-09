@@ -171,3 +171,27 @@ describe("keywords to URL", () => {
     expect(screen.queryByRole("button", { name: /Remove keyword:/ })).toBeNull();
   });
 });
+
+/**
+ * The same regression as the filters heading, in the group legends.
+ *
+ * A <legend> IS the fieldset's accessible name, so "Location" glued to
+ * "1 selected" was announced as "Location1 selected" -- and copied that way,
+ * and painted that way whenever the stylesheet was late. The margin does the
+ * optical spacing; the space itself has to be in the text.
+ */
+describe("the group legend and its tally", () => {
+  it("separates the group name from the count in the text", () => {
+    renderTeams({ ...EMPTY_QUERY, team: ["Engineering"] });
+
+    // getByRole matches on the computed accessible name, so this fails on the
+    // glued string and passes only on the separated one.
+    expect(screen.getByRole("group", { name: "Team 1 selected" })).toBeTruthy();
+  });
+
+  it("shows no tally at all when nothing is selected", () => {
+    renderTeams();
+
+    expect(screen.getByRole("group", { name: "Team" })).toBeTruthy();
+  });
+});

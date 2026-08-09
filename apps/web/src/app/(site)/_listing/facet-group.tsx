@@ -60,9 +60,25 @@ export function FacetGroup({
       <legend className="facet__legend">
         {legend}
         {/* A live tally beside the group's name: the one number in this facet
-            that moves on every click, so the click is never in doubt. */}
+            that moves on every click, so the click is never in doubt.
+
+            THE SPACE IS IN THE MARKUP, NOT IN THE MARGIN
+
+            `{" "}` is load-bearing. Without it the legend's two text runs are
+            adjacent in the DOM and the only thing separating them is
+            .facet__tally's margin-inline-start -- which means the separation
+            exists for the eye and for nothing else. A <legend> IS the
+            fieldset's accessible name, so a screen reader announced the group
+            as "Location1 selected"; selecting the line and copying it gave the
+            same string; and the moment the stylesheet was stale or absent it
+            rendered that way on screen too. Word separation is a property of
+            the text, so it lives in the text. The margin still does the optical
+            spacing on top of it. */}
         {selected > 0 ? (
-          <span className="facet__tally">{selected} selected</span>
+          <>
+            {" "}
+            <span className="facet__tally">{selected} selected</span>
+          </>
         ) : null}
       </legend>
 

@@ -61,6 +61,35 @@ describe("the filters disclosure", () => {
     expect(filtered).not.toContain("Show filters");
     expect(filtered).not.toContain("Hide filters");
   });
+
+  /**
+   * THE "Filters5 applied" REGRESSION.
+   *
+   * Two separate faults produced that one string, and both are pinned here.
+   *
+   * The word was in the markup TWICE -- an h2 for the wide layout and a label
+   * for the narrow one, each hidden at the other's width. That is only ever one
+   * stylesheet away from showing both, which is what a screenshot caught.
+   *
+   * And the count was glued to it, separated by nothing but a flex gap. A gap
+   * is not a word separator: it does not survive text selection, it is not in
+   * the accessible name, and it is not there at all before the CSS lands.
+   */
+  it("writes the word Filters exactly once", () => {
+    expect(panel(EMPTY_QUERY).match(/>Filters/g)).toHaveLength(1);
+  });
+
+  it("separates the heading from the count in the TEXT, not in a margin", () => {
+    const filtered = panel({ ...EMPTY_QUERY, country: ["US"] });
+    // Everything between the word and the count, tags stripped. If the only
+    // thing holding them apart is CSS, this is the empty string.
+    const between = filtered
+      .slice(filtered.indexOf(">Filters") + ">Filters".length)
+      .split("1 applied")[0]
+      .replace(/<[^>]*>/g, "");
+
+    expect(between).toMatch(/\s/);
+  });
 });
 
 /**
