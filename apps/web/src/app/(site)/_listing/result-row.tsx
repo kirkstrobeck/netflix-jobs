@@ -31,7 +31,10 @@ function Row({ job }: { job: JobSummary }) {
       {/* h3: the page runs h1 (masthead) -> h2 ("Open roles") -> h3 per result,
           so a screen reader's heading list nests instead of flattening. */}
       <h3 className="result__title">
-        {/* The whole title is the target, so the hit area matches the text. */}
+        {/* One real link with one real href, and the whole row is its hit area
+            -- stretched over the row by .result__link::after rather than by a
+            click handler, so there is nothing here to go wrong with JavaScript
+            off and nothing extra for a keyboard to stop at. */}
         <a className="result__link" href={`/jobs/${job.display_job_id}`}>
           {job.title}
         </a>

@@ -71,6 +71,38 @@
   transition-duration: 0s;
 }
 
+/* THE KEYBOARD'S ANSWER, WHICH THIS DID NOT HAVE.
+
+   The lift above is a hover state doing double duty, and as a focus state it
+   fails twice: --surface-raised is a 4% white lift, well under the 3:1 WCAG
+   1.4.11 asks of an indicator, and on the chosen half it is invisible outright
+   because that half is already filled with --accent. Tabbing into this control
+   left nothing to see on one option and nothing legible on the other.
+
+   So focus gets the mark the result rows use -- a 2px --accent frame -- and the
+   page ends up with one vocabulary for "this is the thing you are on" rather
+   than one per control.
+
+   outline with a NEGATIVE offset, which is the whole trick here. .sort__options
+   sets overflow: hidden to clip the divider to its rounded corners, and that
+   clips anything drawn outside an option's border box: a normal focus ring on
+   the first or last option would be cut off on the outer edge and lost behind
+   the container on the inner one. Drawn 2px INSIDE, it cannot be clipped, and it
+   is still a real outline -- so it survives forced-colors, which a box-shadow
+   would not. */
+.sort__option:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+/* Same frame, inverted, because the ground changed. The chosen option is filled
+   with --accent, so an --accent ring on it is no ring at all. White is 4.79:1 on
+   --accent -- past 3:1 -- and it is the colour this option already sets its own
+   label in, so the frame belongs to it rather than being applied to it. */
+.sort__option[aria-current="true"]:focus-visible {
+  outline-color: #fff;
+}
+
 /* Selected reads as ON. Off the ARIA attribute rather than a class, because the
    attribute is what actually has to be right -- styling it is what makes a
    missing one visible during development instead of invisible until a screen

@@ -45,61 +45,75 @@
   border-block-start: 0;
 }
 
-/* THE HOVER STATE, RE-JUDGED FOR A ONE-LINE ROW.
+/* ONE ROW, ONE MARK.
 
-   It used to be a gradient wash across the row plus a mark in the gutter. The
-   wash was there to light a four-line block, so that hovering anywhere in a tall
-   stack of facts told you how much of the page was one result. A single line
-   does not need lighting to be legible as one object -- the line IS the object --
-   and a fill behind one line of text is a menu highlight, which is to say a card
-   at reduced height, which is the one thing this list must not become. So the
-   wash is gone, and with it the .result--hover-era z-index/isolation pair: there
-   is no negative layer left to keep inside the row.
+   There used to be two, bolted together: a 2px rule standing in the gutter, and
+   an underline under the title. Two marks for one thing reads as two things,
+   which is exactly how it looked -- and neither of them described the row. The
+   gutter rule stood BESIDE it and the underline sat under one word of it, so a
+   keyboard user tabbing through was shown a word where the target was a whole
+   line.
 
-   What is left is the mark and the underline, which is the right number of
-   things for the amount of row there now is:
+   The target is the whole line now (see .result__link::after below), so the mark
+   is the whole line: a 2px --accent frame around the row, and nothing else. It
+   is one idea -- THIS ROW -- rather than two hints about parts of it, and it is
+   the same mark for a pointer and for a keyboard, because they mean the same
+   thing and a page that says it twice in two ways is a page saying it badly.
 
-   - the mark says WHICH row, standing in the gutter like an editor's margin
-     rule, outside the text column, drawing no edge around anything;
-   - the underline says WHAT WILL OPEN, on the only text in the row that opens
-     anything.
+   WHY A FRAME AND NOT A FILL
 
-   Both are --accent, so they read as one gesture rather than as two effects.
-   --accent is 4.30:1 on --surface -- never enough for text, comfortably past the
-   3:1 WCAG 1.4.11 asks of a non-text indicator.
+   A fill was the obvious answer once the whole row became the target, and it is
+   the wrong one twice over. A wash behind one line of text is a menu highlight,
+   which is a card at reduced height, which is the one thing this list must not
+   become. And it cannot carry the focus state on its own: --surface-raised is a
+   4% white lift, nowhere near the 3:1 WCAG 1.4.11 requires of a non-text
+   indicator, so a focused row would need an accent mark ON TOP of the fill and
+   we would be back to two marks. The frame is the mark that can do both jobs,
+   so it is the only one there is.
 
-   The mark's scaleY retract went with the wash. Over a four-line block that
-   retract was a legible movement; over a one-line row it is a twitch, and with
-   twenty rows on a page, running a pointer down the list would leave a trail of
-   marks shrinking behind it -- movement drawing the eye to the row you have just
-   LEFT. Nothing moves now: the state is opacity and colour only, which is also
-   why there is no longer a reduced-motion branch to write.
+   It is a frame and not a card because it is drawn and not built: no radius, no
+   shadow, no ground of its own, gone the instant the pointer leaves. And it
+   bleeds 0.75rem past the text column on both sides, so it reads as a band
+   across the page rather than as a tile sitting in a column. That -0.75rem sits
+   inside --gutter at its 1.25rem floor, so it never reaches past .shell and
+   .job-page's overflow-x: clip is never called on.
 
-   -0.75rem sits inside --gutter at its 1.25rem floor, so this never reaches past
-   .shell and .job-page's overflow-x: clip is never called on. inset-block keeps
-   it clear of the hairlines above and below, so two adjacent hovered rows never
-   read as one continuous rule down the side of the list. */
+   --accent is 4.30:1 on --surface. Never enough for text; comfortably past the
+   3:1 asked of an indicator, at the 2px WCAG 2.4.13 wants of a focus ring.
+
+   inset-block: 0 puts the frame's edges exactly on the hairlines above and
+   below, so the frame replaces the separator rather than crowding it. Nothing
+   moves and nothing reflows: the state is opacity only, which is also why there
+   is no reduced-motion branch to write. */
 .result::after {
   content: "";
   position: absolute;
-  inset-block: 0.375rem;
-  inset-inline-start: -0.75rem;
-  inline-size: 2px;
-  background: var(--accent);
+  inset-block: 0;
+  inset-inline: -0.75rem;
+  border: 2px solid var(--accent);
   opacity: 0;
   pointer-events: none;
   /* Hover-OFF only: gentle on the way out. */
   transition: opacity 150ms ease;
 }
 
-/* Hover-ON for the whole row: instant, never a fade.
-   :has(.result__link:focus-visible) rather than :focus-within -- focus-within
+/* :has(.result__link:focus-visible) rather than :focus-within -- focus-within
    matches after a mouse click too, which would leave a row lit that nobody is
-   on. The link keeps its own focus ring, so a keyboard gets both: the ring says
-   where you are, the row says what will open. */
+   on. Hover and focus resolve to the same declaration because they are the same
+   statement. Instant on the way in, never a fade. */
 .result:is(:hover, :has(.result__link:focus-visible))::after {
   opacity: 1;
   transition-duration: 0s;
+}
+
+/* Colours are forced in this mode, so --accent is discarded and the frame would
+   arrive as whatever the UA picked for a border. Naming the system colour that
+   MEANS this keeps the row's mark reading as a selection rather than as a box
+   that happens to be there. */
+@media (forced-colors: active) {
+  .result::after {
+    border-color: Highlight;
+  }
 }
 
 /* balance, not pretty: a job title is short display text of two or three lines,
@@ -113,27 +127,39 @@
   text-wrap: balance;
 }
 
-/* 2px at 0.22em, which is .job-footer__link's underline exactly. It was a
-   hairline default before, when it was one cue among four; it is now half the
-   state, and it has to hold its own under a 1.125rem bold title. */
 .result__link {
   color: var(--ink);
-  text-decoration: underline;
-  text-decoration-color: transparent;
-  text-decoration-thickness: 2px;
-  text-underline-offset: 0.22em;
-  /* Hover-OFF only: gentle on the way out. */
-  transition: text-decoration-color 150ms ease;
+  text-decoration: none;
 }
 
-/* Scoped to the row rather than to .result__link:hover: the underline is part
-   of the row's state, so it lights from anywhere in the row and not only from
-   the width of the title. Link hover is a subset of row hover, so nothing is
-   lost by moving it up. */
-.result:is(:hover, :has(.result__link:focus-visible)) .result__link {
-  text-decoration-color: var(--accent);
-  /* Hover-ON: instant, never a fade. */
-  transition-duration: 0s;
+/* THE WHOLE ROW IS THE LINK, IN MARKUP.
+
+   An empty pseudo-element stretched over the row's padding box, which is the
+   anchor's own hit area grown to the shape of the thing it opens. No click
+   handler on a div, no second tab stop, no JavaScript: the title is still one
+   real <a> with one real href, and it is still the only focusable thing in the
+   row -- so a keyboard walks the list at one stop per role, and middle-click,
+   right-click and copy-link-address all keep working from anywhere on the line.
+
+   .result is the positioned ancestor, so inset: 0 resolves to the row.
+
+   The cost is text selection: dragging across the row selects nothing, because
+   the overlay is above the text. That is the accepted price of the hit area
+   being the row, and this row holds a title and a date rather than anything
+   anyone copies. */
+.result__link::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+}
+
+/* The row carries the focus mark, so the browser's ring around the TITLE is a
+   second, smaller answer to the question the frame has already answered -- and
+   it is the wrong answer, because it draws a word. Removing an outline is only
+   safe when something else is visible in its place, and the frame is: it is
+   drawn under the same selector, and it survives forced-colors above. */
+.result__link:focus-visible {
+  outline: none;
 }
 
 .result__posted {
@@ -141,28 +167,21 @@
 }
 
 /* Tabular figures so "3 days ago" and "January 15, 2026" stack into a column
-   with a straight edge rather than one that shuffles with each digit width. */
+   with a straight edge rather than one that shuffles with each digit width.
+
+   It does not respond to the row's state. It used to brighten to full ink on
+   hover, which was a third thing happening for the same reason as the first two;
+   inside a frame that already says "this row", a date changing colour is a
+   second announcement of a fact just announced. */
 .result__date {
   margin: 0;
   color: var(--ink-muted);
   font-size: 0.9375rem;
   line-height: 1.45;
   font-variant-numeric: tabular-nums;
-  /* Hover-OFF only. */
-  transition: color 150ms ease;
 }
 
-/* The date wakes with the row: full ink, the same promotion .option makes on
-   hover, so the two hoverable things in this listing behave alike. It is the
-   third of the three things the state does, and the only one that touches the
-   half of the row that is not a link. Hover-ON: instant. */
-.result:is(:hover, :has(.result__link:focus-visible)) .result__date {
-  color: var(--ink);
-  transition-duration: 0s;
-}
-
-/* Stays faint, on hover too: "Not listed" is an absence, not a value. */
-.result__date--empty,
-.result:is(:hover, :has(.result__link:focus-visible)) .result__date--empty {
+/* Fainter still: "Not listed" is an absence, not a value. */
+.result__date--empty {
   color: var(--ink-faint);
 }

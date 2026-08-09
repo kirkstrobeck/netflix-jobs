@@ -1,6 +1,7 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { readCss, rule as ruleIn } from "@/app/(site)/css-rule";
 import { SortControl } from "@/app/(site)/_listing/sort-control";
 import { NavigateProvider } from "@/app/(site)/_listing/use-query-navigation";
 import { EMPTY_QUERY, type JobQuery } from "@/lib/search/job-query";
@@ -103,5 +104,42 @@ describe("what a press does", () => {
     fireEvent.click(option("Nearest"), { button: 0 });
 
     expect(navigate).toHaveBeenCalledWith(expect.objectContaining({ page: 1 }));
+  });
+});
+
+/**
+ * The focus state, which this control did not have.
+ *
+ * Two anchors in a box with overflow: hidden is the easy place to get a focus
+ * ring subtly wrong -- clipped by the overflow, or drawn in a colour that is
+ * invisible against the fill the chosen half already carries. Both are silent
+ * failures: nothing looks broken, there is just nothing to see when you tab.
+ */
+describe("the switcher's focus ring", () => {
+  const css = readCss("_listing/jobs-sort.css");
+  const rule = (selector: string) => ruleIn(css, selector);
+
+  // A negative offset draws the ring INSIDE the border box, which is the only
+  // place the container's overflow: hidden cannot clip it.
+  it("is drawn inside the box, where the overflow cannot clip it", () => {
+    expect(rule(".sort__options")).toContain("overflow: hidden");
+    expect(rule(".sort__option:focus-visible")).toContain("outline-offset: -2px");
+  });
+
+  // An outline rather than a box-shadow, so it survives forced colours, and the
+  // same 2px accent frame the result rows use.
+  it("is the same mark the result rows use", () => {
+    expect(rule(".sort__option:focus-visible")).toContain(
+      "outline: 2px solid var(--accent)",
+    );
+  });
+
+  // The chosen option is filled with --accent, so an --accent ring on it is no
+  // ring at all. White is 4.79:1 on --accent, and is what its label is already
+  // set in.
+  it("inverts on the chosen half, which is already accent", () => {
+    expect(rule('.sort__option[aria-current="true"]:focus-visible')).toContain(
+      "outline-color: #fff",
+    );
   });
 });

@@ -1,43 +1,49 @@
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
-
 import { describe, expect, it } from "vitest";
+
+import { readCss, rule as ruleIn } from "@/app/(site)/css-rule";
 
 // The row's interaction state is entirely CSS -- there is no class toggle and no
 // JavaScript -- so the stylesheet is the thing under test.
-const css = readFileSync(
-  join(process.cwd(), "src/app/(site)/_listing/result-row.css"),
-  "utf8",
-).replace(/\/\*[\s\S]*?\*\//g, "");
-
-// Split into rules and look them up by their EXACT selector text. Matching by
-// substring instead would let ".result" find ".results", and ".result::after"
-// find a grouped rule that merely mentions it.
-const normalise = (selector: string) => selector.trim().replace(/\s+/g, " ");
-
-const RULES = [...css.matchAll(/([^{}]+)\{([^{}]*)\}/g)].map((match) => ({
-  selector: normalise(match[1]),
-  body: match[2],
-}));
-
-const rule = (selector: string) =>
-  RULES.find((entry) => entry.selector === normalise(selector))?.body ?? "";
+const css = readCss("_listing/result-row.css");
+const rule = (selector: string) => ruleIn(css, selector);
 
 const ON = ".result:is(:hover, :has(.result__link:focus-visible))";
 
-// Every rule that paints the hovered state, keyed by the selector it is
-// actually written under.
-const STATE_RULES = [`${ON}::after`, `${ON} .result__link`, `${ON} .result__date`];
+describe("the row's mark", () => {
+  /**
+   * THE POINT OF THIS FILE. The row used to carry two marks -- a rule standing
+   * in the gutter and an underline under the title -- and neither of them
+   * described the row. One frame does, and the count is the assertion: if a
+   * second mark is ever added back, this is what says so.
+   */
+  it("is exactly one mark, and it frames the whole row", () => {
+    expect(rule(".result::after")).toContain("border: 2px solid var(--accent)");
+    expect(rule(".result::after")).toContain("inset-block: 0");
+    expect(rule(".result::after")).toContain("inset-inline: -0.75rem");
 
-describe("result row hover treatment", () => {
-  // The whole row is the target. Scoping the state to .result means hovering
-  // the date lights the row exactly as hovering the title does.
-  it("keys every part of the state off the row, not the title link", () => {
-    STATE_RULES.forEach((selector) => {
-      expect(rule(selector)).not.toBe("");
-    });
-    // The old title-only hover is gone: the row owns the state now.
+    // The marks it replaced, and the one it was chosen over.
+    expect(css).not.toContain("text-decoration-color");
+    expect(css).not.toContain("inset-inline-start");
+    expect(css).not.toContain("linear-gradient");
+    expect(css).not.toContain("::before");
+  });
+
+  // Scoped to .result, so hovering the date lights the row exactly as hovering
+  // the title does. Nothing keys off the link.
+  it("is keyed off the row, never off the title link", () => {
+    expect(rule(`${ON}::after`)).not.toBe("");
     expect(css).not.toContain(".result__link:hover");
+  });
+
+  /**
+   * Pointer and keyboard are ONE declaration, not two that agree today. There
+   * is one :is() in the file and it paints the only state there is, which is
+   * what "hover and focus read as the same affordance" has to mean in CSS.
+   */
+  it("gives pointer and keyboard the identical treatment", () => {
+    const paired = css.match(/:is\(:hover, :has\(\.result__link:focus-visible\)\)/g);
+
+    expect(paired).toHaveLength(1);
   });
 
   // :focus-within would also match after a mouse click, leaving a row lit that
@@ -47,63 +53,57 @@ describe("result row hover treatment", () => {
     expect(css).not.toContain(":focus-within");
   });
 
-  it("gives pointer and keyboard the identical treatment", () => {
-    // Both live in one :is(), so they cannot drift apart. One per state rule,
-    // plus the rule that holds "Not listed" faint through the state.
-    const paired = css.match(/:is\(:hover, :has\(\.result__link:focus-visible\)\)/g);
-
-    expect(paired?.length).toBe(STATE_RULES.length + 1);
-  });
-
   // The style guide, both halves: the base rule owns the way out and carries a
   // duration; the state rule owns the way in and zeroes it.
   it("appears instantly and only fades on the way out", () => {
-    expect(rule(".result__link")).toContain("transition: text-decoration-color 150ms ease");
-    expect(rule(".result__date")).toContain("transition: color 150ms ease");
     expect(rule(".result::after")).toContain("transition: opacity 150ms ease");
-
-    STATE_RULES.forEach((selector) => {
-      expect(rule(selector)).toContain("transition-duration: 0s");
-    });
+    expect(rule(`${ON}::after`)).toContain("transition-duration: 0s");
   });
 
-  // Re-judged for a one-line row: the wash that lit the old four-line block is
-  // gone, because a fill behind a single line is a menu highlight -- a card at
-  // reduced height, which is what this list exists not to be.
-  it("is a gutter mark and an underline, with no wash behind the row", () => {
-    expect(rule(".result::after")).toContain("background: var(--accent)");
-    expect(rule(".result::after")).toContain("inset-inline-start: -0.75rem");
-    expect(css).not.toContain("linear-gradient");
-    expect(css).not.toContain("::before");
-  });
-
-  // Both marks are --accent, so the state reads as one gesture: the mark says
-  // which row, the underline says what will open.
-  it("underlines the title in the same accent the mark uses", () => {
-    expect(rule(`${ON} .result__link`)).toContain("text-decoration-color: var(--accent)");
-    expect(rule(".result__link")).toContain("text-decoration-color: transparent");
-  });
-
-  // Nothing animated may reflow: no padding, margin, border or size changes.
-  it("cannot shift the layout", () => {
-    STATE_RULES.forEach((selector) => {
-      expect(rule(selector)).not.toMatch(/padding|margin|border-width|font-size/);
-    });
-  });
-
-  // Opacity and colour only. The mark's scaleY retract went with the wash: over
-  // one line it was a twitch, and twenty rows of it would leave a trail of
-  // movement behind a pointer running down the list.
+  // Opacity only. Nothing may reflow and nothing may move -- twenty rows of a
+  // mark that grows would leave a trail of movement behind a pointer running
+  // down the list, drawing the eye to the row it has just left.
   it("moves nothing, so it needs no reduced-motion branch", () => {
+    expect(rule(`${ON}::after`)).not.toMatch(/padding|margin|border|font-size/);
     expect(css).not.toContain("transform");
     expect(css).not.toContain("prefers-reduced-motion");
   });
 
-  // The list separates with hairlines and nothing else; a hovered row must not
-  // start drawing a box.
-  it("adds no border on hover", () => {
-    STATE_RULES.forEach((selector) => {
-      expect(rule(selector)).not.toContain("border");
-    });
+  /**
+   * The frame is drawn with a forced colour rather than left to whatever the UA
+   * picks for a border, because removing the link's own outline below is only
+   * defensible while something visible stands in its place -- in every mode.
+   */
+  it("survives forced colours", () => {
+    expect(css).toContain("@media (forced-colors: active)");
+    expect(rule(".result::after")).toContain("opacity: 0");
+  });
+});
+
+describe("the row as the hit area", () => {
+  /**
+   * Markup and CSS, not a click handler on a div. The anchor's own pseudo
+   * element is stretched over the row, so the title stays one real link with
+   * one real href and the row gains no second tab stop.
+   */
+  it("stretches the real link over the whole row", () => {
+    expect(rule(".result__link::after")).toContain("position: absolute");
+    expect(rule(".result__link::after")).toContain("inset: 0");
+    // The positioned ancestor inset: 0 resolves against.
+    expect(rule(".result")).toContain("position: relative");
+  });
+
+  // The frame must not eat the clicks the overlay exists to catch: it is the
+  // later pseudo element, so it paints on top of it.
+  it("keeps the frame out of the way of the pointer", () => {
+    expect(rule(".result::after")).toContain("pointer-events: none");
+  });
+
+  // A ring around the TITLE is a second, smaller answer to the question the
+  // frame has already answered, and it is the wrong one: it draws a word where
+  // the target is a line.
+  it("moves the focus ring off the word and onto the row", () => {
+    expect(rule(".result__link:focus-visible")).toContain("outline: none");
+    expect(rule(".result__link")).toContain("text-decoration: none");
   });
 });
