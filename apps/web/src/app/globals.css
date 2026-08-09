@@ -1,7 +1,6 @@
 @import "tailwindcss";
 
 :root {
-  background: #000000;
   color-scheme: dark;
 }
 
@@ -9,6 +8,83 @@ html,
 body {
   min-height: 100%;
   background: #000000;
+}
+
+/* Red in the rubber-band gutter at the END of the page, black at the start.
+
+   The gutter is the strip a trackpad opens past either end of the document.
+   Nothing in the page can paint there -- it is outside the document, and the
+   only thing outside the document is the canvas -- so this has to be reached
+   from the root element. What it cannot be is a background IMAGE, and that is
+   worth writing down because the image version is the obvious idea and it is
+   wrong in a way that only a real browser will tell you.
+
+   CSS Backgrounds 3 says the root's background is propagated to the canvas with
+   the PAINTING area extended to the whole canvas while the POSITIONING area
+   stays the root's own box. Read literally, that buys a gradient sized 100%
+   200% and anchored top: transparent over the document, red hanging one
+   document-height below it, nothing above. Measured, the first half is true --
+   a root-propagated image really does paint outside the root box -- and the
+   conclusion is still false, because the overscroll gutter is not painted by
+   the canvas rasterisation at all. It is filled by the compositor, from the
+   base background COLOR. Probed in Chromium 151 with ElasticOverscroll, same
+   gesture, three roots: background-color red gives a red gutter, body-propagated
+   red gives a red gutter, and black + a red-bottom-half image gives a BLACK
+   one. The image is never consulted. Neither is any element: no z-index, no
+   ::after, no fixed position reaches this.
+
+   So the only lever is a flat colour -- and a flat colour is the same at both
+   ends, which is the trap this rule exists to get out of. background-color:
+   red on the root paints the bottom gutter red and the TOP gutter red with it
+   (measured: rgb(255,0,0) at both). The colour therefore has to depend on where
+   the document is scrolled, and that is what the scroll-progress timeline below
+   does, with no script and no scroll listener: step-end holds the from-colour
+   across the entire range and swaps to the to-colour only at 100%. The bottom
+   gutter can only open at progress 100%, the top gutter only at 0%, so the two
+   ends read the two keyframes and nothing in between is ever visible.
+
+   Nothing here adds scrollable height -- it is one colour on an existing
+   element. documentElement.scrollHeight still ends exactly at the footer's
+   bottom edge (measured 2712 on / and 4753 on /jobs/JR41938 at 1280x800), which
+   is the whole reason this is a colour and not a skirt element. The red is also
+   invisible inside the document: body's own black covers the root's box for the
+   full height of the page, so the swap at 100% shows up only in the gutter.
+
+   The @supports guard is load-bearing, not decoration. Without a scroll
+   timeline this is a 0s time-based animation that fills instantly to its
+   to-keyframe, which is a red gutter at BOTH ends -- measured, exactly the
+   failure mode the rule is written to avoid. Engines without scroll-driven
+   animations must fall through to the plain black above instead.
+
+   The colour is the band's last painted row, so the seam is invisible. That row
+   is not #e50914: .job-footer::before lays 0.14 black over the wash right down
+   to the bottom edge, landing on rgb(197, 8, 17). Mixing the same 14% here is
+   what continues the band rather than starting a second red, and writing it as
+   the mix rather than the result is what makes it track if that scrim's alpha
+   moves. .glow::before mixes the identical value for the same reason -- retune
+   the scrim and retune all three. It is spelled #e50914 rather than
+   var(--accent) because --accent is defined on .job-page, below the root, so
+   the token is not in scope on this selector.
+
+   The reduced-motion block below sets animation-duration on every element,
+   which looks like it would collapse this to its end state everywhere. It does
+   not: a time duration is ignored against a progress-based timeline, and the
+   gutters measure red-at-bottom / black-at-top with reduce emulated. */
+@supports (animation-timeline: scroll()) {
+  @keyframes page-end-gutter {
+    from {
+      background-color: #000000;
+    }
+    to {
+      background-color: color-mix(in srgb, #000 14%, #e50914);
+    }
+  }
+
+  html {
+    /* The shorthand resets animation-timeline, so the timeline comes after. */
+    animation: page-end-gutter step-end both;
+    animation-timeline: scroll(root block);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

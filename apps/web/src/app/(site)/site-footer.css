@@ -145,10 +145,17 @@
    IS this box's bottom edge -- and it belongs to the effect rather than to the
    one component that happens to mount it.
 
-   What neither version can do is colour the rubber-band gutter a trackpad opens
-   past the end of the document. That gutter is outside the document, where only
-   the canvas paints, so nothing in a footer can reach it and the honest answer
-   is that it shows black. Do not chase it from html or body: the root's
-   background propagates to the canvas at BOTH ends, and the top gutter would go
-   red too. The version that tried to reach it from here cost 1000px of empty
-   page -- see the overflow note at the top of this file. */
+   What no version of it can do is colour the rubber-band gutter a trackpad
+   opens past the end of the document. That gutter is outside the document,
+   where only the canvas paints, so nothing in a footer can reach it -- not a
+   pseudo-element, not a fixed child, not any z-index. The version that tried
+   to reach it from here cost 1000px of empty page; see the overflow note at
+   the top of this file.
+
+   The gutter IS red now, and it is done in globals.css, on the root element,
+   as a colour rather than as anything with a box. The warning that used to sit
+   here -- that a root background reddens BOTH gutters -- is true of a flat
+   colour and is exactly what that rule works around; read it there before
+   touching either end of this. What matters on this side is only that the
+   gutter's red is the same mix .glow::before uses, so the seam at the band's
+   last row is invisible. Retune the 0.14 above and retune all three. */
