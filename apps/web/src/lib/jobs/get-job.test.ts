@@ -24,10 +24,42 @@ describe("getJob", () => {
   });
 
   it("returns the first row", async () => {
-    const job = { position_id: 1, display_job_id: "JR41912" } as Job;
-    restGetMock.mockResolvedValue([job]);
+    const row = { position_id: 1, display_job_id: "JR41912", job_locations: [] };
+    restGetMock.mockResolvedValue([row]);
 
-    await expect(getJob("JR41912")).resolves.toBe(job);
+    await expect(getJob("JR41912")).resolves.toEqual({
+      position_id: 1,
+      display_job_id: "JR41912",
+      sites: [],
+    } as unknown as Job);
+  });
+
+  // The embedded join is flattened on the way out, and sorted: PostgREST does
+  // not promise an order for an embedded resource, and a page whose location
+  // links reorder between crawls is a page that looks like it changed.
+  it("flattens the embedded locations into sorted slugs", async () => {
+    restGetMock.mockResolvedValue([
+      {
+        position_id: 1,
+        display_job_id: "JR41912",
+        job_locations: [{ location_slug: "us-remote" }, { location_slug: "jp-tokyo" }],
+      },
+    ]);
+
+    const job = await getJob("JR41912");
+
+    expect(job?.sites).toEqual(["jp-tokyo", "us-remote"]);
+    expect(job).not.toHaveProperty("job_locations");
+  });
+
+  it("asks for the locations join", async () => {
+    restGetMock.mockResolvedValue([]);
+
+    await getJob("JR41912");
+
+    expect(restGetMock).toHaveBeenCalledWith(
+      expect.stringContaining("job_locations(location_slug)"),
+    );
   });
 
   it("encodes the id into the rpc request path", async () => {

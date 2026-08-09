@@ -1,12 +1,14 @@
 import { renderToStaticMarkup } from "react-dom/server";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { SITES } from "@/lib/jobs/job-summary.fixture";
 import { MINIMAL_JOB, SAMPLE_JOB } from "@/lib/jobs/job.fixture";
 import { checkBreadcrumbList } from "@/lib/seo/rules/breadcrumb-rules";
 import { checkJobPosting } from "@/lib/seo/rules/job-posting-rules";
 
 vi.mock("@/lib/jobs/get-job", () => ({ getJob: vi.fn() }));
 vi.mock("@/lib/jobs/job-ids", () => ({ listRecentJobIds: vi.fn() }));
+vi.mock("@/lib/jobs/list-sites", () => ({ listSites: vi.fn() }));
 vi.mock("next/navigation", () => ({
   notFound: vi.fn(() => {
     throw new Error("NEXT_NOT_FOUND");
@@ -16,9 +18,16 @@ vi.mock("next/navigation", () => ({
 import JobPage, { generateMetadata, generateStaticParams } from "@/app/(site)/jobs/[jobid]/page";
 import { getJob } from "@/lib/jobs/get-job";
 import { listRecentJobIds } from "@/lib/jobs/job-ids";
+import { listSites } from "@/lib/jobs/list-sites";
 import { notFound } from "next/navigation";
 
 const params = Promise.resolve({ jobid: "JR73020" });
+
+beforeEach(() => {
+  // The page loads the site table beside the posting -- it is what turns the
+  // posting's location slugs into words and into links.
+  vi.mocked(listSites).mockResolvedValue(SITES);
+});
 
 afterEach(() => {
   vi.clearAllMocks();

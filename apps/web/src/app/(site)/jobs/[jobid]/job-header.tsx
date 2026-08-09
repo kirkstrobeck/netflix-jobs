@@ -2,10 +2,11 @@ import { ApplyButton } from "@/app/(site)/jobs/[jobid]/apply-button";
 import { PostedDate } from "@/app/(site)/jobs/[jobid]/posted-date";
 import { ShareButton } from "@/app/(site)/jobs/[jobid]/share-button";
 import { BarsStage } from "@/app/_bars/bars-stage";
-import { formatLocations } from "@/lib/format/location";
 import { formatPostedDate } from "@/lib/format/posted-date";
 import { postedOn } from "@/lib/jobs/date-posted";
+import { jobPlaces, placeLine } from "@/lib/jobs/job-places";
 import { jobShare } from "@/lib/jobs/job-share";
+import type { Site } from "@/lib/jobs/site";
 import type { Job } from "@/lib/jobs/types";
 
 // posting_date is null on 179 of 481 rows, so the fact list renders a fixed set
@@ -17,8 +18,21 @@ import type { Job } from "@/lib/jobs/types";
 // stated, "Listed" for the fallback to when the posting appeared on Netflix's
 // board. That is what keeps the markup describing something the visitor can
 // actually read on the page.
-export function JobHeader({ job }: { job: Job }) {
-  const locations = formatLocations(job.locations, job.location);
+// THE HERO PRINTS THE PLACES; THE DETAILS CARD LINKS THEM
+//
+// Same words in both, out of jobPlaces, which is the change this needed. The
+// hero used to print the crawl's own string -- 'USA - Remote' -- while the card
+// below it named the site record, 'Remote, United States', so one page spelled
+// one office two ways and only the second of them matched the facet it filters
+// on. One vocabulary, and it is the listing's.
+//
+// Text here, links there. This band is a summary read on the way to a decision,
+// and it sits directly above the page's one primary action; three underlined
+// facts beside Apply is three invitations to leave. The card below is the
+// structured record of the posting, every value under its own term, which is
+// where a value being a filter is useful rather than distracting.
+export function JobHeader({ job, catalog }: { job: Job; catalog: Site[] }) {
+  const places = jobPlaces(job, catalog);
   const on = postedOn(job);
   const posted = formatPostedDate(on?.iso ?? null);
 
@@ -32,9 +46,7 @@ export function JobHeader({ job }: { job: Job }) {
       <h1 className="job-title">{job.title}</h1>
 
       <ul className="job-facts">
-        <li className="job-facts__item">
-          {locations.length > 0 ? locations.join(" · ") : "Location to be confirmed"}
-        </li>
+        <li className="job-facts__item">{placeLine(places)}</li>
         <li className="job-facts__item">{job.work_type ?? "On site"}</li>
         <li className="job-facts__item">
           {posted && on ? (

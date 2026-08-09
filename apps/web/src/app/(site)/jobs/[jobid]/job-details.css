@@ -40,6 +40,56 @@
   overflow-wrap: anywhere;
 }
 
+/* A VALUE THAT IS ALSO A FILTER.
+ *
+ * Underlined at rest, not on hover. Four of the six values in this card are
+ * links and two are not, and the only thing distinguishing them is that they
+ * are links -- so the mark that says so has to be there before the pointer is.
+ * A card where the underlines appear on hover is a card you have to sweep to
+ * read, and a keyboard never sweeps.
+ *
+ * It keeps --ink rather than taking an accent colour. Colour alone cannot carry
+ * this (WCAG 1.4.1), the underline already does carry it, and six values in two
+ * colours would read as two kinds of fact rather than as one list where some
+ * entries lead somewhere.
+ *
+ * text-underline-offset over the browser default so the rule clears the commas
+ * and the descenders in 'Los Angeles, California, United States'; from-font
+ * keeps its weight in step with the type. */
+.detail-list__link {
+  color: var(--ink);
+  text-decoration: underline;
+  text-decoration-thickness: from-font;
+  text-underline-offset: 0.2em;
+  /* Hover-OFF only: the state arrives on the frame the pointer lands and takes
+     150ms to leave, like every other interaction state on this site. */
+  transition: text-decoration-color 150ms ease, color 150ms ease;
+}
+
+/* Hover and focus are the same statement, so they are the same declaration. The
+   underline goes to the accent and the text stays full ink -- the row is
+   already legible, and what changes is which of the four the pointer is on. */
+.detail-list__link:is(:hover, :focus-visible) {
+  text-decoration-color: var(--accent);
+  transition-duration: 0s;
+}
+
+/* The underline is doing the work at rest and the accent is doing it on hover,
+   so focus needs to be visible without a second box around a run of text that
+   wraps across three lines. A thicker rule in the same place is the same mark,
+   louder. outline is left alone in forced-colors, where the UA draws its own. */
+.detail-list__link:focus-visible {
+  outline: none;
+  text-decoration-thickness: 2px;
+}
+
+@media (forced-colors: active) {
+  .detail-list__link:focus-visible {
+    outline: 2px solid Highlight;
+    outline-offset: 2px;
+  }
+}
+
 .job-missing {
   padding-block: clamp(4rem, 12vw, 8rem) 8rem;
   max-inline-size: 44ch;

@@ -3,6 +3,10 @@ import type { Job } from "@/lib/jobs/types";
 // A fully populated posting used to exercise the happy paths across the job
 // detail components: two distinct locations (to hit the "Locations" plural
 // label), a display_job_id, and a parseable posting_date.
+//
+// `sites` names two of the fixture catalog's US rows (see job-summary.fixture),
+// so the location links resolve against a country that has more than one office
+// -- which is the case where the link carries a site as well as a country.
 export const SAMPLE_JOB: Job = {
   position_id: 730201,
   display_job_id: "JR73020",
@@ -15,6 +19,7 @@ export const SAMPLE_JOB: Job = {
     "Los Angeles,California,United States of America",
     "Remote,United States of America",
   ],
+  sites: ["us-los-angeles", "us-remote"],
   work_location_option: "Hybrid",
   work_type: "Full-time",
   description_html:
@@ -49,6 +54,9 @@ export const MINIMAL_JOB: Job = {
   team: null,
   location: "",
   locations: [],
+  // No rows in job_locations either, so there is nothing to link and the raw
+  // strings are all the page has -- which for this fixture is nothing at all.
+  sites: [],
   work_location_option: null,
   work_type: null,
   description_html: "<p>Minimal role with nothing else on file.</p>",

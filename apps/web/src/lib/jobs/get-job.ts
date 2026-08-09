@@ -23,7 +23,26 @@ const COLUMNS = [
   "canonical_url",
   "posting_date",
   "source_created_at",
+  // Embedded, not a second round trip. job_by_display_id returns `setof
+  // public.jobs`, so PostgREST resolves the foreign key on
+  // job_locations.job_position_id off the function's result exactly as it does
+  // off the table -- checked against the running database, not assumed.
+  "job_locations(location_slug)",
 ].join(",");
+
+/** A posting as PostgREST returns it, with the join still nested. */
+type JobRow = Omit<Job, "sites"> & {
+  job_locations: { location_slug: string }[];
+};
+
+// Sorted for the same reason the board sorts them: PostgREST does not promise
+// an order for an embedded resource, and a page whose location links change
+// order between crawls is a page that looks like it changed.
+function toJob(row: JobRow): Job {
+  const { job_locations: joined, ...job } = row;
+
+  return { ...job, sites: joined.map((entry) => entry.location_slug).sort() };
+}
 
 // Cached so the page is prerenderable: with `cacheComponents`, an uncached await
 // here would make the whole route block on the request instead of streaming a
@@ -49,9 +68,9 @@ export async function getJob(jobId: string): Promise<Job | null> {
     return null;
   }
 
-  const rows = await restGet<Job[]>(
+  const rows = await restGet<JobRow[]>(
     `rpc/job_by_display_id?p_display_id=${encodeURIComponent(jobId)}&select=${COLUMNS}&limit=1`,
   );
 
-  return rows[0] ?? null;
+  return rows[0] ? toJob(rows[0]) : null;
 }

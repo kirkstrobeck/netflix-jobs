@@ -10,6 +10,14 @@ export type Job = {
   team: string | null;
   location: string;
   locations: string[];
+  /**
+   * public.locations slugs, sorted. The same join the board carries, and here
+   * for the same reason: the two columns above spell one office five different
+   * ways across the crawl, so they can be READ but never matched against. A
+   * link from this page to the listing filtered by this place needs the slug,
+   * because the slug is what the listing filters on.
+   */
+  sites: string[];
   work_location_option: string | null;
   work_type: string | null;
   description_html: string;

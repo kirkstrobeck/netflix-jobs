@@ -6,6 +6,7 @@ import { JobDetails } from "@/app/(site)/jobs/[jobid]/job-details";
 import { JobHeader } from "@/app/(site)/jobs/[jobid]/job-header";
 import { getJob } from "@/lib/jobs/get-job";
 import { listRecentJobIds } from "@/lib/jobs/job-ids";
+import { listSites } from "@/lib/jobs/list-sites";
 import { buildBreadcrumbs } from "@/lib/seo/breadcrumbs";
 import { buildJobPosting } from "@/lib/seo/job-posting";
 import { JsonLd } from "@/lib/seo/json-ld";
@@ -57,7 +58,12 @@ export async function generateMetadata({ params }: JobPageProps): Promise<Metada
 
 export default async function JobPage({ params }: JobPageProps) {
   const { jobid: jobId } = await params;
-  const job = await getJob(jobId);
+  // Both cached under the same tag and the same profile, so they cannot be a
+  // crawl apart, and the site table is 36 rows the listing has already paid for
+  // -- this page is what turns a posting's location slugs into the words for
+  // them and the links to them. Requested together rather than in sequence: the
+  // second does not depend on the first.
+  const [job, catalog] = await Promise.all([getJob(jobId), listSites()]);
 
   if (!job) {
     notFound();
@@ -75,11 +81,11 @@ export default async function JobPage({ params }: JobPageProps) {
 
   return (
     <article className="job-article">
-      <JobHeader job={job} />
+      <JobHeader catalog={catalog} job={job} />
 
       <div className="job-body">
         <JobDescription html={job.description_html} />
-        <JobDetails job={job} />
+        <JobDetails catalog={catalog} job={job} />
       </div>
 
       {/* Last, not first. The JobPosting's `description` is the whole
