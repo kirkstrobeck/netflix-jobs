@@ -5,13 +5,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { CountryFacet } from "@/app/(site)/_listing/country-facet";
 import { NavigateProvider } from "@/app/(site)/_listing/use-query-navigation";
 import { BOARD } from "@/lib/jobs/job-summary.fixture";
-import { toggleCountry, type CountryDefault } from "@/lib/search/geo-query";
+import { toggleCountry } from "@/lib/search/geo-query";
 import { EMPTY_QUERY, jobsHref, type JobQuery } from "@/lib/search/job-query";
 import { deriveListing } from "@/lib/search/listing-view";
 
 const navigate = vi.fn();
-const NO_DEFAULT: CountryDefault = { countries: [], from: "detected" };
-
 // Controls hand over a query, not a URL. Reading it back as a URL is still the
 // clearest way to state the expectation, and it is the same serialiser the
 // address bar gets.
@@ -20,13 +18,12 @@ const navigatedTo = () => jobsHref(navigate.mock.calls.at(-1)![0]);
 const mount = (ui: ReactNode) =>
   render(<NavigateProvider value={navigate}>{ui}</NavigateProvider>);
 
-function facet(query: JobQuery = EMPTY_QUERY, countryDefault = NO_DEFAULT) {
+function facet(query: JobQuery = EMPTY_QUERY) {
   const { facets } = deriveListing(BOARD, query);
 
   return mount(
     <CountryFacet
       countries={facets.country}
-      countryDefault={countryDefault}
       query={query}
       sites={facets.site}
     />,
@@ -130,67 +127,5 @@ describe("the offices under a ticked country", () => {
 
     expect(box(/Japan/).checked).toBe(true);
     expect(offices()).toBeNull();
-  });
-});
-
-/**
- * A listing that quietly drops from five roles to four because the request came
- * from California is indistinguishable from a board that only has four. The
- * note is what tells the difference, and the link beside it is the undo --
- * which, being a link to `?country=all`, also stops detection ever applying
- * again on that URL.
- */
-describe("the note about a detected country", () => {
-  const detected: CountryDefault = { countries: ["US"], from: "detected" };
-
-  it("names the country and offers the way out", () => {
-    facet({ ...EMPTY_QUERY, country: ["US"] }, detected);
-
-    expect(screen.getByText(/United States was matched to your location/)).toBeTruthy();
-
-    fireEvent.click(screen.getByRole("link", { name: "Show every country" }));
-
-    expect(navigatedTo()).toBe("/?country=all");
-  });
-
-  it("stays quiet once the selection is no longer just the detected country", () => {
-    facet({ ...EMPTY_QUERY, country: ["JP", "US"] }, detected);
-
-    expect(screen.queryByText(/matched to your location/)).toBeNull();
-  });
-
-  // The same rule the other way round: one country ticked, but not the one
-  // that was detected. They have answered, so there is nothing to explain.
-  it("stays quiet when the one ticked country is not the detected one", () => {
-    facet({ ...EMPTY_QUERY, country: ["JP"] }, detected);
-
-    expect(screen.queryByText(/matched to your location/)).toBeNull();
-  });
-
-  it("stays quiet for a country the visitor chose on an earlier visit", () => {
-    facet({ ...EMPTY_QUERY, country: ["US"] }, { countries: ["US"], from: "remembered" });
-
-    expect(screen.queryByText(/matched to your location/)).toBeNull();
-  });
-
-  /**
-   * A code with no option to read a name off still has to say something.
-   * facetOptions pins a selected country into the list even at a count of
-   * zero, so this cannot arrive from deriveListing -- the props are built by
-   * hand here for that reason. "KE was matched to your location" is a poor
-   * sentence and a readable one; a blank where the country's name goes is
-   * neither.
-   */
-  it("falls back to the code when the country has no option to name it", () => {
-    mount(
-      <CountryFacet
-        countries={[]}
-        countryDefault={{ countries: ["KE"], from: "detected" }}
-        query={{ ...EMPTY_QUERY, country: ["KE"] }}
-        sites={[]}
-      />,
-    );
-
-    expect(screen.getByText(/KE was matched to your location/)).toBeTruthy();
   });
 });

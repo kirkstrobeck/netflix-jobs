@@ -6,7 +6,7 @@ import { KeywordFacet } from "@/app/(site)/_listing/keyword-facet";
 import { QueryLink } from "@/app/(site)/_listing/query-link";
 import { useCountryChoice } from "@/app/(site)/_listing/use-country-choice";
 import type { FacetOption } from "@/lib/search/facet-counts";
-import { everyCountry, type CountryDefault } from "@/lib/search/geo-query";
+import { everyCountry } from "@/lib/search/geo-query";
 import { EMPTY_QUERY, isFiltered, type FacetKey, type JobQuery } from "@/lib/search/job-query";
 
 // The options arrive counted. deriveListing does it once for all four groups,
@@ -31,7 +31,6 @@ const GROUPS: { key: FacetKey; legend: string; plural: string }[] = [
 type FacetsPanelProps = {
   facets: Record<FacetKey, FacetOption[]>;
   query: JobQuery;
-  countryDefault: CountryDefault;
   draft: string;
   onDraft: (value: string) => void;
 };
@@ -39,7 +38,6 @@ type FacetsPanelProps = {
 export function FacetsPanel({
   facets,
   query,
-  countryDefault,
   draft,
   onDraft,
 }: FacetsPanelProps) {
@@ -75,7 +73,6 @@ export function FacetsPanel({
 
       <CountryFacet
         countries={facets.country}
-        countryDefault={countryDefault}
         query={query}
         sites={facets.site}
       />

@@ -5,7 +5,6 @@ import { useCallback, useDeferredValue, useMemo, useState } from "react";
 
 import { useBoard } from "@/app/(site)/_listing/use-board";
 import { useNearest, type Nearest } from "@/app/(site)/_listing/use-nearest";
-import { applyCountryDefault, type CountryDefault } from "@/lib/search/geo-query";
 import { jobsHref, type JobQuery } from "@/lib/search/job-query";
 import { deriveListing, type ListingView } from "@/lib/search/listing-view";
 import { readSearchParams } from "@/lib/search/parse-query";
@@ -52,7 +51,6 @@ export function useListing(
   initialQuery: JobQuery,
   initialView: ListingView,
   boardVersion: string,
-  countryDefault: CountryDefault,
 ): Listing {
   const board = useBoard(boardVersion);
   const nearest = useNearest(initialQuery.sort);
@@ -66,18 +64,15 @@ export function useListing(
   // is what gets read -- a popstate listener would be a second opinion about
   // what the URL says, and the two would eventually disagree.
   //
-  // The country default is applied here as well as on the server, through the
-  // same function. Pressing Back onto a URL with no country in it has to mean
-  // what it meant the first time that URL was rendered -- otherwise the state
-  // the visitor is going back to is not the state they came from, and the
-  // listing silently widens from their country to every country.
+  // Nothing is folded in on top of it. This used to re-apply the country
+  // default here, because a URL could be filtered by a country it did not
+  // name, and pressing Back onto one had to mean what it meant the first time.
+  // Every URL now names its own country -- proxy.ts will not let one render
+  // otherwise -- so the URL alone is the state, and reading it is the whole of
+  // reading it.
   const fromUrl = useMemo(
-    () =>
-      applyCountryDefault(
-        readSearchParams(new URLSearchParams(params.toString())),
-        countryDefault,
-      ),
-    [countryDefault, params],
+    () => readSearchParams(new URLSearchParams(params.toString())),
+    [params],
   );
 
   // Seeded from the URL as it was at mount, NOT from initialQuery: those two

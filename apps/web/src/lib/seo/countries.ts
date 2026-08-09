@@ -58,6 +58,27 @@ const BY_NAME = new Map(
   COUNTRIES.flatMap((country) => country.names.map((name) => [name, country])),
 );
 
+/**
+ * Every country this board can place a role in, as codes.
+ *
+ * The table above is a CLOSED set, and the gate in tools/structured-data is
+ * what keeps it closed: a location string naming a country that is not here
+ * fails the build. So this is not an approximation of "where Netflix hires" --
+ * it is the same list, enforced, and it is a guaranteed superset of the
+ * countries with something open today.
+ *
+ * The proxy reads it to decide whether a country matched from a request is
+ * worth redirecting to. It has to be a plain module: proxy.ts runs before the
+ * render and cannot reach the board, a cache or a database, so the alternative
+ * -- counting the live postings -- is a Supabase round trip in front of every
+ * first paint. The gap this leaves is one country in the table with nothing
+ * open this week, and facetOptions already covers it: a selected value whose
+ * count is zero still renders, ticked, so it can be unticked.
+ */
+export const BOARD_COUNTRIES: ReadonlySet<string> = new Set(
+  COUNTRIES.map((country) => country.code),
+);
+
 export function lookupCountry(name: string): { code: string; label: string } | null {
   const country = BY_NAME.get(name.trim().toLowerCase());
 

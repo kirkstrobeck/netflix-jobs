@@ -8,7 +8,6 @@ import { SortControl } from "@/app/(site)/_listing/sort-control";
 import { SortStatus } from "@/app/(site)/_listing/sort-status";
 import { useListing } from "@/app/(site)/_listing/use-listing";
 import { NavigateProvider } from "@/app/(site)/_listing/use-query-navigation";
-import type { CountryDefault } from "@/lib/search/geo-query";
 import type { JobQuery } from "@/lib/search/job-query";
 import type { ListingView } from "@/lib/search/listing-view";
 
@@ -16,8 +15,6 @@ type ListingProps = {
   initialQuery: JobQuery;
   initialView: ListingView;
   boardVersion: string;
-  /** What the country facet falls back to, and whether to say so. */
-  countryDefault: CountryDefault;
 };
 
 /**
@@ -33,17 +30,11 @@ type ListingProps = {
  * instead, and the props stop being read. No swap, no remount, no flash: the
  * components are the same ones throughout, only their data changed hands.
  */
-export function Listing({
-  boardVersion,
-  countryDefault,
-  initialQuery,
-  initialView,
-}: ListingProps) {
+export function Listing({ boardVersion, initialQuery, initialView }: ListingProps) {
   const { query, view, draft, setDraft, navigate, nearest } = useListing(
     initialQuery,
     initialView,
     boardVersion,
-    countryDefault,
   );
 
   return (
@@ -79,7 +70,6 @@ export function Listing({
         </main>
 
         <FacetsPanel
-          countryDefault={countryDefault}
           draft={draft}
           facets={view.facets}
           onDraft={setDraft}

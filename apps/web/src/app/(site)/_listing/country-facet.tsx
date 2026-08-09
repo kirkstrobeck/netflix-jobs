@@ -1,15 +1,9 @@
 "use client";
 
 import { FacetGroup } from "@/app/(site)/_listing/facet-group";
-import { QueryLink } from "@/app/(site)/_listing/query-link";
 import { useCountryChoice } from "@/app/(site)/_listing/use-country-choice";
 import type { FacetOption } from "@/lib/search/facet-counts";
-import {
-  everyCountry,
-  toggleCountry,
-  toggleSite,
-  type CountryDefault,
-} from "@/lib/search/geo-query";
+import { toggleCountry, toggleSite } from "@/lib/search/geo-query";
 import type { JobQuery } from "@/lib/search/job-query";
 
 /**
@@ -40,7 +34,6 @@ type CountryFacetProps = {
   countries: FacetOption[];
   sites: FacetOption[];
   query: JobQuery;
-  countryDefault: CountryDefault;
 };
 
 // An office list of one is noise: it repeats the country's own count on a
@@ -49,12 +42,7 @@ type CountryFacetProps = {
 // Germany and Taiwan with two apiece) are the ones this is for.
 const worthNesting = (options: FacetOption[]) => options.length > 1;
 
-export function CountryFacet({
-  countries,
-  sites,
-  query,
-  countryDefault,
-}: CountryFacetProps) {
+export function CountryFacet({ countries, sites, query }: CountryFacetProps) {
   // Every change made in here is an explicit answer to the country question, so
   // every change is written down. The cookie is the only part of this that
   // needs a browser: with JavaScript off the same click is a real navigation to
@@ -107,65 +95,26 @@ export function CountryFacet({
       plural="countries"
       query={query}
       renderNested={nested}
-    >
-      <DetectedNote
-        countries={countries}
-        onFollow={choose}
-        query={query}
-        source={countryDefault}
-      />
-    </FacetGroup>
+    />
   );
 }
 
-/**
- * Says out loud that a country was applied without being asked for.
+/* WHERE THE "MATCHED TO YOUR LOCATION" NOTE WENT
  *
- * A listing that quietly drops from 481 roles to 19 because the request came
- * from Seoul is indistinguishable from a board that only has 19 roles. This is
- * the sentence that tells the difference, and the link beside it is the undo --
- * which, being a link to `?country=all`, is also the thing that stops detection
- * ever applying again on that URL.
+ * It was here, and it was necessary: a listing that quietly dropped from 481
+ * roles to 19 because the request came from Seoul was indistinguishable from a
+ * board that only had 19 roles, and that sentence was the only thing on the page
+ * that could tell the difference.
  *
- * Shown only for a DETECTED country. One the visitor chose on an earlier visit
- * needs no explanation; it is their own setting coming back.
+ * The filter is not quiet any more. It is in the address bar, it is a ticked box
+ * in this list with its own count beside it, and Clear all is on the line above.
+ * The note was scaffolding around an invisible filter, and the filter is now
+ * visible by construction -- so what is left of the note is a sentence
+ * describing a checkbox the visitor is already looking at.
+ *
+ * Keeping it had a price, which is the other half of why it is gone. Knowing
+ * that a country was DETECTED rather than typed means reading the request's geo
+ * header and the cookie during the render, and a render that varies on anything
+ * outside the URL cannot be served from a shared cache. Deleting it is what
+ * bought the listing its CDN caching back. See cache-headers.ts.
  */
-function DetectedNote({
-  countries,
-  onFollow,
-  query,
-  source,
-}: {
-  countries: FacetOption[];
-  onFollow: (query: JobQuery) => void;
-  query: JobQuery;
-  source: CountryDefault;
-}) {
-  const applied = source.countries[0];
-
-  if (source.from !== "detected" || !applied) {
-    return null;
-  }
-
-  // Only while the detected country is still the whole of the selection. The
-  // moment anything else is ticked the sentence stops being true, and the panel
-  // is describing the visitor's own choices back to them.
-  if (query.country.length !== 1 || query.country[0] !== applied) {
-    return null;
-  }
-
-  const name = countries.find((option) => option.value === applied)?.label ?? applied;
-
-  return (
-    <p className="facet__detected">
-      {name} was matched to your location.{" "}
-      <QueryLink
-        className="facets__clear"
-        onFollow={onFollow}
-        query={everyCountry(query)}
-      >
-        Show every country
-      </QueryLink>
-    </p>
-  );
-}

@@ -9,7 +9,6 @@ import {
   url,
 } from "@/app/(site)/_listing/history.fixture";
 import { board as asBoard, summary } from "@/lib/jobs/job-summary.fixture";
-import type { CountryDefault } from "@/lib/search/geo-query";
 import { EMPTY_QUERY, type JobQuery } from "@/lib/search/job-query";
 import { deriveListing } from "@/lib/search/listing-view";
 
@@ -20,14 +19,18 @@ vi.mock("next/navigation", async () => {
 });
 
 /**
- * The client half of "first load only".
+ * The country, in the browser, now that the URL always carries it.
  *
- * The server turned "this request came from the US" into `?country=US` and
- * rendered from that. The browser then has to reach the SAME answer for the
- * same URL, twice over: once at mount, and again when a Back button lands on
- * the bare `/` that the country was never written into. It applies the default
- * through the same pure function the server used, which is what makes those
- * two answers the same one rather than two that happen to agree today.
+ * This suite used to be about the client re-deriving a country the URL had
+ * failed to mention -- applying the same detected default the server had, so a
+ * Back button onto a bare `/` did not silently widen the listing from one
+ * country to every country. There is no such URL any more: proxy.ts redirects
+ * before the listing renders, so the address the browser is sitting on names
+ * the country, and every link built from it carries the country forward.
+ *
+ * So what is left to pin is the opposite claim. The client reads the URL and
+ * NOTHING else -- no default, no cookie, no second opinion -- and the cookie is
+ * still written by exactly the two controls that answer the country question.
  */
 
 // 25 US roles and one in Tokyo, so widening is visible in the count rather
@@ -37,12 +40,10 @@ const WORLD = asBoard([
   summary({ title: "Tokyo role", sites: ["jp-tokyo"] }),
 ]);
 
-const DETECTED: CountryDefault = { countries: ["US"], from: "detected" };
-
 let fetchMock: ReturnType<typeof vi.fn>;
 
 beforeEach(() => {
-  resetHistory();
+  resetHistory("/?country=US");
   vi.stubGlobal("fetch", (fetchMock = vi.fn(async () => ({
     ok: true,
     status: 200,
@@ -57,11 +58,10 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-function mount(query: JobQuery, countryDefault: CountryDefault) {
+function mount(query: JobQuery) {
   return render(
     <Listing
       boardVersion="v1"
-      countryDefault={countryDefault}
       initialQuery={query}
       initialView={deriveListing(WORLD, query)}
     />,
@@ -75,9 +75,9 @@ const board = async () => {
 
 const tick = (name: string) => screen.findByRole("checkbox", { name: new RegExp(name) });
 
-describe("the detected country, in the browser", () => {
-  it("stays applied when Back lands on a URL that never carried it", async () => {
-    mount({ ...EMPTY_QUERY, country: ["US"] }, DETECTED);
+describe("the country, in the browser", () => {
+  it("restores exactly what the URL says when Back lands on it", async () => {
+    mount({ ...EMPTY_QUERY, country: ["US"] });
     await board();
 
     fireEvent.click(await tick("Engineering"));
@@ -85,20 +85,20 @@ describe("the detected country, in the browser", () => {
 
     await travel(-1);
 
-    // The URL is bare, and the listing is still the United States -- not the
-    // whole world. Re-reading the URL alone would silently widen it to 26.
-    expect(url()).toBe("/");
+    // The country came back because the URL carries it, not because anything
+    // re-applied it. The address the visitor returns to is the address they
+    // came from, spelled out.
+    expect(url()).toBe("/?country=US");
     expect(screen.getByText(/of 25 roles/)).toBeTruthy();
   });
 
   /**
-   * And the other half: an explicit answer in the URL is never answered over,
-   * on the client either. `?country=all` and a bare `/` render identically and
-   * mean the opposite things, which is the distinction the flag exists for.
+   * `?country=all` and a country-filtered URL render different lists and are
+   * different addresses, and neither is ever quietly turned into the other.
    */
-  it("keeps its hands off an explicit everywhere", async () => {
+  it("reads an explicit everywhere as everywhere", async () => {
     resetHistory("/?country=all");
-    mount({ ...EMPTY_QUERY, everywhere: true }, { countries: [], from: "detected" });
+    mount({ ...EMPTY_QUERY, everywhere: true });
     await board();
 
     expect(screen.getByText(/of 26 roles/)).toBeTruthy();
@@ -108,7 +108,7 @@ describe("the detected country, in the browser", () => {
   // carries it instead of asking the edge again. This is the line between a
   // country they picked and one that was picked for them.
   it("remembers a country the visitor unticks", async () => {
-    mount({ ...EMPTY_QUERY, country: ["US"] }, DETECTED);
+    mount({ ...EMPTY_QUERY, country: ["US"] });
     await board();
 
     fireEvent.click(await tick("United States"));
@@ -119,10 +119,10 @@ describe("the detected country, in the browser", () => {
   });
 
   // Filtering by something else must NOT write the cookie. If it did, a first
-  // load followed by any click at all would promote the detected country into
-  // a remembered choice, and detection would become permanent.
+  // load followed by any click at all would promote the country the edge
+  // matched into a remembered choice, and detection would become permanent.
   it("does not remember anything when another facet is used", async () => {
-    mount({ ...EMPTY_QUERY, country: ["US"] }, DETECTED);
+    mount({ ...EMPTY_QUERY, country: ["US"] });
     await board();
 
     fireEvent.click(await tick("Engineering"));

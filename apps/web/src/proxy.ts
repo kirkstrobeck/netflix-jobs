@@ -1,6 +1,19 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
+import {
+  COUNTRY_COOKIE,
+  countryDefault,
+  GEO_HEADER,
+} from "@/lib/geo/country-default";
+import { countryRedirect } from "@/lib/geo/country-redirect";
+
+// TWO JOBS, IN ORDER: canonicalize the path, then make the URL admit which
+// country the listing is about to be filtered by. Both happen here for the same
+// reason -- this file runs BEFORE anything is rendered, so an answer given here
+// is the first thing the browser hears rather than a correction to something it
+// has already painted.
+
 // Canonicalize the request path so each page has one address instead of one per
 // casing. Canonical is: static route segments lowercase, and the job code
 // UPPERCASE -- AJRT30201, JR41912 -- because that is the form Netflix prints on
@@ -35,23 +48,72 @@ function canonicalPath(pathname: string): string {
     .join("/");
 }
 
+// The listing, and the only path a country can apply to. /jobs/AJRT30201 shows
+// one posting and is not filtered by anything.
+const LISTING = "/";
+
+// A redirect that is right for THIS visitor and wrong for the next one. Whatever
+// a shared cache is told about the destination, the hop itself has to be worked
+// out per request -- it is read off a cookie and an IP address, neither of which
+// is in the URL that would be the cache key.
+const PRIVATE = { "Cache-Control": "private, no-store" };
+
+/**
+ * The country hop: the URL is made to say what the listing is about to do,
+ * before a byte of that listing exists.
+ *
+ * Everything it needs is on the request -- the cookie the visitor's own choice
+ * was written to, and the country the edge read off their address -- so it
+ * costs no round trip and reaches no database, which is what makes it safe to
+ * run in front of every first paint. countryRedirect owns the precedence and
+ * the fixed point; this owns getting the two strings out of the request.
+ */
+function countryHop(request: NextRequest): string | null {
+  if (request.nextUrl.pathname !== LISTING) {
+    return null;
+  }
+
+  return countryRedirect(
+    request.nextUrl.searchParams,
+    countryDefault(
+      request.cookies.get(COUNTRY_COOKIE)?.value,
+      request.headers.get(GEO_HEADER),
+    ),
+  );
+}
+
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const canonical = canonicalPath(pathname);
 
-  // The overwhelmingly common case: already canonical, so do nothing.
-  if (canonical === pathname) {
-    return NextResponse.next();
-  }
-
   // clone() carries the query string across, so ?src=test survives the redirect.
   // Fragments never reach the server; the browser reapplies them to the target.
   const url = request.nextUrl.clone();
-  url.pathname = canonical;
 
-  // 308, not 307/302: permanent and method-preserving, so caches and crawlers
-  // settle on the canonical URL.
-  return NextResponse.redirect(url, 308);
+  if (canonical !== pathname) {
+    url.pathname = canonical;
+
+    // 308, not 307/302: permanent and method-preserving, so caches and crawlers
+    // settle on the canonical URL. Casing is a property of the path and of
+    // nothing else, so this answer is the same for everyone and is left
+    // cacheable.
+    return NextResponse.redirect(url, 308);
+  }
+
+  const search = countryHop(request);
+
+  if (search) {
+    url.search = search;
+
+    // 307, NOT 308. The destination depends on where the request came from, so
+    // a permanent redirect would have a browser remember one visitor's country
+    // as the meaning of `/` -- and would have a crawler record it as the home
+    // page's new address. Temporary keeps `/` the canonical URL and keeps the
+    // hop revisitable.
+    return NextResponse.redirect(url, { status: 307, headers: PRIVATE });
+  }
+
+  return NextResponse.next();
 }
 
 export const config = {

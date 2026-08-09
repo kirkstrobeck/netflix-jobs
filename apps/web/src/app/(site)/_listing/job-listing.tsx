@@ -1,17 +1,14 @@
 import { Listing } from "@/app/(site)/_listing/listing";
-import { countryDefault } from "@/lib/geo/detect-country";
-import { openCountries } from "@/lib/jobs/board";
 import { boardVersion } from "@/lib/jobs/board-payload";
 import { loadBoard } from "@/lib/jobs/load-board";
-import { applyCountryDefault } from "@/lib/search/geo-query";
 import { deriveListing } from "@/lib/search/listing-view";
 import { parseJobQuery, type RawSearchParams } from "@/lib/search/parse-query";
 
 type JobListingProps = { searchParams: Promise<RawSearchParams> };
 
-// The first paint for any URL is still made here, on the server: parse the URL,
-// derive the whole screen from the cached board, send finished HTML. A copied
-// link renders the same on someone else's machine, with JavaScript off, and to a
+// The first paint for any URL is made here, on the server: parse the URL, derive
+// the whole screen from the cached board, send finished HTML. A copied link
+// renders the same on someone else's machine, with JavaScript off, and to a
 // crawler.
 //
 // What is sent down is the DERIVED view -- one page of rows and the counted
@@ -20,26 +17,26 @@ type JobListingProps = { searchParams: Promise<RawSearchParams> };
 // document and none of them would share a byte. It arrives once, separately,
 // from /api/board, and boardVersion is the digest that names which copy.
 //
-// COUNTRY IS THE ONE THING THIS RENDER VARIES ON
+// THE URL IS THE WHOLE INPUT
 //
-// searchParams, the geo header and the cookie are all request-time APIs, so
-// this component is dynamic and sits inside the page's <Suspense>. Only the
-// third of those is new, and it resolves to a country BEFORE anything is
-// derived: applyCountryDefault turns "this request came from Japan" into
-// "?country=JP", and from that line on the render is a pure function of a query
-// exactly like every other. Nothing downstream can tell the difference between
-// a country that was detected and one that was typed, which is what keeps one
-// implementation serving both.
+// It used to not be. A country could reach this render by two other routes -- a
+// cookie, and the country the edge read off the request -- and applyCountryDefault
+// folded them in here, which meant a filtered listing could be served from an
+// address that did not mention the filter.
+//
+// Both of those are now settled in proxy.ts, before this component exists, by a
+// redirect to the URL that says so. So there is nothing left to fold in: this
+// reads searchParams and only searchParams, which is what makes the render a
+// pure function of the address bar. It is also what makes the response
+// shareable -- everything it varies on is now in the cache key. See
+// cache-headers.ts.
 export async function JobListing({ searchParams }: JobListingProps) {
   const board = await loadBoard();
-  const asked = parseJobQuery(await searchParams);
-  const fallback = await countryDefault(openCountries(board));
-  const query = applyCountryDefault(asked, fallback);
+  const query = parseJobQuery(await searchParams);
 
   return (
     <Listing
       boardVersion={await boardVersion()}
-      countryDefault={fallback}
       initialQuery={query}
       initialView={deriveListing(board, query)}
     />

@@ -6,7 +6,7 @@ import { ListingSkeleton } from "@/app/(site)/_listing/listing-skeleton";
 import { ResultList } from "@/app/(site)/_listing/result-list";
 import { NavigateProvider } from "@/app/(site)/_listing/use-query-navigation";
 import { BOARD, JOBS, summary } from "@/lib/jobs/job-summary.fixture";
-import { everyCountry, type CountryDefault } from "@/lib/search/geo-query";
+import { everyCountry } from "@/lib/search/geo-query";
 import { EMPTY_QUERY, toggleFacet, type JobQuery } from "@/lib/search/job-query";
 import { deriveListing } from "@/lib/search/listing-view";
 import { PAGE_SIZE } from "@/lib/search/paginate";
@@ -14,15 +14,12 @@ import { PAGE_SIZE } from "@/lib/search/paginate";
 // Nothing was detected and nothing was remembered, which is the panel's plain
 // case. What it does with a country that WAS detected belongs to the country
 // facet, and is tested in country-facet.test.tsx.
-const NO_DEFAULT: CountryDefault = { countries: [], from: "detected" };
-
 // The panel is fed the options deriveListing already counted, which is exactly
 // what the real tree hands it -- server render and client render alike.
-const panel = (query: JobQuery, countryDefault: CountryDefault = NO_DEFAULT) =>
+const panel = (query: JobQuery) =>
   renderToStaticMarkup(
     <NavigateProvider value={vi.fn()}>
       <FacetsPanel
-        countryDefault={countryDefault}
         draft=""
         facets={deriveListing(BOARD, query).facets}
         onDraft={vi.fn()}

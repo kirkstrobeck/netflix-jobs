@@ -1,23 +1,12 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  applyCountryDefault,
   countryChosen,
   everyCountry,
   toggleCountry,
   toggleSite,
-  type CountryDefault,
 } from "@/lib/search/geo-query";
 import { EMPTY_QUERY, withPage, type JobQuery } from "@/lib/search/job-query";
-
-const detected = (...countries: string[]): CountryDefault => ({
-  countries,
-  from: "detected",
-});
-const remembered = (...countries: string[]): CountryDefault => ({
-  countries,
-  from: "remembered",
-});
 
 describe("countryChosen", () => {
   it("is false only when the URL has not answered", () => {
@@ -122,44 +111,6 @@ describe("everyCountry", () => {
       site: [],
       everywhere: true,
       page: 1,
-    });
-  });
-});
-
-describe("applyCountryDefault", () => {
-  it("applies the default when the URL has not answered", () => {
-    expect(applyCountryDefault(EMPTY_QUERY, detected("US"))).toMatchObject({
-      country: ["US"],
-      everywhere: false,
-    });
-  });
-
-  // A shared link is authoritative. Somebody sending "here are the Tokyo roles"
-  // must not have it rewritten to the recipient's own country.
-  it("leaves a URL that names a country completely alone", () => {
-    const query: JobQuery = { ...EMPTY_QUERY, country: ["JP"] };
-
-    expect(applyCountryDefault(query, detected("US"))).toBe(query);
-  });
-
-  it("leaves an explicit everywhere alone", () => {
-    const query = everyCountry(EMPTY_QUERY);
-
-    expect(applyCountryDefault(query, detected("US"))).toBe(query);
-  });
-
-  it("applies a remembered choice the same way a detected one applies", () => {
-    expect(applyCountryDefault(EMPTY_QUERY, remembered("CA"))).toMatchObject({
-      country: ["CA"],
-    });
-  });
-
-  // Nothing detected, or a country with nothing open: the listing shows the
-  // world rather than an empty column, and records that as the answer.
-  it("means everywhere when the default is empty", () => {
-    expect(applyCountryDefault(EMPTY_QUERY, detected())).toMatchObject({
-      country: [],
-      everywhere: true,
     });
   });
 });

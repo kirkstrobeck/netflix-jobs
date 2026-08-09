@@ -21,14 +21,9 @@ vi.mock("next/navigation", () => ({
   useSearchParams: () => new URLSearchParams(),
 }));
 
-// A request with no geography on it, which the fallback reads as a US visitor.
-// Every posting below is in the United States, so the country resolves to one
-// that changes nothing and these assertions stay about paging and filtering.
-// What varies with the request is job-listing-country.test.tsx.
-vi.mock("next/headers", () => ({
-  headers: async () => new Headers(),
-  cookies: async () => ({ get: () => undefined }),
-}));
+// No next/headers mock, and none is needed: this render reads searchParams and
+// nothing else. Which country a request resolves to is settled a hop earlier,
+// in proxy.ts, and is pinned in lib/geo/country-redirect.test.ts.
 
 const listMock = vi.mocked(listJobSummaries);
 vi.mocked(boardVersion).mockResolvedValue("bo4rdv3rs10n");
@@ -106,10 +101,10 @@ describe("JobListing", () => {
   // Every page link is a real href even before the board lands, which is what a
   // crawler follows and what a visitor with JavaScript off clicks.
   it("links every page as a URL, not a button", async () => {
-    const html = await renderListing({});
+    // A real listing URL, carrying the country the hop wrote into it. The link
+    // has to reproduce the WHOLE query or page 2 is a different listing.
+    const html = await renderListing({ country: "US" });
 
-    // With the country the request resolved to on it: what the server rendered
-    // is what the link has to reproduce, or page 2 is a different listing.
     expect(html).toContain('href="/?country=US&amp;page=2"');
     expect(html).not.toContain("<button class=\"pager__link\"");
   });

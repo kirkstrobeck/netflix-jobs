@@ -83,42 +83,18 @@ export function everyCountry(query: JobQuery): JobQuery {
 }
 
 /**
- * Where the country came from when the URL did not say.
+ * WHERE THE DEFAULT IS APPLIED, AND WHY NOT HERE
  *
- * `countries` empty means every country. `from` is only used to decide whether
- * the visitor is owed an explanation: a country matched from their IP address
- * appeared without them asking and has to be visible and undoable, whereas one
- * they chose on a previous visit is just their own setting coming back.
+ * There used to be an applyCountryDefault beside countryChosen: it took a query
+ * with no country and returned one with the detected country folded in, and
+ * both the server render and the client's Back-button handler called it. That
+ * is precisely the thing this codebase no longer does. Folding a country into a
+ * query leaves a listing filtered by something its URL does not mention, and
+ * two readers of the same URL who have to agree about it by calling the same
+ * function.
+ *
+ * countryChosen survives because the QUESTION is still worth asking -- it is
+ * what proxy.ts asks to decide whether a URL is owed a redirect. The answering
+ * moved to lib/geo/country-redirect.ts, one hop earlier, where the answer can
+ * be a new address instead of a hidden argument.
  */
-export type CountryDefault = {
-  countries: string[];
-  from: "detected" | "remembered";
-};
-
-/**
- * The one rule that enforces "first load only".
- *
- * A query whose URL names a country -- or names `all` -- is returned untouched,
- * so a shared link is authoritative and a visitor who has answered the question
- * is never answered over. Everything else is a URL that has not spoken, which
- * is what a first load looks like, and only then does the default apply.
- *
- * It is a pure function of the query and the default so the server and the
- * client cannot disagree about it: the server calls it to render, and the
- * client calls it again with the same default after a Back button lands on a
- * URL with no country in it.
- */
-export function applyCountryDefault(
-  query: JobQuery,
-  fallback: CountryDefault,
-): JobQuery {
-  if (countryChosen(query)) {
-    return query;
-  }
-
-  return {
-    ...query,
-    country: fallback.countries,
-    everywhere: fallback.countries.length === 0,
-  };
-}

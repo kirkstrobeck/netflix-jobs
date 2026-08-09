@@ -68,28 +68,45 @@ export async function cacheHeaders(): Promise<HeaderList> {
     // reason in the other direction: /api/revalidate is a POST lever, not a
     // document, and nothing about it should be cacheable.
     //
-    // `.+` rather than `.*`, so the LISTING is not matched. That one character
-    // is the whole of the country's cache story, and it is deliberate:
+    // `.+` rather than `.*`, so the LISTING is not matched. Every listing URL
+    // has the pathname `/` -- country, facets and page are all query -- so that
+    // one character is the whole listing, and it stays.
     //
-    // The listing is rendered for one country -- the one in the URL, the one in
-    // the cookie, or the one the edge read off the address -- and the last two
-    // are not in the URL. A shared cache keys on the URL, so `s-maxage=60` here
-    // hands a visitor in Seoul the document built a moment earlier for a
-    // visitor in Los Gatos. `Vary: Cookie, X-Vercel-IP-Country` is the textbook
-    // answer and it does not work: Next sets its own Vary (rsc,
-    // next-router-state-tree, ...) on every app-router response, overwriting
-    // both a header declared here and one appended in proxy.ts -- verified
-    // against `next start`, which returns Next's list either way. The docs say
-    // as much, and say the fix is to move cache-affecting inputs into the
-    // pathname (02-guides/cdn-caching.md).
+    // THE REASON CHANGED. THE ANSWER DID NOT.
     //
-    // So the listing is left to the header Next sets for it, which is already
-    // right: `private, no-cache, no-store, max-age=0, must-revalidate`, because
-    // the route reads cookies and headers. Overriding that with a public policy
-    // was the bug. What is expensive is cached elsewhere and unaffected -- the
-    // 108KB board is immutable under /api/board, the chunks are immutable under
-    // /_next/static -- so what this costs is one dynamic HTML render per visit,
-    // which is what "the listing varies by country" means.
+    // It used to be about the country. The listing was rendered for one country
+    // that could arrive from the cookie or from the address the edge read off
+    // the request, and neither is in the URL a shared cache keys on, so
+    // `s-maxage=60` here would hand a visitor in Seoul the document built a
+    // moment earlier for a visitor in Los Gatos. `Vary: Cookie,
+    // X-Vercel-IP-Country` is the textbook answer and does not work: Next sets
+    // its own Vary on every app-router response and overwrites both a header
+    // declared here and one appended in proxy.ts. The docs say the fix is to
+    // move cache-affecting inputs into the URL (02-guides/cdn-caching.md).
+    //
+    // That fix has now been made. proxy.ts settles the country BEFORE the
+    // render and redirects to the URL that names it, so JobListing reads
+    // searchParams and nothing else and two visitors on one URL get the same
+    // bytes. The render is measurably cheaper for it: `/` moved from ƒ
+    // (dynamic) to ◐ (partial prerender) in the build output the moment
+    // cookies() and headers() left it, so the masthead, the shell and the font
+    // preloads come off the prerender instead of being rebuilt per request.
+    //
+    // The HTTP policy still cannot follow, and the reason is now Next's rather
+    // than ours. `/` resolves its dynamic hole per request, so it goes out as a
+    // postponed PPR resume -- `x-nextjs-postponed: 1` -- and Next serves those
+    // with `private, no-cache, no-store, max-age=0, must-revalidate` AND
+    // discards this entire header list on the way. Measured against `next start`
+    // 16.2.12: a probe header on a source that certainly matches `/` (the
+    // pattern below with `.*` in place of `.+`) does not appear on `/` at all,
+    // while the same list lands on /jobs/[jobid], which prerenders per path and
+    // does not postpone. So this is not a `.+`/`.*` choice any more; there is no
+    // spelling of it that wins.
+    //
+    // What is expensive is cached elsewhere and unaffected -- the 108KB board is
+    // immutable under /api/board, the chunks are immutable under /_next/static
+    // -- so what is left to pay is the listing hole, streamed into a shell that
+    // no longer costs anything.
     {
       source: "/:path((?!_next/|api/).+)",
       headers: html,

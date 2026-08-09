@@ -41,33 +41,6 @@ function build(sites: Site[]): SiteCatalog {
   return { bySlug, countries };
 }
 
-/**
- * The countries that have at least one role open right now.
- *
- * Not the countries in the site table: Madrid is a Netflix office with nothing
- * posted this week, so a visitor in Spain whose address was read perfectly
- * would land on an empty listing. That reads as a broken board rather than as a
- * filter, which is why detection is checked against this and not against the
- * catalog. It stays a set of what is OPEN, so it answers correctly again the
- * day something is posted there.
- */
-export function openCountries(board: Board): Set<string> {
-  const catalog = siteCatalog(board.sites);
-  const open = new Set<string>();
-
-  board.jobs.forEach((job) => {
-    job.sites.forEach((slug) => {
-      const site = catalog.bySlug.get(slug);
-
-      if (site) {
-        open.add(site.country_code);
-      }
-    });
-  });
-
-  return open;
-}
-
 /** The catalog as lookups, built once per site table. */
 export function siteCatalog(sites: Site[]): SiteCatalog {
   const cached = CATALOGS.get(sites);

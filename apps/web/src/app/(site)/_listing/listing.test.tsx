@@ -10,7 +10,6 @@ import {
   url,
 } from "@/app/(site)/_listing/history.fixture";
 import { board as asBoard, summary } from "@/lib/jobs/job-summary.fixture";
-import type { CountryDefault } from "@/lib/search/geo-query";
 import { EMPTY_QUERY, type JobQuery } from "@/lib/search/job-query";
 import { deriveListing } from "@/lib/search/listing-view";
 
@@ -35,8 +34,6 @@ const BOARD = asBoard(
 );
 
 // What the server resolved the request to, handed down as a prop.
-const DETECTED: CountryDefault = { countries: ["US"], from: "detected" };
-
 let fetchMock: ReturnType<typeof vi.fn>;
 
 beforeEach(() => {
@@ -55,12 +52,11 @@ afterEach(() => {
 });
 
 function mount(query: JobQuery = EMPTY_QUERY) {
-  const applied = { ...query, country: DETECTED.countries };
+  const applied = { ...query, country: ["US"] };
 
   return render(
     <Listing
       boardVersion="v1"
-      countryDefault={DETECTED}
       initialQuery={applied}
       initialView={deriveListing(BOARD, applied)}
     />,
