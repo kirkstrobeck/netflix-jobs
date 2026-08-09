@@ -2,12 +2,13 @@ import { act, renderHook, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { useNearest } from "@/app/(site)/_listing/use-nearest";
-import { locate, locationGranted } from "@/lib/geo/locate";
+import { locate, locationGranted, watchLocationPermission } from "@/lib/geo/locate";
 import { requestNearby } from "@/lib/geo/nearby-request";
 
 vi.mock("@/lib/geo/locate", () => ({
   locate: vi.fn(),
   locationGranted: vi.fn(),
+  watchLocationPermission: vi.fn(),
 }));
 
 vi.mock("@/lib/geo/nearby-request", () => ({ requestNearby: vi.fn() }));
@@ -15,6 +16,7 @@ vi.mock("@/lib/geo/nearby-request", () => ({ requestNearby: vi.fn() }));
 const locateMock = vi.mocked(locate);
 const grantedMock = vi.mocked(locationGranted);
 const nearbyMock = vi.mocked(requestNearby);
+const watchMock = vi.mocked(watchLocationPermission);
 
 const FIX = { lat: 37.23, lng: -121.96 };
 const RINGS = { "us-los-gatos": 0 };
@@ -22,17 +24,17 @@ const RINGS = { "us-los-gatos": 0 };
 beforeEach(() => {
   vi.clearAllMocks();
   grantedMock.mockResolvedValue(false);
-  locateMock.mockResolvedValue({ fix: FIX });
+  // Rooftop-grade, so nothing here trips the coarse-accuracy disclosure.
+  locateMock.mockResolvedValue({ fix: FIX, accuracyM: 30 });
   nearbyMock.mockResolvedValue(RINGS);
+  watchMock.mockImplementation(() => () => {});
 });
 
-afterEach(() => {
-  vi.clearAllMocks();
-});
+afterEach(() => vi.clearAllMocks());
 
 describe("useNearest on a first, unsorted load", () => {
-  // The rule the whole island exists for. Nothing is asked of the browser
-  // until the visitor asks for it.
+  // The rule the island exists for: nothing is asked of the browser until the
+  // visitor asks for it.
   it("asks the device for nothing at all", async () => {
     renderHook(() => useNearest("newest"));
 
@@ -70,8 +72,13 @@ describe("useNearest when the visitor presses Nearest", () => {
     await waitFor(() => expect(result.current.status).toBe("locating"));
   });
 
+  // Every way of not getting a position is now ONE state: there used to be a
+  // status per failure mode because each had its own sentence apologising for
+  // the list being newest, and those sentences are gone. The one distinction
+  // the retry copy still needs is `permission` -- a fact about the browser
+  // rather than about this attempt -- covered in use-nearest-precision.test.ts.
   it.each(["denied", "unavailable", "timeout", "unsupported"] as const)(
-    "reports %s and keeps no rings",
+    "collapses %s to failed, with no rings",
     async (failure) => {
       locateMock.mockResolvedValue({ failure });
 
@@ -79,15 +86,13 @@ describe("useNearest when the visitor presses Nearest", () => {
 
       act(() => result.current.request());
 
-      await waitFor(() => expect(result.current.status).toBe(failure));
+      await waitFor(() => expect(result.current.status).toBe("failed"));
       expect(result.current.buckets).toBeNull();
       // No position, so nothing was sent anywhere.
       expect(nearbyMock).not.toHaveBeenCalled();
     },
   );
 
-  // Distinct from `unavailable`: the device found itself and we could not
-  // answer. One is our fault and one is not, and the visitor is told which.
   it("reports failed when the server does not answer", async () => {
     nearbyMock.mockResolvedValue(null);
 
@@ -112,8 +117,7 @@ describe("useNearest when the visitor presses Nearest", () => {
   });
 
   // Nearest, then Newest, then Nearest again leaves two flights in the air.
-  // Without the attempt token the first to land wins, which can be the stale
-  // one.
+  // Without the attempt token the first to land wins, which can be the stale one.
   it("ignores an attempt that has been superseded", async () => {
     let settleFirst: (value: { failure: "timeout" }) => void = () => {};
     locateMock.mockReturnValueOnce(
@@ -134,9 +138,8 @@ describe("useNearest when the visitor presses Nearest", () => {
     await waitFor(() => expect(result.current.status).toBe("ready"));
   });
 
-  // The same race one stage later: the position came back fast and the RINGS are
-  // what is slow. A stale answer here would overwrite a good sort with a stale
-  // one, or with "failed".
+  // The same race one stage later: the position came back fast and the RINGS
+  // are slow. A stale answer would overwrite a good sort.
   it("ignores rings that arrive after a newer attempt", async () => {
     let settleFirst: (rings: null) => void = () => {};
     nearbyMock.mockReturnValueOnce(
@@ -161,8 +164,8 @@ describe("useNearest when the visitor presses Nearest", () => {
 });
 
 describe("useNearest on a shared ?sort=near link", () => {
-  // Granted already means fetching a position raises nothing, so the shared
-  // link lands sorted for the person who granted it before.
+  // Granted already means fetching a position raises nothing, so the link
+  // lands sorted for the person who granted it before.
   it("resolves silently when permission was already given", async () => {
     grantedMock.mockResolvedValue(true);
 
@@ -172,8 +175,8 @@ describe("useNearest on a shared ?sort=near link", () => {
     expect(result.current.buckets).toEqual(RINGS);
   });
 
-  // The one that matters. `prompt` is the state that would raise a dialog, and
-  // arriving on a URL is not a visitor asking for one.
+  // `prompt` is the state that would raise a dialog, and arriving on a URL is
+  // not a visitor asking for one.
   it("does not prompt when permission has not been given", async () => {
     grantedMock.mockResolvedValue(false);
 

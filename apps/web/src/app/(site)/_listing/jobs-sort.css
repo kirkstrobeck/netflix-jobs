@@ -118,13 +118,43 @@
   color: #fff;
 }
 
-/* What happened, when Nearest did not end in a distance-ordered list. Sits
-   between the header rule and the first row, at the muted weight the rest of
-   the page uses for a note about the thing next to it rather than for the thing
-   itself. */
-.sort-status {
+/* .sort-status is gone with the five sentences it styled -- see
+   location-offer.tsx. What sits here now is an offer to sharpen the order, or a
+   note that the position behind it is vague. Same slot, same muted weight: a
+   note about the list rather than part of it. */
+.location-offer {
   margin: 0.875rem 0 0;
   color: var(--ink-muted);
   font-size: 0.8125rem;
   text-wrap: pretty;
+}
+
+/* A caveat, not an error: the list is fine, its precision is not. --ink is the
+   page's plain text, so this reads as "pay attention to this sentence" without
+   borrowing the red that means a destructive or failed thing everywhere else. */
+.location-offer--warn {
+  color: var(--ink);
+}
+
+/* A button that reads as a link, because it does what a link does from the
+   visitor's side. It is a <button> because asking the browser for a position is
+   not an address that can be navigated to. */
+.location-offer__action {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ink);
+  font: inherit;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+  cursor: pointer;
+  /* Hover-OFF only. */
+  transition: text-decoration-color 150ms ease, color 150ms ease;
+}
+
+.location-offer__action:hover,
+.location-offer__action:focus-visible {
+  color: var(--accent);
+  /* Hover-ON: instant. */
+  transition-duration: 0s;
 }

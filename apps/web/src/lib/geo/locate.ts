@@ -19,7 +19,19 @@ import { coarsen, type Fix } from "@/lib/geo/fix";
  */
 export type LocateFailure = "denied" | "unavailable" | "timeout" | "unsupported";
 
-export type LocateResult = { fix: Fix } | { failure: LocateFailure };
+/**
+ * The position, plus how wide it is.
+ *
+ * `accuracyM` is GeolocationCoordinates.accuracy verbatim: the radius in metres
+ * of a 95% confidence circle around the point. It is carried because a position
+ * is not a fact until you know how big it is -- a Wi-Fi or IP-derived fix can be
+ * tens of kilometres wide, which is wider than the 50km ring the sort buckets
+ * at, and presenting that as "you are here" is presenting a guess as knowledge.
+ * The fix itself is coarsened before it leaves the browser; this number is not
+ * coarsened, because it is what the disclosure is computed from and it never
+ * goes to the server.
+ */
+export type LocateResult = { fix: Fix; accuracyM: number } | { failure: LocateFailure };
 
 // Long enough for a cold GPS fix on a phone, short enough that the control does
 // not sit saying "Finding you" past the point anyone believes it.
@@ -53,6 +65,9 @@ export function locate(): Promise<LocateResult> {
             lat: position.coords.latitude,
             lng: position.coords.longitude,
           }),
+          // Not coarsened, and not sent anywhere. It decides one thing: whether
+          // the visitor is told this position may be well off.
+          accuracyM: position.coords.accuracy,
         }),
       (error) => resolve({ failure: FAILURES[error.code] ?? "unavailable" }),
       {
@@ -92,4 +107,60 @@ export async function locationGranted(): Promise<boolean> {
   } catch {
     return false;
   }
+}
+
+/**
+ * What the permission is now, and every time it changes -- without a reload.
+ *
+ * THIS IS THE HALF THAT MAKES RETRY POSSIBLE AT ALL
+ *
+ * Once an origin is blocked, getCurrentPosition fails with PERMISSION_DENIED
+ * immediately and forever, and no script can raise the prompt again. Measured in
+ * Chromium against this app: three consecutive calls after a denial returned
+ * code 1 in 0-1ms each, with no dialog. So a "Retry" button that just calls it
+ * again is a button that does nothing, and the honest UI has to say how to
+ * re-enable it in browser UI instead.
+ *
+ * What browser UI does give us is this event. PermissionStatus fires `change`
+ * the moment the visitor flips the site setting, in the page they already have
+ * open -- verified in the same run, which observed 'denied' then 'granted'
+ * without a navigation. So the offer can go from "here is how to turn it on" to
+ * a live button the instant they do it, and nobody is told to reload.
+ *
+ * Returns an unsubscribe. `unknown` is Safari, which shipped Permissions without
+ * a geolocation descriptor and throws on the query: it means "we cannot tell",
+ * and every caller has to treat it as "do not claim it is blocked".
+ */
+export type PermissionState = "granted" | "denied" | "prompt" | "unknown";
+
+export function watchLocationPermission(
+  onChange: (state: PermissionState) => void,
+): () => void {
+  if (typeof navigator === "undefined" || !navigator.permissions) {
+    onChange("unknown");
+    return () => {};
+  }
+
+  let live = true;
+  let detach = () => {};
+
+  navigator.permissions
+    .query({ name: "geolocation" })
+    .then((status) => {
+      if (!live) {
+        return;
+      }
+
+      const report = () => onChange(status.state as PermissionState);
+
+      report();
+      status.addEventListener("change", report);
+      detach = () => status.removeEventListener("change", report);
+    })
+    .catch(() => onChange("unknown"));
+
+  return () => {
+    live = false;
+    detach();
+  };
 }
