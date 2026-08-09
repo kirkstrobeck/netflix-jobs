@@ -54,18 +54,46 @@ export const DEFAULT_COUNTRY = "US";
  * is first exercised in production; this way localhost runs the same function,
  * in the same order, and the only difference is which of its inputs is present.
  */
-function overrideCountry(): string | null {
-  const override = process.env.DEV_GEO_COUNTRY;
-
-  if (override === undefined) {
-    return DEFAULT_COUNTRY;
-  }
-
-  return countryCode(override);
+/**
+ * Where the request appears to be from, or nothing. NO DEFAULT.
+ *
+ * This is the honest half of detection and it is deliberately separate from the
+ * one below. `countryDefault` answers "which country should this URL be
+ * filtered by", and its answer for a request it knows nothing about is the
+ * United States -- a policy, and a defensible one, because 303 of 481 roles are
+ * there and the answer is written into the address bar where it can be changed.
+ *
+ * This answers a different question: "where do we think this visitor IS". A
+ * policy default is a wrong answer to that one. Saying "you are in the United
+ * States" to somebody we cannot place is a claim about a person rather than a
+ * choice about a list, so the absence of a signal returns null and the caller
+ * says nothing at all. GET /api/where is that caller.
+ *
+ * DEV_GEO_COUNTRY is read here rather than in a second override of its own,
+ * which is what keeps localhost exercising this path: unset means no signal,
+ * `JP` means a visitor in Tokyo, and `none` -- anything that is not a country
+ * code -- means an edge that could not place the address.
+ */
+export function detectedCountry(geo: string | null | undefined): string | null {
+  return countryCode(geo) ?? countryCode(process.env.DEV_GEO_COUNTRY);
 }
 
 function detect(geo: string | null | undefined): string | null {
-  return countryCode(geo) ?? overrideCountry();
+  const detected = detectedCountry(geo);
+
+  if (detected) {
+    return detected;
+  }
+
+  // Nothing was detected, and only now does the policy default apply. An
+  // explicit DEV_GEO_COUNTRY that is not a country code is a deliberate "the
+  // edge could not place this", so it does NOT fall through to the default --
+  // that case is otherwise unreachable by hand.
+  if (process.env.DEV_GEO_COUNTRY === undefined) {
+    return DEFAULT_COUNTRY;
+  }
+
+  return null;
 }
 
 /**

@@ -24,6 +24,14 @@ Then:
 | `hero.mjs`    | a cropped shot of the results header line                         |
 | `cta.mjs`     | contrast of a control against an ANIMATED backdrop, worst frame   |
 | `share.mjs`   | the share control's fallback chain, one stubbed browser per rung  |
+| `where.mjs`   | whether the country from /api/where moves the page or filters it  |
+
+`where.mjs` holds the `/api/where` response until the listing has settled, so
+the page can be read in the state it paints in and again once the refinement
+lands. It sets `x-vercel-ip-country` per request, which is the only way to
+stand in for Vercel's edge from in here, and the `nfj_country=all` cookie,
+without which the proxy's country hop never lets the cleared state render at
+all.
 
 `cta.mjs` is the other one worth keeping. A screenshot answers for one frame,
 and the hero's backdrop is fifteen bars walking on loops of up to 254 seconds —

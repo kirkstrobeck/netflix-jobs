@@ -91,3 +91,25 @@ describe("line balancing", () => {
     expect(rule(options, ".option__label")).toContain("overflow-wrap: break-word");
   });
 });
+
+/**
+ * THE CLAUSE THAT ARRIVES AFTER PAINT.
+ *
+ * GET /api/where lands a country into the results heading seconds after the
+ * page. This label shares its line with the sort control, so it is 134px wide
+ * at a 320px viewport and 189px at 375px -- measured against the running page
+ * -- and "Open roles — you are in the United States" (387px) is three lines
+ * there against one from 640px up. A heading that grows two lines when the
+ * answer lands takes the whole list down with it.
+ *
+ * So the clause is hidden where it does not fit, rather than the heading
+ * reserving three lines from first paint: reserving would spend a permanent
+ * band of empty space above every phone's results on a refinement that, in the
+ * fail-closed case this tier is built around, never arrives.
+ */
+describe("a refinement that cannot move the page", () => {
+  it("hides the where-clause below the width it fits on one line", () => {
+    expect(rule(listing, ".listing-title__where")).toContain("display: none");
+    expect(listing).toContain("@media (min-width: 42rem)");
+  });
+});

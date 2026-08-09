@@ -11,7 +11,7 @@ import { useListing } from "@/app/(site)/_listing/use-listing";
 import { NavigateProvider } from "@/app/(site)/_listing/use-query-navigation";
 import { headingPlace } from "@/app/(site)/_listing/heading-place";
 import type { JobQuery } from "@/lib/search/job-query";
-import { listingHeading } from "@/lib/search/listing-heading";
+import { headingParts } from "@/lib/search/listing-heading";
 import type { ListingView } from "@/lib/search/listing-view";
 
 type ListingProps = {
@@ -34,16 +34,17 @@ type ListingProps = {
  * components are the same ones throughout, only their data changed hands.
  */
 export function Listing({ boardVersion, initialQuery, initialView }: ListingProps) {
-  const { query, view, draft, setDraft, navigate, nearest } = useListing(
+  const { query, view, draft, setDraft, navigate, nearest, where } = useListing(
     initialQuery,
     initialView,
     boardVersion,
   );
 
-  // Country on the server and on the first client render; device only once a
-  // real position has landed. See heading-place.ts for why that split is what
-  // keeps the heading out of the cache key.
-  const place = headingPlace(query, view.facets.country, nearest);
+  // Country on the server and on the first client render; the request's country
+  // and then the device only once each has landed. See heading-place.ts for why
+  // that split is what keeps the heading out of the cache key.
+  const place = headingPlace(query, view.facets.country, nearest, where);
+  const heading = headingParts(query.sort, place);
 
   return (
     <NavigateProvider value={navigate}>
@@ -73,7 +74,17 @@ export function Listing({ boardVersion, initialQuery, initialView }: ListingProp
                 and a button inside it would become part of the heading's text.
                 The offer is a sibling, below. */}
             <h2 className="listing-title" id={RESULTS_ANCHOR}>
-              {listingHeading(query.sort, place)}
+              {heading.lead}
+              {/* The clause naming where the request came from, in its own
+                  element so the stylesheet can drop it on a screen too narrow
+                  to hold it on one line. Nothing here duplicates the lead, so a
+                  missing stylesheet shows the long sentence rather than the
+                  word twice -- and a heading that grows a line after paint
+                  would push the whole list down, which is the one thing this
+                  refinement is not allowed to do. */}
+              {heading.where ? (
+                <span className="listing-title__where">{heading.where}</span>
+              ) : null}
             </h2>
 
             {/* Inside the header and after the heading, so it reads as "these
@@ -86,7 +97,12 @@ export function Listing({ boardVersion, initialQuery, initialView }: ListingProp
           {/* Under the header rather than inside it: it appears and disappears,
               so putting it in the header would make that line change height --
               and it holds a button, which must not end up inside an h2. */}
-          {query.sort === "nearest" ? <LocationOffer nearest={nearest} /> : null}
+          {query.sort === "nearest" ? (
+            <LocationOffer
+              byCountry={place?.precision === "country"}
+              nearest={nearest}
+            />
+          ) : null}
 
           <ResultList jobs={view.jobs} />
 

@@ -80,6 +80,32 @@
   text-transform: uppercase;
 }
 
+/* THE CLAUSE THAT NAMES WHERE THE REQUEST CAME FROM, AND THE WIDTH IT NEEDS.
+ *
+ * It arrives after paint, from GET /api/where, and a heading that grows a line
+ * when it lands takes the entire list down the page with it. Measured against
+ * the running page: this label shares its line with the sort control, which
+ * leaves it 134px at a 320px viewport and 189px at 375px -- so "Open roles —
+ * you are in the United States" (387px) is three lines there and one line from
+ * 640px up. 42rem is that threshold with 32px to spare.
+ *
+ * Hidden rather than reserved. Reserving three lines from first paint would pay
+ * for the refinement with a permanent band of empty space above every phone's
+ * results -- and pay it hardest where the refinement never arrives at all,
+ * which is the fail-closed case this tier is built around.
+ *
+ * The lead is not repeated inside it, so a stale stylesheet shows one long
+ * heading rather than "Open roles" twice. */
+.listing-title__where {
+  display: none;
+}
+
+@media (min-width: 42rem) {
+  .listing-title__where {
+    display: inline;
+  }
+}
+
 /* The block-start padding used to live on .listing-hero; it moved here when the
    header moved into the column, so the space between masthead and body is the
    same whichever column is taller. */

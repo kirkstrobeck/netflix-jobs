@@ -5,6 +5,7 @@ import { useCallback, useDeferredValue, useMemo, useState } from "react";
 
 import { useBoard } from "@/app/(site)/_listing/use-board";
 import { useNearest, type Nearest } from "@/app/(site)/_listing/use-nearest";
+import { useWhere } from "@/app/(site)/_listing/use-where";
 import { jobsHref, type JobQuery } from "@/lib/search/job-query";
 import { deriveListing, type ListingView } from "@/lib/search/listing-view";
 import { readSearchParams } from "@/lib/search/parse-query";
@@ -18,6 +19,8 @@ export type Listing = {
   navigate: (query: JobQuery) => void;
   /** The distance island: its state, and the one call that starts it. */
   nearest: Nearest;
+  /** The country the edge read off the request. Names a place, filters nothing. */
+  where: string | null;
 };
 
 // The keyword box filters as it is typed, so the text has to reach the filter
@@ -105,6 +108,12 @@ export function useListing(
   );
   const deferredQuery = useDeferredValue(previewQuery);
 
+  // Asked only when it could change something: Nearest is chosen and the URL
+  // has not already answered the country question. It never reaches the view --
+  // this is a name for the heading, not a filter -- so it is deliberately not
+  // an input to deriveListing below.
+  const where = useWhere(query.sort === "nearest" && query.country.length === 0);
+
   // initialView is the server's render, which is ALWAYS newest -- the server has
   // no position and is never given one. So the moment rings arrive there is a
   // view the server could not have produced, and the board has to be in memory
@@ -149,5 +158,5 @@ export function useListing(
     [board, router],
   );
 
-  return { query, view, draft, setDraft, navigate, nearest };
+  return { query, view, draft, setDraft, navigate, nearest, where };
 }

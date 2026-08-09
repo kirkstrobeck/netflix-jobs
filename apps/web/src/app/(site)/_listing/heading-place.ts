@@ -27,10 +27,32 @@ import type { HeadingPlace } from "@/lib/search/listing-heading";
  * is in the view both on the server and on the client, from the same board, with
  * nothing new to plumb and no second spelling to drift.
  */
+/**
+ * The code travels with the label because the heading's grammar needs it: four
+ * of the board's countries take "the" and the rest do not, and that is a
+ * property of the country rather than of the string it is spelled with.
+ *
+ * A country with no label in the facet list is dropped. That is the fail-closed
+ * path for /api/where: the facets only name countries this board hires in, so a
+ * request placed in a country with no roles has nothing to be called here and
+ * the heading stays plain rather than naming somewhere the board has never
+ * heard of.
+ */
+function named(
+  countries: FacetOption[],
+  code: string,
+  precision: "country" | "request",
+): HeadingPlace | null {
+  const name = countries.find((option) => option.value === code)?.label;
+
+  return name ? { precision, code, name } : null;
+}
+
 export function headingPlace(
   query: JobQuery,
   countries: FacetOption[],
   nearest: Nearest,
+  where: string | null,
 ): HeadingPlace | null {
   if (query.sort !== "nearest") {
     return null;
@@ -47,14 +69,27 @@ export function headingPlace(
   // ordering that is not happening.
   const [code, ...rest] = query.country;
 
-  if (!code || rest.length > 0) {
+  if (rest.length > 0) {
     return null;
   }
 
-  const name = countries.find((option) => option.value === code)?.label;
+  if (code) {
+    return named(countries, code, "country");
+  }
 
-  // The code travels with the label because the heading's grammar needs it:
-  // four of the board's countries take "the" and the rest do not, and that is a
-  // property of the country rather than of the string it is spelled with.
-  return name ? { precision: "country", code, name } : null;
+  // THE COUNTRY IS IN THE URL, OR IT IS NOT A FILTER.
+  //
+  // Past this line the visitor has NOT answered the country question -- they
+  // cleared it, or they arrived on a link that says everywhere -- so what
+  // follows can only name a place, never narrow the list. `where` comes from
+  // GET /api/where after paint, and the tier it produces is a different
+  // sentence for exactly that reason: see listing-heading.ts.
+  //
+  // An office ticked without its country is still an answer to "where", so the
+  // guess stays quiet there too.
+  if (query.site.length > 0 || !where) {
+    return null;
+  }
+
+  return named(countries, where, "request");
 }

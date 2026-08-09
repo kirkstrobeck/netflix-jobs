@@ -34,16 +34,31 @@ import { accuracyKm, isCoarse } from "@/lib/geo/accuracy";
  * no reload, which is what the `permission` prop is watching.
  */
 
-const BLOCKED =
-  "Location is blocked for this site, so this list is ordered by country. To use it, allow location for this site in your browser's address bar or site settings.";
+const blocked = (byCountry: boolean) =>
+  `Location is blocked for this site, so this list is ordered ${
+    byCountry ? "by country" : "newest first"
+  }. To use it, allow location for this site in your browser's address bar or site settings.`;
 
 function accuracyNote(accuracyM: number): string {
   return `This position came from the network rather than a satellite, so it could be about ${accuracyKm(accuracyM)} km out — roles in a neighbouring city may be ordered wrongly.`;
 }
 
-type LocationOfferProps = { nearest: Nearest };
+/**
+ * "Ordered by country" was true of one case and printed for all of them.
+ *
+ * It is true when a country filter is applied: the list IS the roles in that
+ * country. It was false for the visitor who cleared the filter -- their list is
+ * every role on the board, newest first -- and telling them it was ordered by a
+ * country they had just removed was the offer describing a filter that was not
+ * there. The heading names the tier; this names the ORDER, and now it names the
+ * one the list is actually in.
+ */
+const ordering = (byCountry: boolean) =>
+  byCountry ? "Ordered by country." : "Ordered newest first.";
 
-export function LocationOffer({ nearest }: LocationOfferProps) {
+type LocationOfferProps = { nearest: Nearest; byCountry: boolean };
+
+export function LocationOffer({ byCountry, nearest }: LocationOfferProps) {
   const { status, accuracyM, permission, request } = nearest;
 
   if (status === "locating") {
@@ -76,7 +91,7 @@ export function LocationOffer({ nearest }: LocationOfferProps) {
   if (permission === "denied") {
     return (
       <p className="location-offer location-offer--warn" role="status">
-        {BLOCKED}
+        {blocked(byCountry)}
       </p>
     );
   }
@@ -85,7 +100,7 @@ export function LocationOffer({ nearest }: LocationOfferProps) {
   // position, which is not an address anyone can navigate to.
   return (
     <p className="location-offer">
-      Ordered by country.{" "}
+      {ordering(byCountry)}{" "}
       <button className="location-offer__action" onClick={request} type="button">
         Use my location
       </button>{" "}

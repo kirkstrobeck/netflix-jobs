@@ -16,8 +16,11 @@ const nearest = (over: Partial<Nearest> = {}): Nearest => ({
   ...over,
 });
 
-const show = (over: Partial<Nearest> = {}) =>
-  render(<LocationOffer nearest={nearest(over)} />);
+// byCountry says whether a country filter is applied, which is what decides
+// whether "Ordered by country" is a true sentence. Default true here: it is
+// what every case below except the pair at the bottom is about.
+const show = (over: Partial<Nearest> = {}, byCountry = true) =>
+  render(<LocationOffer byCountry={byCountry} nearest={nearest(over)} />);
 
 const offerButton = () => screen.queryByRole("button", { name: "Use my location" });
 
@@ -47,7 +50,9 @@ describe("the offer to sharpen the order", () => {
 
     expect(offerButton()).toBeNull();
 
-    rerender(<LocationOffer nearest={nearest({ status: "failed", permission: "prompt" })} />);
+    rerender(
+      <LocationOffer byCountry nearest={nearest({ status: "failed", permission: "prompt" })} />,
+    );
 
     expect(offerButton()).toBeTruthy();
   });
@@ -83,5 +88,34 @@ describe("the accuracy disclosure", () => {
     show({ status: "ready", buckets: {}, accuracyM: 1_200 });
 
     expect(screen.queryByRole("status")).toBeNull();
+  });
+});
+
+/**
+ * "Ordered by country" was printed whether or not a country was applied.
+ *
+ * For a visitor who cleared the filter it was the offer describing a filter
+ * that was not there -- and it was the same sentence they would have got with
+ * one on, so it could not be read as information either way.
+ */
+describe("the order it says the list is in", () => {
+  it("says country when a country is what scoped the list", () => {
+    show({ status: "idle", permission: "prompt" }, true);
+
+    expect(screen.getByText(/Ordered by country/)).toBeTruthy();
+  });
+
+  it("says newest when the visitor asked for everywhere", () => {
+    show({ status: "idle", permission: "prompt" }, false);
+
+    expect(screen.getByText(/Ordered newest first/)).toBeTruthy();
+    expect(screen.queryByText(/Ordered by country/)).toBeNull();
+  });
+
+  // The blocked sentence made the same claim, so it takes the same correction.
+  it("corrects the blocked sentence too", () => {
+    show({ status: "failed", permission: "denied" }, false);
+
+    expect(screen.getByRole("status").textContent).toContain("ordered newest first");
   });
 });
