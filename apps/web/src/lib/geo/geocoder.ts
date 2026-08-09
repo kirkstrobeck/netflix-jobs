@@ -12,8 +12,8 @@ import type { Fix } from "@/lib/geo/fix";
  *             "nearest to Beaverton, Oregon" instead of "nearest to you".
  *
  * Neither exists in this app today and no credential has been provisioned. The
- * service the reference implementation uses could not be identified from in here -- that repository
- * is not on this filesystem; see the report.
+ * geocoding service the reference implementation uses could not be identified
+ * from in here -- that repository is not on this filesystem; see the report.
  *
  * FAIL CLOSED, DELIBERATELY
  *
