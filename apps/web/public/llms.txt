@@ -1,25 +1,32 @@
-# Careers at Netflix
+# Netflix Jobs
 
-A mirror of the Netflix careers board. Every posting is a server-rendered page
-at a stable URL, so there is nothing here that needs a browser to read.
+> A server-rendered mirror of the Netflix careers board. Every active posting is
+> a page at a stable URL, the whole board is one JSON file, and nothing here
+> needs a browser to read it.
+
+Postings are crawled from Netflix's own careers board and keep the job code
+Netflix prints on them -- JR41912, AJRT30201 -- as their URL key. Applying
+happens on Netflix's site, linked from the Apply button on each posting.
+
+Fetch the board JSON once rather than crawling the listing: it is the same data
+the listing filters against, in a single request. The one field it does not
+carry is the full description, which lives on each posting's own page.
 
 ## Pages
 
-- [Open roles](/): the whole active board. Filter with query parameters —
-  `?team=Engineering`, `?type=Full+Time`, `?location=Los+Gatos`, `?q=free+text`,
-  `?page=2`. Each of `team`, `type` and `q` may repeat. Every filter is in the
+- [Open roles](/): the whole active board. Filter with query parameters --
+  `?team=Engineering`, `?type=Remote`, `?location=Los+Gatos`, `?q=free+text`,
+  `?page=2`. Each of `team`, `type`, `location` and `q` may repeat. `type` is
+  the posting's work type, which is `Onsite` or `Remote`. Every filter is in the
   URL, so any listing you can see is a link you can share.
 - [A single posting](/jobs/JR41912): `/jobs/{job code}`, where the job code is
-  the id printed on the posting (`JR41912`, `AJRT30201`). Case-insensitive; the
-  canonical form is uppercase and anything else redirects to it.
+  the id printed on the posting. Case-insensitive; the canonical form is
+  uppercase and anything else redirects to it. Carries the full HTML
+  description, the locations, the work type, and a schema.org JobPosting as
+  JSON-LD.
 
 ## Data
 
 - [The board as JSON](/api/board): every active posting as one array, newest
-  first — job code, title, team, work type, locations and posting date. Business
-  unit and the full description are on the posting page only, not here. This is
-  the same payload the listing page filters against, so reading it
-  once is strictly better than crawling the pages for the same fields.
-
-Applications go to the official Netflix careers site, linked from the Apply
-button on each posting.
+  first -- job code, title, team, work type, locations and posting date.
+  Business unit and the full description are on the posting page only, not here.
