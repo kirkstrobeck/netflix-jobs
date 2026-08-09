@@ -22,6 +22,7 @@ const COLUMNS = [
   "apply_url",
   "canonical_url",
   "posting_date",
+  "source_created_at",
 ].join(",");
 
 // Cached so the page is prerenderable: with `cacheComponents`, an uncached await

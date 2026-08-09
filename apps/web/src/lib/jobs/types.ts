@@ -17,6 +17,9 @@ export type Job = {
   apply_url: string;
   canonical_url: string;
   posting_date: string | null;
+  // t_create from the crawl: when the posting was created on Netflix's board.
+  // Read only as the datePosted fallback -- see lib/jobs/date-posted.ts.
+  source_created_at: string | null;
 };
 
 // The URL key is display_job_id, the code Netflix prints on the posting: ASCII

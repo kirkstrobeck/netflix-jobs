@@ -24,6 +24,16 @@ export const SAMPLE_JOB: Job = {
   apply_url: "https://explore.jobs.netflix.net/careers/job/730201",
   canonical_url: "https://explore.jobs.netflix.net/careers/job/730201",
   posting_date: "2026-01-15",
+  source_created_at: "2026-01-02T00:00:00+00:00",
+};
+
+// posting_date is empty on 179 of the 481 rows, so the datePosted fallback needs
+// a fixture of its own: everything present except the date the employer stated.
+export const UNDATED_JOB: Job = {
+  ...SAMPLE_JOB,
+  position_id: 730202,
+  display_job_id: "JR73021",
+  posting_date: null,
 };
 
 // Every nullable column set to null and no locations, so components fall
@@ -46,4 +56,5 @@ export const MINIMAL_JOB: Job = {
   apply_url: "https://explore.jobs.netflix.net/careers/job/999999",
   canonical_url: "https://explore.jobs.netflix.net/careers/job/999999",
   posting_date: null,
+  source_created_at: null,
 };

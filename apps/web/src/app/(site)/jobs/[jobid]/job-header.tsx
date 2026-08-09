@@ -3,14 +3,22 @@ import { PostedDate } from "@/app/(site)/jobs/[jobid]/posted-date";
 import { BarsStage } from "@/app/_bars/bars-stage";
 import { formatLocations } from "@/lib/format/location";
 import { formatPostedDate } from "@/lib/format/posted-date";
+import { postedOn } from "@/lib/jobs/date-posted";
 import type { Job } from "@/lib/jobs/types";
 
 // posting_date is null on 179 of 481 rows, so the fact list renders a fixed set
 // of slots and fills the empty one with an em dash. The row keeps its height
 // either way, which is why nothing here can shift once the page paints.
+//
+// The date comes from postedOn(), the same call the JobPosting's datePosted
+// comes from, and it carries its own verb: "Posted" for the date the employer
+// stated, "Listed" for the fallback to when the posting appeared on Netflix's
+// board. That is what keeps the markup describing something the visitor can
+// actually read on the page.
 export function JobHeader({ job }: { job: Job }) {
   const locations = formatLocations(job.locations, job.location);
-  const posted = formatPostedDate(job.posting_date);
+  const on = postedOn(job);
+  const posted = formatPostedDate(on?.iso ?? null);
 
   // The stage IS the <header>, not a wrapper inside it: the bars are the
   // masthead's backdrop, and the hero's padding-block is most of its height, so
@@ -27,10 +35,9 @@ export function JobHeader({ job }: { job: Job }) {
         </li>
         <li className="job-facts__item">{job.work_type ?? "On site"}</li>
         <li className="job-facts__item">
-          {posted ? (
+          {posted && on ? (
             <>
-              {/* posted is only truthy when posting_date parsed, so it is a string here. */}
-              Posted <PostedDate absolute={posted} iso={job.posting_date!} />
+              {on.verb} <PostedDate absolute={posted} iso={on.iso} />
             </>
           ) : (
             <span className="job-facts__empty">Posted date not listed</span>
