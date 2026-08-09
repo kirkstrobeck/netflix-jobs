@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   addKeyword,
+  appliedCount,
   EMPTY_QUERY,
   isFiltered,
   jobsHref,
@@ -178,6 +179,23 @@ describe("mutations", () => {
     const two = addKeyword(addKeyword(EMPTY_QUERY, "design"), "senior");
 
     expect(removeKeyword(two, "design").keywords).toEqual(["senior"]);
+  });
+
+  // What the collapsed filters toggle says out loud. Every ticked box and every
+  // chip counts once, so the number matches what opening the panel will show.
+  // Sort is not one: it reorders the list rather than narrowing it.
+  it("counts every applied filter and no controls that are not one", () => {
+    expect(appliedCount(EMPTY_QUERY)).toBe(0);
+    expect(appliedCount({ ...EMPTY_QUERY, sort: "nearest", page: 3 })).toBe(0);
+    expect(
+      appliedCount({
+        ...EMPTY_QUERY,
+        country: ["JP", "US"],
+        site: ["us-remote"],
+        workType: ["Remote"],
+        keywords: ["design"],
+      }),
+    ).toBe(5);
   });
 
   it("knows whether anything is filtering", () => {

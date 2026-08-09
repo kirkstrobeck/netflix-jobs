@@ -176,6 +176,49 @@ describe("FacetsPanel", () => {
   });
 });
 
+/**
+ * The narrow-screen disclosure, which is markup plus CSS and no script.
+ *
+ * What is pinned here is the part CSS cannot recover from if it moves: the
+ * checkbox has to come BEFORE the panel and be its sibling, because
+ * `:checked ~ .facets__panel` only looks forward, and the label has to be bound
+ * to it by id or the control has no accessible name and no keyboard.
+ */
+describe("the filters disclosure", () => {
+  it("puts the switch before the panel it opens, as a sibling", () => {
+    const html = panel(EMPTY_QUERY);
+    const id = html.match(/class="facets__switch[^"]*" id="([^"]+)"/)?.[1];
+
+    expect(id).toBeTruthy();
+    expect(html).toContain(`for="${id}"`);
+    expect(html.indexOf("facets__switch")).toBeLessThan(html.indexOf("facets__panel"));
+  });
+
+  // One set of controls. A second, mobile-only copy of the panel is two sets of
+  // checkboxes that have to keep saying the same thing.
+  it("renders the panel exactly once", () => {
+    expect(panel(EMPTY_QUERY).match(/facets__panel/g)).toHaveLength(1);
+  });
+
+  // A shut drawer over an applied filter is an invisible filter, so the shut
+  // drawer says how many. The word itself never changes -- open and shut is
+  // what the checkbox announces -- so the accessible name stays put.
+  it("says how many filters are applied, and only when some are", () => {
+    const clean = panel(EMPTY_QUERY);
+    const filtered = panel({
+      ...EMPTY_QUERY,
+      country: ["US"],
+      team: ["Engineering"],
+      keywords: ["design"],
+    });
+
+    expect(clean).not.toContain("facets__applied");
+    expect(filtered).toContain(">3 applied<");
+    expect(filtered).not.toContain("Show filters");
+    expect(filtered).not.toContain("Hide filters");
+  });
+});
+
 describe("ListingSkeleton", () => {
   // A placeholder announcing a page of empty rows is worse than silence.
   it("is a full page of rows and is hidden from assistive tech", () => {

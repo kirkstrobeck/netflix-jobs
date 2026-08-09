@@ -15,6 +15,7 @@ import "@/app/(site)/_listing/result-row.css";
 import "@/app/(site)/_listing/jobs-sort.css";
 import "@/app/(site)/_listing/jobs-pager.css";
 import "@/app/(site)/_listing/jobs-facets.css";
+import "@/app/(site)/_listing/jobs-collapse.css";
 import "@/app/(site)/_listing/jobs-options.css";
 import "@/app/(site)/_listing/jobs-country.css";
 import "@/app/(site)/jobs/[jobid]/posted-badge.css";

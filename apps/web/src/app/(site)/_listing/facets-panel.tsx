@@ -78,8 +78,13 @@ export function FacetsPanel({
   const switchId = useId();
   const applied = appliedCount(query);
 
+  // aria-label rather than aria-labelledby pointing at the h2 below: the
+  // heading is display: none on a narrow screen, where the toggle carries the
+  // word instead, and a name computed from a hidden element is no name at all.
+  // The region keeps the same name at both widths, and the accessibility tree
+  // never holds "Filters" three times over.
   return (
-    <aside aria-labelledby="filters-heading" className="facets">
+    <aside aria-label="Filters" className="facets">
       {/* First, and a sibling of the panel it opens: `:checked ~ .facets__panel`
           is the whole mechanism, and a sibling combinator only looks forward.
 
@@ -91,14 +96,12 @@ export function FacetsPanel({
       <input className="facets__switch visually-hidden" id={switchId} type="checkbox" />
 
       <div className="facets__head">
-        {/* Kept at every width, because it is what names this region and what
-            holds the page's outline together -- h1 masthead, h2 here and over
-            the results, h3 per role. On a narrow screen it is visually hidden
-            and the toggle below carries the word instead, so the same name is
-            never on screen twice. */}
-        <h2 className="facets__heading" id="filters-heading">
-          Filters
-        </h2>
+        {/* The column's name where there are two columns. Below the breakpoint
+            there is one column and this is not a column heading any more -- it
+            is a label on a shut drawer -- so it goes and the toggle says the
+            word instead. The outline that survives is the one that matters:
+            h1 masthead, h2 "Open roles", h3 per role. */}
+        <h2 className="facets__heading">Filters</h2>
 
         {/* The toggle's face. Its text is the checkbox's accessible name, so it
             says the same thing out loud as on screen -- which is why the word
