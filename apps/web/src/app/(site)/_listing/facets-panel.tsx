@@ -19,7 +19,7 @@ import type { FacetKey, JobQuery } from "@/lib/search/job-query";
 // the whole board, so the panel is a layout and the arithmetic has exactly one
 // home -- the same one the server render uses.
 //
-// THE ORDER, WHICH IS WORK TYPE, KEYWORDS, LOCATION, SENIORITY, TEAM
+// THE ORDER: WORK TYPE, KEYWORDS, LOCATION, TEAM, BUSINESS UNIT, SENIORITY
 //
 // Location led for a while, on the grounds that a country can arrive ALREADY
 // TICKED and a filter that applied itself should be the first thing on the
@@ -41,6 +41,14 @@ import type { FacetKey, JobQuery } from "@/lib/search/job-query";
 // being found second: someone who arrives typing goes to it regardless of what
 // is above it, and someone who does not is better served by being shown a
 // choice than an empty field.
+//
+// SENIORITY IS LAST
+//
+// Asked for in those words, and it is the one group that has to be reached for
+// rather than met: 29% of the board states no rung in its title, so ticking a
+// level quietly puts 139 roles out of view. That belongs at the end of a panel,
+// after the questions that can answer for every posting. Its own note in
+// facet-groups.ts carries the rest of the argument.
 //
 // Each group's own name and its own reason for sitting where it does are in
 // facet-groups.ts, beside the group rather than above the component that draws
@@ -108,7 +116,6 @@ export function FacetsPanel({
           options={facets[WORK_TYPE.key]}
           plural={WORK_TYPE.plural}
           query={query}
-          singular={WORK_TYPE.singular}
         />
 
         <KeywordFacet draft={draft} onDraft={onDraft} query={query} />
@@ -116,21 +123,11 @@ export function FacetsPanel({
         <CountryFacet countries={facets.country} query={query} sites={facets.site} />
 
         <FacetGroup
-          facetKey={SENIORITY.key}
-          legend={SENIORITY.legend}
-          options={facets[SENIORITY.key]}
-          plural={SENIORITY.plural}
-          query={query}
-          singular={SENIORITY.singular}
-        />
-
-        <FacetGroup
           facetKey={TEAM.key}
           legend={TEAM.legend}
           options={facets[TEAM.key]}
           plural={TEAM.plural}
           query={query}
-          singular={TEAM.singular}
         />
 
         <FacetGroup
@@ -139,7 +136,14 @@ export function FacetsPanel({
           options={facets[BUSINESS_UNIT.key]}
           plural={BUSINESS_UNIT.plural}
           query={query}
-          singular={BUSINESS_UNIT.singular}
+        />
+
+        <FacetGroup
+          facetKey={SENIORITY.key}
+          legend={SENIORITY.legend}
+          options={facets[SENIORITY.key]}
+          plural={SENIORITY.plural}
+          query={query}
         />
       </div>
     </aside>

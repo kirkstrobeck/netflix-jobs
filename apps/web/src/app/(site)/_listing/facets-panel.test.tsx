@@ -64,15 +64,26 @@ describe("FacetsPanel", () => {
   // shorter read than thirty-odd. Business unit is last because it is the one
   // nobody arrives with; it is here so the role pages have a filter to link to
   // and a box to untick.
-  it("orders the groups work type, keywords, location, seniority, team, unit", () => {
+  // Seniority is LAST, which is the one position on this panel that was asked
+  // for outright -- it is the group that answers for only 71% of the board, so
+  // it is the one to reach for rather than the one to meet. See facet-groups.ts.
+  it("orders the groups work type, keywords, location, team, unit, seniority", () => {
     const html = panel(EMPTY_QUERY);
     const at = (legend: string) => html.indexOf(`>${legend}`);
 
     expect(at("Work type")).toBeLessThan(at("Keywords"));
     expect(at("Keywords")).toBeLessThan(at("Location"));
-    expect(at("Location")).toBeLessThan(at("Seniority"));
-    expect(at("Seniority")).toBeLessThan(at("Team"));
+    expect(at("Location")).toBeLessThan(at("Team"));
     expect(at("Team")).toBeLessThan(at("Business unit"));
+    expect(at("Business unit")).toBeLessThan(at("Seniority"));
+  });
+
+  // And nothing sits below it.
+  it("puts seniority last of all", () => {
+    const html = panel(EMPTY_QUERY);
+    const legends = [...html.matchAll(/class="facet__legend"[^>]*>([A-Z][a-z ]+)/g)];
+
+    expect(legends.at(-1)?.[1]).toBe("Seniority");
   });
 
   /**
@@ -86,7 +97,11 @@ describe("FacetsPanel", () => {
 
     expect(html).toContain("Seniority");
     expect(html).toContain("Staff and principal");
-    expect(html).toContain("Search seniority levels");
+    // Six rungs, five shown, one behind -- under the three-row floor, so the
+    // whole ladder stands open and neither the disclosure nor the option search
+    // renders. See facet-disclosure.ts.
+    expect(html).not.toContain("Search seniority levels");
+    expect(html).not.toContain("more seniority levels");
   });
 
   // Selection is markup and CSS: a ticked box and the class the stylesheet
