@@ -15,15 +15,28 @@ import { JOBS_BOARD_TAG, jobTag } from "@/lib/jobs/cache-tags";
 
 const SECRET_HEADER = "x-revalidate-secret";
 
-// revalidateTag's second argument is required as of Next 16 -- the one-argument
-// form is deprecated and expires the entry immediately, making the next reader
-// block on Supabase. "max" marks the tag stale instead: the next visitor is
-// served the previous render while the fresh one is built behind them, and
-// everyone after that gets the new crawl. The alternative the docs offer for
-// webhooks, `{ expire: 0 }`, buys strict freshness at the cost of putting a
-// Supabase round trip in front of the first visitor after every crawl. A jobs
-// board that just changed by a handful of postings does not need that.
-const PROFILE = "max";
+// revalidateTag's second argument is required as of Next 16; the one-argument
+// form is deprecated (04-functions/revalidateTag.md: "The single-argument form
+// `revalidateTag(tag)` is deprecated").
+//
+// THIS WAS "max" AND THE REASON IT WAS STOPPED APPLYING.
+//
+// "max" marks a tag stale and serves the previous render while the fresh one is
+// built behind it. That was the right trade while the ingestor fired this after
+// EVERY crawl, whether or not anything had moved: most calls invalidated
+// nothing worth waiting for, so making anyone wait was pure cost.
+//
+// The ingestor now compares a per-role content checksum and only calls at all
+// when something genuinely changed -- and names exactly what. A call is now a
+// statement that the entry it points at is WRONG, and serving a known-wrong
+// render to the next visitor to save them 200ms is the wrong way round. So this
+// takes the form the docs hold out for exactly this caller: "For webhooks or
+// third-party services that need immediate expiration, you can pass
+// `{ expire: 0 }` as the second argument" (04-functions/revalidateTag.md).
+//
+// What it costs is one Supabase round trip in front of the first visitor to
+// each changed page -- a handful of pages per crawl, not 481.
+const PROFILE = { expire: 0 };
 
 type RevalidateBody = { jobIds?: unknown; board?: unknown };
 
@@ -90,9 +103,10 @@ function readJobIds(body: RevalidateBody): string[] | null {
   return ids.length === body.jobIds.length ? ids : null;
 }
 
-// Defaults to true, which is what makes `{ jobIds }` mean "those postings AND
-// the listing they appear in" -- a retitled job changes the row on the home page
-// too. `{ jobIds, board: false }` is the narrow form: flush those postings only.
+// Defaults to true, so a hand call of `{ jobIds }` still means "those postings
+// AND the listing they appear in". The ingestor never relies on that default: it
+// has compared checksums and states `board` explicitly either way, because a
+// role whose DESCRIPTION changed moves its own page and nothing the board draws.
 function readBoard(body: RevalidateBody): boolean | null {
   if (body.board === undefined) {
     return true;

@@ -1,4 +1,4 @@
-import { cacheTag } from "next/cache";
+import { cacheLife, cacheTag } from "next/cache";
 import { describe, expect, it, vi } from "vitest";
 
 import { SITES } from "@/lib/jobs/job-summary.fixture";
@@ -44,13 +44,19 @@ describe("listSites", () => {
     );
   });
 
-  // Same tag as the board it describes, so one POST /api/revalidate flushes
-  // both and the two can never be a crawl apart.
-  it("is tagged with the board, not with a table of its own", async () => {
+  // NO CACHE ENTRY, SO NO TAG, AND THE TAG IS WHY.
+  //
+  // Tags propagate out of a nested cached scope into the entry that read it.
+  // With this tagged `jobs-board`, a built /jobs/JR42022 carried
+  // `job:JR42022,jobs-board` in its prerender meta -- so flushing the listing
+  // would have flushed all 481 posting pages with it. Uncached, it is covered by
+  // whichever entry reads it and contributes no tag of its own.
+  it("adds no cache entry and no tag of its own", async () => {
     restGetMock.mockResolvedValue([]);
 
     await listSites();
 
-    expect(cacheTag).toHaveBeenCalledWith("jobs-board");
+    expect(cacheLife).not.toHaveBeenCalled();
+    expect(cacheTag).not.toHaveBeenCalled();
   });
 });

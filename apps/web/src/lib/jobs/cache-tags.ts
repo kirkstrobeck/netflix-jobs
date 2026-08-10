@@ -4,9 +4,12 @@
 // tag name does not fail anything -- it silently invalidates nothing -- so the
 // string is not repeated anywhere.
 
-// Everything derived from the whole board carries this. The detail fetch carries
-// it too, so one revalidation of this tag flushes the listing and every job page
-// with it: that is the tag the ingestor fires after a crawl.
+// Everything derived from the whole board carries this: the board and site
+// reads, the /api/board payload, and every rendered listing URL. A posting's
+// page does NOT -- it used to, so that "the crawl ran" could flush all 481 of
+// them at once, and the ingestor now knows better than that. The ingestor fires
+// this tag only when the SET the board shows moved: a role added, a role
+// removed, or a change to a field the board displays or filters on.
 export const JOBS_BOARD_TAG = "jobs-board";
 
 // Per job, so one posting can be invalidated without dropping the other 480.

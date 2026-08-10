@@ -2,7 +2,7 @@ import "server-only";
 
 import { cacheLife, cacheTag } from "next/cache";
 
-import { JOBS_BOARD_TAG, jobTag } from "@/lib/jobs/cache-tags";
+import { jobTag } from "@/lib/jobs/cache-tags";
 import { isJobId, type Job } from "@/lib/jobs/types";
 import { restGet } from "@/lib/supabase/rest";
 
@@ -58,11 +58,13 @@ function toJob(row: JobRow): Job {
 export async function getJob(jobId: string): Promise<Job | null> {
   "use cache";
   cacheLife("jobs");
-  // Two tags, deliberately. The board tag means a finished crawl flushes every
-  // job page without the ingestor having to name 481 ids; the per-job tag means
-  // one corrected posting can be flushed on its own, leaving the other 480
-  // entries warm.
-  cacheTag(JOBS_BOARD_TAG, jobTag(jobId));
+  // ONE tag, and it names this posting only. It used to carry the board tag as
+  // well, so that a finished crawl could flush all 481 job pages without naming
+  // any of them -- convenient while "the crawl ran" was the only signal the
+  // ingestor had. It now compares a per-role content checksum and names the
+  // roles that actually moved, so the blunt tag is not needed and is actively
+  // wrong: it would put every posting inside the blast radius of one added role.
+  cacheTag(jobTag(jobId));
 
   if (!isJobId(jobId)) {
     return null;

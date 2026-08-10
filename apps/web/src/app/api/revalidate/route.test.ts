@@ -87,9 +87,9 @@ describe("revalidation", () => {
       board: true,
       jobIds: [],
       tags: ["jobs-board"],
-      profile: "max",
+      profile: { expire: 0 },
     });
-    expect(revalidateTagMock).toHaveBeenCalledExactlyOnceWith("jobs-board", "max");
+    expect(revalidateTagMock).toHaveBeenCalledExactlyOnceWith("jobs-board", { expire: 0 });
   });
 
   it("flushes named jobs in addition to the board by default", async () => {

@@ -72,11 +72,16 @@ describe("getJob", () => {
     );
   });
 
-  it("tags the cache entry with the uppercased id", async () => {
+  // One tag, and it names this posting only. The board tag used to be here too,
+  // so that "the crawl ran" flushed all 481 job pages at once; the ingestor now
+  // names the roles whose content actually moved, and keeping the blunt tag
+  // would put every posting inside the blast radius of one added role.
+  it("tags the cache entry with the uppercased id, and with nothing else", async () => {
     restGetMock.mockResolvedValue([]);
 
     await getJob("jr41912");
 
-    expect(cacheTag).toHaveBeenCalledWith("jobs-board", "job:JR41912");
+    expect(cacheTag).toHaveBeenCalledWith("job:JR41912");
+    expect(cacheTag).not.toHaveBeenCalledWith(expect.stringContaining("jobs-board"));
   });
 });
