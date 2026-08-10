@@ -10,6 +10,24 @@ import { UltraFillCanvas } from "@/app/_ultra/ultra-fill-canvas";
 const session = { poke: vi.fn(), stop: vi.fn() };
 const startUltraFill = vi.fn(() => session);
 
+// jsdom has no IntersectionObserver. This one hands the callback back so a test
+// can say "now it is on screen" without a layout engine.
+const observers: { fire: (isIntersecting: boolean) => void; disconnect: () => void }[] = [];
+
+vi.stubGlobal(
+  "IntersectionObserver",
+  class {
+    constructor(callback: (entries: { isIntersecting: boolean }[]) => void) {
+      observers.push({
+        fire: (isIntersecting) => callback([{ isIntersecting }]),
+        disconnect: () => {},
+      });
+    }
+    observe() {}
+    disconnect() {}
+  },
+);
+
 vi.mock("@/lib/ultra/ultra-fill", () => ({
   startUltraFill: (...args: unknown[]) => startUltraFill(...(args as [])),
 }));
@@ -19,6 +37,7 @@ vi.mock("@/lib/ultra/ultra-fill", () => ({
 afterEach(cleanup);
 
 beforeEach(() => {
+  observers.length = 0;
   session.poke.mockClear();
   session.stop.mockClear();
   startUltraFill.mockClear();
@@ -68,6 +87,30 @@ describe("UltraFillCanvas", () => {
     document.dispatchEvent(new Event("visibilitychange"));
 
     expect(session.poke).toHaveBeenCalledTimes(2);
+  });
+
+  /**
+   * Scrolling away and back is the third way a surface is found empty, and the
+   * one nothing answered: measured over three scroll cycles on the running page,
+   * no repaint fired at all on re-entry.
+   *
+   * It repaints and does NOT reallocate. The device, the surface and the canvas
+   * outlive the scroll -- an Ultra fill is one flat clear pass, so there is
+   * nothing to park off screen and everything to lose by freeing it. That is the
+   * opposite of the bars and the glow, which are continuous keyframe animations
+   * and do pause off screen.
+   */
+  it("repaints on re-entry, and never tears the session down for a scroll", () => {
+    render(<UltraFillCanvas />);
+    session.poke.mockClear();
+
+    observers[0].fire(false);
+    expect(session.poke).not.toHaveBeenCalled();
+
+    observers[0].fire(true);
+    expect(session.poke).toHaveBeenCalledTimes(1);
+    expect(session.stop).not.toHaveBeenCalled();
+    expect(startUltraFill).toHaveBeenCalledTimes(1);
   });
 
   it("stops the fill and both listeners on unmount", () => {
