@@ -22,7 +22,8 @@ export type Job = {
   work_type: string | null;
   description_html: string;
   description_text: string;
-  apply_url: string;
+  // No apply_url. Where the Apply button goes is derived from position_id --
+  // see lib/jobs/apply-url.ts for why that stopped being a column.
   canonical_url: string;
   posting_date: string | null;
   // t_create from the crawl: when the posting was created on Netflix's board.

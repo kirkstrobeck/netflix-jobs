@@ -35,7 +35,6 @@ function row(overrides: Partial<JobRow> = {}): JobRow {
     work_type: null,
     description_html: '',
     description_text: '',
-    apply_url: '',
     canonical_url: '',
     locale: null,
     is_hot: false,

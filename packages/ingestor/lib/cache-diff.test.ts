@@ -25,7 +25,6 @@ function row(overrides: Partial<JobRow> = {}): JobRow {
     work_type: 'Onsite',
     description_html: '<p>Work here</p>',
     description_text: 'Work here',
-    apply_url: 'https://example.test/apply',
     canonical_url: 'https://example.test/job',
     locale: 'en',
     is_hot: false,

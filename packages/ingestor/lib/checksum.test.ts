@@ -25,7 +25,6 @@ function row(overrides: Partial<JobRow> = {}): JobRow {
     work_type: 'Onsite',
     description_html: '<p>Work here</p>',
     description_text: 'Work here',
-    apply_url: 'https://example.test/apply',
     canonical_url: 'https://example.test/job',
     locale: 'en',
     is_hot: false,
@@ -107,7 +106,6 @@ describe('contentChecksum', () => {
     ['locations', { locations: ['Remote,United States of America'] }],
     ['description_html', { description_html: '<p>Rewritten</p>' }],
     ['description_text', { description_text: 'Rewritten' }],
-    ['apply_url', { apply_url: 'https://example.test/apply-2' }],
     ['canonical_url', { canonical_url: 'https://example.test/job-2' }],
     ['source_created_at', { source_created_at: '2026-07-31T00:00:00Z' }],
   ])('moves when %s changes', (_field, change) => {

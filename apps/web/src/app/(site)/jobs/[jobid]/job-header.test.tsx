@@ -13,6 +13,19 @@ describe("JobHeader", () => {
     expect(html).toContain(`>${SAMPLE_JOB.department}<`);
   });
 
+  // The href is built here, from the row's key, rather than read off a column.
+  // Asserted at this level and not only in apply-url.test.ts because the bug
+  // this replaces was a wiring bug: the builder is only useful if the header is
+  // what calls it.
+  it("points Apply at the board's apply route, keyed on the numeric pid", () => {
+    const html = renderToStaticMarkup(<JobHeader catalog={SITES} job={SAMPLE_JOB} />);
+
+    expect(html).toContain(
+      'href="https://explore.jobs.netflix.net/careers/apply' +
+        "?domain=netflix.com&amp;pid=730201&amp;sort_by=relevance\"",
+    );
+  });
+
   it("falls back to Netflix for the eyebrow when the department is missing", () => {
     const html = renderToStaticMarkup(<JobHeader catalog={SITES} job={MINIMAL_JOB} />);
 

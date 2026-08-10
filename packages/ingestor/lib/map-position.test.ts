@@ -74,7 +74,6 @@ describe('mapPosition', () => {
     expect(row.posting_date).toBe('2025-03-27');
     expect(row.locale).toBe('en-US');
     expect(row.canonical_url).toBe('https://jobs.netflix.com/jobs/790123');
-    expect(row.apply_url).toBe('https://explore.jobs.netflix.net/careers/job/790123/apply');
     expect(row.source_created_at).toBe('2023-11-14T22:13:20.000Z');
     expect(row.source_updated_at).toBe('2023-11-15T22:13:20.000Z');
     expect(row.display_job_id).toBe('JR1234');

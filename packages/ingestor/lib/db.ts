@@ -29,7 +29,6 @@ export type JobRow = {
   work_type: string | null;
   description_html: string;
   description_text: string;
-  apply_url: string;
   canonical_url: string;
   locale: string | null;
   is_hot: boolean;

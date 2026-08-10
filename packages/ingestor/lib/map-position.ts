@@ -50,7 +50,10 @@ export function mapPosition(listed: Position, detail: Position | null): JobRow {
     work_type: customField(merged, 'work_type'),
     description_html: html,
     description_text: htmlToText(html),
-    apply_url: `${jobUrl(id)}/apply`,
+    // No apply_url. It used to be synthesised here as `${jobUrl(id)}/apply`, a
+    // path the board does not serve -- every stored copy was a 404. The apply
+    // link is a pure function of position_id and is built where it is rendered:
+    // apps/web/src/lib/jobs/apply-url.ts.
     canonical_url: trimmed(merged.canonicalPositionUrl) ?? jobUrl(id),
     locale: trimmed(merged.locale),
     is_hot: Number(merged.hot ?? 0) > 0,

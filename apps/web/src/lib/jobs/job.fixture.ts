@@ -26,7 +26,6 @@ export const SAMPLE_JOB: Job = {
     "<h1>About the team</h1><p>We build the tools every engineer at Netflix relies on.</p>",
   description_text:
     "We build the tools every engineer at Netflix relies on every single day.",
-  apply_url: "https://explore.jobs.netflix.net/careers/job/730201",
   canonical_url: "https://explore.jobs.netflix.net/careers/job/730201",
   posting_date: "2026-01-15",
   source_created_at: "2026-01-02T00:00:00+00:00",
@@ -61,7 +60,6 @@ export const MINIMAL_JOB: Job = {
   work_type: null,
   description_html: "<p>Minimal role with nothing else on file.</p>",
   description_text: "Minimal role with nothing else on file.",
-  apply_url: "https://explore.jobs.netflix.net/careers/job/999999",
   canonical_url: "https://explore.jobs.netflix.net/careers/job/999999",
   posting_date: null,
   source_created_at: null,

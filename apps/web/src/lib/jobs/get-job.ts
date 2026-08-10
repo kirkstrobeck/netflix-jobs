@@ -19,7 +19,6 @@ const COLUMNS = [
   "work_type",
   "description_html",
   "description_text",
-  "apply_url",
   "canonical_url",
   "posting_date",
   "source_created_at",

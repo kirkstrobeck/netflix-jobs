@@ -3,6 +3,7 @@ import { PostedDate } from "@/app/(site)/jobs/[jobid]/posted-date";
 import { ShareButton } from "@/app/(site)/jobs/[jobid]/share-button";
 import { BarsStage } from "@/app/_bars/bars-stage";
 import { formatPostedDate } from "@/lib/format/posted-date";
+import { applyUrl } from "@/lib/jobs/apply-url";
 import { postedOn } from "@/lib/jobs/date-posted";
 import { jobPlaces, placeLine } from "@/lib/jobs/job-places";
 import { jobShare } from "@/lib/jobs/job-share";
@@ -63,7 +64,7 @@ export function JobHeader({ job, catalog }: { job: Job; catalog: Site[] }) {
           only other thing you can do with a posting. They are grouped so the
           gap between them reads as smaller than the gap above them. */}
       <div className="job-cta">
-        <ApplyButton href={job.apply_url} title={job.title} />
+        <ApplyButton href={applyUrl(job.position_id)} title={job.title} />
         <ShareButton share={jobShare(job)} />
       </div>
     </BarsStage>
