@@ -8,15 +8,26 @@ const catalog = siteCatalog(SITES);
 
 describe("facetValues", () => {
   it("reads the single-valued facets as one-entry lists", () => {
-    const job = summary({ team: "Legal", work_type: "Remote" });
+    const job = summary({
+      team: "Legal",
+      work_type: "Remote",
+      business_unit: "Streaming",
+    });
 
     expect(facetValues(job, "team", catalog)).toEqual(["Legal"]);
     expect(facetValues(job, "workType", catalog)).toEqual(["Remote"]);
+    expect(facetValues(job, "businessUnit", catalog)).toEqual(["Streaming"]);
   });
 
+  // An empty list rather than a one-entry list holding null. The facet counts
+  // are built by counting these entries, so a null that got through would
+  // become an option in the panel with no name on it.
   it("is empty where the column is null", () => {
     expect(facetValues(summary({ team: null }), "team", catalog)).toEqual([]);
     expect(facetValues(summary({ work_type: null }), "workType", catalog)).toEqual([]);
+    expect(
+      facetValues(summary({ business_unit: null }), "businessUnit", catalog),
+    ).toEqual([]);
   });
 
   it("reads a posting's sites as slugs and its countries as codes", () => {

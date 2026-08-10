@@ -79,6 +79,26 @@ describe("the name on an option", () => {
     ).toMatchObject({ label: "xx-atlantis", group: undefined, count: 0 });
   });
 
+  // The same answer one rung up. A hand-typed `?country=XX` has to come back as
+  // a ticked box the visitor can untick, and a box labelled "undefined" is not
+  // one -- they would be stuck on an empty board with no way to read their way
+  // out of it.
+  it("labels a country code the catalog does not know with the code", () => {
+    const option = facetOptions(
+      JOBS,
+      { ...EMPTY_QUERY, country: ["XX"] },
+      "country",
+      catalog,
+    ).find((o) => o.value === "XX");
+
+    expect(option).toMatchObject({
+      value: "XX",
+      label: "XX",
+      selected: true,
+      count: 0,
+    });
+  });
+
   it("leaves a country option ungrouped -- it is the top level", () => {
     expect(options(EMPTY_QUERY, "country").every((o) => o.group === undefined)).toBe(
       true,
