@@ -13,8 +13,9 @@
 // the element's own computed style, and a diff clipped to the control misses the
 // row frame entirely. Whole viewport, so wherever the mark is drawn it counts.
 //
-// Also reads the header's height at the top of the page and scrolled down, since
-// nothing in the stylesheet says whether it resizes.
+// Also reads the header's height at the top of the page and scrolled down. The
+// masthead shrinks on a scroll-progress timeline; tools/probe/header.mjs is the
+// full reading of that, this one is a spot check beside the tab walk.
 //
 // Usage: node tools/probe/keyboard.mjs [origin] [path]
 import { chromium } from "playwright-core";
@@ -83,11 +84,16 @@ for (const path of PATHS) {
   const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
   await page.goto(ORIGIN + path, { waitUntil: "networkidle" });
 
-  const header = await page.evaluate(() => {
+  const header = await page.evaluate(async () => {
     const height = () =>
       Math.round(document.querySelector(".site-header").getBoundingClientRect().height);
     const top = height();
     window.scrollTo(0, 600);
+    // Two frames. A scroll-progress timeline updates with the frame, so reading
+    // straight after scrollTo reports the height the header had BEFORE the
+    // scroll -- which is how this probe once reported a header that never
+    // resized.
+    await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
     return { top, scrolled: height() };
   });
   await page.evaluate(() => window.scrollTo(0, 0));

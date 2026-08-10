@@ -136,3 +136,65 @@
   block-size: 4.5rem;
   transform: translateY(-50%);
 }
+
+/* THE HEADER SHRINKS AS THE PAGE SCROLLS, AND SETTLES.
+
+   No JavaScript and no scroll listener: a scroll-progress timeline drives it,
+   as the overscroll gutter in globals.css does. A scroll handler resizing a
+   header runs layout on the main thread on every event, at the moment that
+   thread is busiest; this is read on the compositor once per frame.
+
+   animation-range is what makes it SETTLE rather than track the whole document.
+   The shrink completes over the first 8rem of scroll and `both` holds both
+   keyframes at their end value for the rest of the page, two screens or twenty.
+   The timeline comes after the shorthand, which resets it -- the ordering trap
+   globals.css records.
+
+   STICKY, BECAUSE A HEADER THAT SHRINKS AND THEN LEAVES DID NOTHING. The compact
+   bar is the point: the wordmark stays reachable all the way down a 4,753px
+   posting. .job-page uses overflow-x: clip, not hidden, so there is no scroll
+   container and sticky resolves against the viewport -- the same reason the
+   details sidebar sticks. The background goes with it: sticky lifts the header
+   off the flow and the article would otherwise scroll visibly underneath.
+
+   Row and mark shrink on one range, so the wordmark stays centred in a row
+   closing around it. 4.5rem to 3rem is 72px to 48px, still clear of the 44px
+   minimum hit target for the one control in the row.
+
+   The global prefers-reduced-motion block sets animation-duration, which a
+   progress timeline ignores -- again as globals.css records. Correct here: this
+   is a layout response to scrolling, not motion in place. */
+@supports (animation-timeline: scroll()) {
+  @keyframes site-header-row {
+    to {
+      min-block-size: 3rem;
+    }
+  }
+
+  @keyframes site-header-mark {
+    to {
+      block-size: 1.125rem;
+    }
+  }
+
+  .site-header {
+    position: sticky;
+    inset-block-start: 0;
+    /* Over the hero's bars and the article, under nothing that matters: the
+       footer band is its own stacking context far below. */
+    z-index: 3;
+    background: var(--surface);
+  }
+
+  .site-header__inner {
+    animation: site-header-row linear both;
+    animation-timeline: scroll(root block);
+    animation-range: 0 8rem;
+  }
+
+  .site-header .wordmark__mark {
+    animation: site-header-mark linear both;
+    animation-timeline: scroll(root block);
+    animation-range: 0 8rem;
+  }
+}
