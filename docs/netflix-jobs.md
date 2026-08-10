@@ -50,8 +50,8 @@ claim is checked against a digest rather than asserted on a timer.
 
 ## The filters carry real logic
 
-The facet panel is where most of the product thinking went, and almost none of
-it is visible until you look for it.
+Most of the decisions in this build are in the facet panel, and almost none of
+them are visible until you look for them.
 
 **Filters respect each other, across the whole board.** Tick Remote and every
 other group re-counts against it: United States drops from 304 to 99, Los Angeles
@@ -120,6 +120,23 @@ Measured in Chromium at 390px and 1280px, on the one-line and two-line masthead
 and a three-line role title: **0 glyph pixels missed by the mask**, coverage
 1.0000 in all four readings.
 
+A mask viewport is a rectangle, so both overlay layers are grown 50% past the
+word on every side. Pinned to the text box the rectangle *is* the line box, and
+every glyph that overshoots one — an accent above the cap line, a descender below
+the baseline, the tail of a G — gets a straight edge the letterform does not
+have. Stating the width and height is the load-bearing half: an `<svg>` is a
+replaced element, so at `auto` it keeps its intrinsic 300×150, ignores the right
+and bottom insets, and the mask slides off the word instead of growing around it.
+It costs nothing — the canvas is still 1×1, so a larger box is a larger scale
+factor on one texel.
+
+The two buttons in the hero take the same treatment twice each: one pass masked
+to the plate, a second masked to the label's glyphs. One pass over the whole
+button would draw the label into the canvas, and a canvas cannot be selected,
+copied, or read out — so the plate is a picture and the words stay a text node.
+The plate is painted in its own colour multiplied by the headroom rather than in
+white, which is what keeps Apply a brighter red instead of a white slab.
+
 ## The motion is CSS, not a video
 
 The red bars behind the mastheads and the glow at the foot of the page are HTML
@@ -141,6 +158,16 @@ class mutation, no keyframes rebuilt, and a resumed animation carries on from
 where it stopped. The same switch also parks everything when the tab goes to the
 background.
 
+**The masthead shrinks and settles.** It is sticky, and closes over the first
+8rem of scroll into a compact bar that stays for the rest of the document — so
+the wordmark is still reachable at the bottom of a 4,753px posting. Measured at
+1280×900, identical on both routes: 73.0px at the top of the page, 62.9px at
+scrollY 54, 49.0px from scrollY 128 onward, with the wordmark going 23.4px →
+18.0px on the same range. 49px still clears the 44px minimum hit target for the
+one control in the row. No scroll listener: a scroll-progress timeline drives it,
+read on the compositor once per frame, where a handler would run layout on the
+main thread on every scroll event.
+
 The overscroll gutter is handled the same way — with no JavaScript at all. A
 scroll-progress timeline on the root element holds black across the entire scroll
 range and swaps to the footer's own red only at 100%, so rubber-banding past the
@@ -155,10 +182,22 @@ elements behind both effects are server-rendered; the only thing that ships
 JavaScript for them is a wrapper that knows when it is idle.
 
 The CSS is current: `:has()`, container query units, `color-mix()`,
-`text-wrap: balance`, `animation-timeline: scroll()`, CSS masks, and
+`text-wrap`, `animation-timeline: scroll()`, CSS masks, and
 `dynamic-range-limit` for the Ultra fill. Where a browser lacks one, the feature
 is behind `@supports` and the page falls through to something correct rather than
 something broken.
+
+**No runts.** A single word stranded on the last line of a headline or a card
+title is the most common way type on a job board looks unconsidered, and it is
+fixed in the layout engine rather than by JavaScript measuring text and inserting
+breaks. `text-wrap: balance` evens the lines of every short display string — the
+board headline, a role title in the hero, a result row's title, a facet option
+label, and every heading inside a posting's own copy. `text-wrap: pretty` takes
+the running text, where balancing whole paragraphs would be wrong and the job is
+only to stop the last line being one word: the empty-state copy, the location
+offer, the footer notice. Two properties, nine rules, no measurement pass, and it
+holds at every width because the browser rewraps rather than replaying a
+decision made at some other size.
 
 ## Accessibility, on every page rather than the audited ones
 
@@ -174,7 +213,7 @@ somewhere other than the focused element.
   links, 4 detail links, 4 footer links.
 - **Stops with no visible change on focus: 0.** On both pages.
 
-That zero is the interesting part. A result row takes `outline: none` on its link
+That zero needed the right instrument. A result row takes `outline: none` on its link
 and lights a 2px frame around the whole row instead; a detail link drops its
 outline and thickens its underline. Both look ringless if you read `outline` off
 the focused element, and both are plainly visible on screen — which is why the
@@ -197,7 +236,7 @@ state the label is being read in.
 
 Lighthouse accessibility 100 is the floor here, not the proof.
 
-## The small things that make it feel finished
+## The details that decide whether it feels finished
 
 - **Native share on role pages.** `navigator.share()` gets the operating
   system's own sheet where it exists, with a copy-link fallback that does not
@@ -221,3 +260,14 @@ crawler. Everything is server-rendered first, with client-side acceleration on
 top: the listing paints from the server, then fetches the board once and filters,
 sorts and pages in the browser against it — so the first response is complete and
 every interaction after it is local.
+
+## Where this goes next
+
+There is more I want to add. Saved searches and alerts, a role-to-role
+recommendation pass over the descriptions already in the database, the crawler on
+a scheduled runner instead of a command someone has to remember, and the Ultra
+treatment carried through the rest of the type rather than stopping at the
+headlines.
+
+This is a starting point, not a finished product. What is here is shipped and
+measured, and I would welcome the opportunity to lead a team and build it out.
