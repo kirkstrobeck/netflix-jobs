@@ -15,7 +15,7 @@
  * Never tune brightness with opacity, colour or a CSS filter. This is the value
  * the fill is painted at, and the only place it is decided.
  */
-export const ULTRA_HEADROOM = 4;
+export const ULTRA_HEADROOM = 1.35;
 
 /**
  * How far the Ultra overlay layers grow past the box they cover, per side, as a
