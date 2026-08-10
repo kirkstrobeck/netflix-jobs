@@ -2,8 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-import { NewBadge } from "@/app/(site)/jobs/[jobid]/new-badge";
-import { describePosting, type PostingRecency } from "@/lib/format/posted-recency";
+import { describePosting } from "@/lib/format/posted-recency";
 
 type PostedDateProps = {
   // Formatted on the server, and proven non-null there, which is what lets this
@@ -18,8 +17,11 @@ type PostedDateProps = {
 // renders start from the same markup, so there is no hydration mismatch, and a
 // visitor with JavaScript off keeps a real date rather than an empty slot.
 //
-// The New badge is decided here for the same reason: a cached server render
-// cannot know whether a posting is still inside its first week.
+// A "New" badge used to be decided here too, for the same reason. It is gone --
+// twenty rows of a newest-first list all inside their first week is twenty red
+// pills down the page saying the one thing the sort has already said, and the
+// relative date under each title is the honest version of it. What was removed
+// is the emphasis, not the fact.
 //
 // The clock has to be read in the effect, not in render. Two lint rules meet
 // here and only this shape satisfies both: react-hooks/purity rejects Date.now()
@@ -31,30 +33,21 @@ type PostedDateProps = {
 // referentially stable, so the timestamp would have to be cached outside the
 // component and would then be shared by every instance and every test.
 export function PostedDate({ absolute, iso }: PostedDateProps) {
-  const [recency, setRecency] = useState<PostingRecency | null>(null);
+  const [relative, setRelative] = useState<string | null>(null);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- see above
-    setRecency(describePosting(iso, Date.now()));
+    setRelative(describePosting(iso, Date.now()));
   }, [iso]);
 
+  // One element now, so no fragment and no markup space to keep between two
+  // runs of text. That space was load-bearing while the badge sat beside the
+  // date; with the badge gone there is nothing on this line but the date.
   return (
-    <>
-      {/* title keeps the full date reachable once the visible text goes
-          relative; dateTime keeps it machine-readable either way. */}
-      <time dateTime={iso} title={absolute}>
-        {recency ? recency.label : absolute}
-      </time>
-      {/* The space is in the markup for the same reason it is in the facet
-          legend: without it these two runs are adjacent in the DOM and only
-          .posted-badge's margin holds them apart, so the text copies and reads
-          as "2 days agoNew". */}
-      {recency?.isNew ? (
-        <>
-          {" "}
-          <NewBadge />
-        </>
-      ) : null}
-    </>
+    // title keeps the full date reachable once the visible text goes relative;
+    // dateTime keeps it machine-readable either way.
+    <time dateTime={iso} title={absolute}>
+      {relative ?? absolute}
+    </time>
   );
 }

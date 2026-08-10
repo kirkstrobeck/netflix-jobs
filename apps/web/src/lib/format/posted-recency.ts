@@ -4,8 +4,8 @@ const DATE_PATTERN = /^(\d{4})-(\d{2})-(\d{2})$/;
 
 // numeric: "auto" is why 0 and 1 read as "today" and "yesterday" instead of
 // "0 days ago" and "1 day ago". It costs precision at exactly one week --
-// "last week", not "1 week ago" -- and that is the same day the New badge
-// drops, so the vaguer wording lands where the emphasis has already left.
+// "last week", not "1 week ago" -- which is the right trade for a line whose
+// job is "is this fresh", not "how many days exactly".
 const RELATIVE = new Intl.RelativeTimeFormat("en-US", { numeric: "auto" });
 
 // Longest unit first, so the first threshold a gap clears is the coarsest unit
@@ -21,14 +21,16 @@ const UNITS: [Intl.RelativeTimeFormatUnit, number][] = [
 // Nothing clears a threshold at a gap of zero, so days is the floor.
 const DAY: [Intl.RelativeTimeFormatUnit, number] = ["day", 1];
 
-// A posting is New for its first week. Named here so the boundary lives in one
-// place rather than once in the component and again in its test.
-export const NEW_POSTING_DAYS = 7;
-
-export type PostingRecency = {
-  label: string;
-  isNew: boolean;
-};
+// NEW_POSTING_DAYS AND `isNew` ARE GONE.
+//
+// This module used to return a pair -- a label, and a boolean saying whether the
+// posting was inside its first week -- and the boolean existed for exactly one
+// reader: the red "New" badge. The badge is gone from the listing and the detail
+// hero alike, so the flag, the seven-day boundary it was compared against and
+// the record wrapping them had nothing left to tell anyone.
+//
+// The recency itself stays, in full. It is the visible label under every result
+// title, and posting_date is still what the newest sort orders on.
 
 // Whole calendar days between the posting's date and the reader's, both reduced
 // to a UTC midnight so the subtraction never lands on a DST-shortened day. The
@@ -64,7 +66,7 @@ function formatGap(days: number): string {
 
 // Null for input this cannot read, which is the same input formatPostedDate
 // rejects -- by the time that matters the caller has already fallen back.
-export function describePosting(value: string, now: number): PostingRecency | null {
+export function describePosting(value: string, now: number): string | null {
   const days = daysSince(value, now);
 
   if (days === null) {
@@ -73,7 +75,5 @@ export function describePosting(value: string, now: number): PostingRecency | nu
 
   // A posting dated ahead of the reader's calendar day -- a timezone east of the
   // board's, or a skewed clock -- reads as today rather than "in 2 days".
-  const elapsed = Math.max(days, 0);
-
-  return { label: formatGap(elapsed), isNew: elapsed < NEW_POSTING_DAYS };
+  return formatGap(Math.max(days, 0));
 }

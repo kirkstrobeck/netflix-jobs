@@ -57,8 +57,8 @@ describe("ResultList", () => {
     expect(html.match(/Not listed/g)?.length).toBe(1);
   });
 
-  // The posted date is the detail page's component, so relative time, the
-  // absolute date in the title, and the New badge all come with it.
+  // The posted date is the detail page's component, so relative time and the
+  // absolute date in the title come with it. No badge does: there is no badge.
   it("reuses the posted-date treatment, with the absolute date in the title", () => {
     const html = renderToStaticMarkup(
       <ResultList jobs={[summary({ posting_date: "2026-01-15" })]} />,

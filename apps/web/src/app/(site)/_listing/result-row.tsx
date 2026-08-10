@@ -49,8 +49,8 @@ function Row({ job }: { job: JobSummary }) {
         {posted ? (
           <dd className="result__date">
             {/* Same treatment as the detail page: the server sends the absolute
-                date, the client swaps in relative time, and the New badge comes
-                with it for anything inside its first week. */}
+                date and the client swaps in relative time. There is no badge
+                riding with it -- see posted-date.tsx. */}
             <PostedDate absolute={posted} iso={job.posting_date!} />
           </dd>
         ) : (

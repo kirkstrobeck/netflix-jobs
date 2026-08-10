@@ -18,7 +18,6 @@ import "@/app/(site)/_listing/jobs-facets.css";
 import "@/app/(site)/_listing/jobs-collapse.css";
 import "@/app/(site)/_listing/jobs-options.css";
 import "@/app/(site)/_listing/jobs-country.css";
-import "@/app/(site)/jobs/[jobid]/posted-badge.css";
 
 export const metadata: Metadata = {
   // The root layout already titles the site; only the description is specific

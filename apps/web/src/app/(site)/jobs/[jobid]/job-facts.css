@@ -1,11 +1,9 @@
-/* The hero's fact row -- location, work type, posted date -- and the New badge
-   that rides with the date. Split from job-hero.css to stay under the 200-line
+/* The hero's fact row -- location, work type, posted date. Split from job-hero.css to stay under the 200-line
    limit; same tokens and the same 64rem breakpoint as the rest of the page. */
 
 /* Stacked by default -- location, work type, posted date each on their own row.
    A grid rather than the flex row below, so an item that wraps to two lines
-   still occupies one track and the rows stay evenly spaced. The New badge needs
-   no special handling: it lives inside the posted item, so it stacks with it. */
+   still occupies one track and the rows stay evenly spaced. */
 .job-facts {
   display: grid;
   gap: 0.5rem;
