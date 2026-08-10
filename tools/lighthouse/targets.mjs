@@ -64,5 +64,8 @@ export async function targets(origin) {
   return [
     { label: "listing  /", url: `${origin}/` },
     { label: `detail   /jobs/${jobId}`, url: `${origin}/jobs/${jobId}` },
+    // /about holds the same bar as the two pages that carry the product. It is
+    // the page that claims the scores, so it is in the run that produces them.
+    { label: "about    /about", url: `${origin}/about` },
   ];
 }

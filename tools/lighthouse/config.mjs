@@ -1,4 +1,5 @@
 import desktopConfig from "lighthouse/core/config/desktop-config.js";
+import defaultConfig from "lighthouse/core/config/default-config.js";
 
 // Every category this Lighthouse reports, in report order. Not hardcoded
 // optimism: main.mjs asserts this list equals Object.keys of the default
@@ -31,21 +32,28 @@ export const RUNS = 3;
 //    measures the host, which here is an arm64 VM behind virtiofs and is not a
 //    machine anyone browses from.
 //
-// 2. Desktop over mobile. The mobile preset multiplies observed CPU time by 4.
-//    That multiplier does not just slow the simulated device down, it amplifies
-//    measurement noise by 4 as well -- a 30ms scheduling hiccup on a loaded
-//    container becomes 120ms of simulated main-thread work. On a jobs board
-//    served to laptop browsers, that is a lot of variance bought for a device
-//    profile the traffic does not have.
+// 2. BOTH form factors, desktop by default. Set LIGHTHOUSE_FORM_FACTOR=mobile
+//    for the other. The mobile preset multiplies observed CPU time by 4, which
+//    amplifies measurement noise by 4 with it -- a 30ms scheduling hiccup on a
+//    loaded container becomes 120ms of simulated main-thread work. That is why
+//    the default stayed desktop and why the median of three matters more here.
+//    It is still the profile half the traffic to a jobs board arrives on, so it
+//    is measured rather than assumed.
 //
 // 3. cpuQuietThresholdMs raised from Lighthouse's 1000ms default. The page runs
 //    an ambient CSS animation in the footer; the default quiet threshold can
 //    end the trace while compositor frames are still landing, which reads as
 //    main-thread work that never settles. 2000ms lets the page actually finish.
+export const FORM_FACTOR = process.env.LIGHTHOUSE_FORM_FACTOR ?? "desktop";
+
+// Lighthouse's own mobile preset is its default config: a Moto G Power screen,
+// slow 4G, and the 4x CPU multiplier.
+const preset = FORM_FACTOR === "mobile" ? defaultConfig : desktopConfig;
+
 export const config = {
-  ...desktopConfig,
+  ...preset,
   settings: {
-    ...desktopConfig.settings,
+    ...preset.settings,
     throttlingMethod: "simulate",
     cpuQuietThresholdMs: 2000,
     pauseAfterFcpMs: 2000,

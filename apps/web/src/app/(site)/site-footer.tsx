@@ -1,4 +1,4 @@
-import { Glow } from "@/app/_glow/glow";
+import { DeferredGlow } from "@/app/_glow/glow-deferred";
 import { Wordmark } from "@/app/(site)/wordmark";
 import type { RawSearchParams } from "@/lib/search/parse-query";
 
@@ -22,6 +22,8 @@ import "@/app/(site)/site-footer-content.css";
 // "Netflix House" stays capitalised as the venue's name -- the trailing "jobs"
 // is an ordinary plural, not part of it.
 const LINKS = [
+  // First, and the only one that stays on this site: it describes this board.
+  { label: "About this board", href: "/about" },
   { label: "About us", href: "https://about.netflix.com/en" },
   { label: "Privacy", href: "https://jobs.netflix.com/candidate-privacy" },
   { label: "Netflix House jobs", href: "https://jobs.netflixhouse.com/" },
@@ -49,7 +51,7 @@ type SiteFooterProps = { searchParams?: Promise<RawSearchParams> };
 export function SiteFooter({ searchParams }: SiteFooterProps) {
   return (
     <footer className="job-footer">
-      <Glow />
+      <DeferredGlow />
 
       <div className="shell job-footer__content">
         <h2 className="visually-hidden">Footer</h2>
@@ -81,11 +83,15 @@ export function SiteFooter({ searchParams }: SiteFooterProps) {
           <ul className="job-footer__links">
             {LINKS.map((link) => (
               <li key={link.href}>
+                {/* Every other link in this list leaves the site, so the list
+                    opens in a new tab. /about does not leave the site, and
+                    sending a visitor to a second tab to read one page of it
+                    would be a tab they have to close. The href decides. */}
                 <a
                   className="job-footer__link"
                   href={link.href}
-                  rel="noopener noreferrer"
-                  target="_blank"
+                  rel={link.href.startsWith("/") ? undefined : "noopener noreferrer"}
+                  target={link.href.startsWith("/") ? undefined : "_blank"}
                 >
                   {link.label}
                 </a>

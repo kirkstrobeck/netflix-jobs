@@ -19,10 +19,22 @@ const EXPECTED_LINKS = [
 ];
 
 describe("SiteFooter", () => {
-  it("renders the ambient glow", () => {
+  /**
+   * The glow is NOT in the server HTML any more, and that is the point.
+   *
+   * Its stylesheet is 118,925 bytes on the wire -- 73% of every byte of
+   * render-blocking CSS the site served -- to draw decoration that starts below
+   * the fold. next/dynamic with ssr: false moves the markup and the sheet into a
+   * chunk fetched after hydration, so the first paint does not wait for either.
+   *
+   * The band still renders: its red ground is .job-footer's own background, not
+   * anything inside <Glow />.
+   */
+  it("keeps the glow off the server render, and out of the critical path", () => {
     const html = renderToStaticMarkup(<SiteFooter />);
 
-    expect(html).toContain('class="glow"');
+    expect(html).not.toContain('class="glow"');
+    expect(html).toContain('class="job-footer"');
   });
 
   it("renders all four external links, each opened safely in a new tab", () => {

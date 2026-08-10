@@ -1,0 +1,107 @@
+/* /about. Two things this page needs that no other page has: a grid of five
+   claims, and a reading measure for prose. Everything else -- the masthead, the
+   column, the type scale, the tokens, the focus ring -- comes from the sheets
+   the rest of the site already loads. */
+
+.about {
+  padding-block: clamp(2.5rem, 6vw, 4.5rem) clamp(4rem, 10vw, 7rem);
+}
+
+/* One size down from the masthead headline, and the only thing between it and
+   the claims. balance, because it is two lines of display copy and a runt on
+   the second would be the first thing on the page a reader noticed. */
+.about__lede {
+  margin: 0 0 clamp(2rem, 5vw, 3rem);
+  max-inline-size: 34ch;
+  color: var(--ink);
+  font-size: clamp(1.375rem, 1rem + 1.6vw, 2rem);
+  font-weight: 500;
+  line-height: 1.25;
+  letter-spacing: -0.015em;
+  text-wrap: balance;
+}
+
+/* THE FIVE CLAIMS.
+
+   auto-fit with a 17rem floor: one column on a phone, two on a tablet, and as
+   many as fit after that, without a media query deciding where those points
+   are. minmax(17rem, 1fr) is what keeps the last row's items the same width as
+   the rest rather than stretching one across the row.
+
+   A real <ul>, so a screen reader announces five claims and says it is five. */
+.about__stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr));
+  gap: clamp(1.5rem, 3vw, 2rem);
+  margin: 0 0 clamp(3.5rem, 8vw, 5.5rem);
+  padding: 0;
+  list-style: none;
+}
+
+.stat {
+  padding-block-start: 1rem;
+  border-block-start: 2px solid var(--accent);
+}
+
+.stat__figure {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0 0.5ch;
+  margin: 0 0 0.5rem;
+}
+
+/* Tabular figures so 100%, 100, 0, 480 and 1 sit on one optical line rather
+   than shuffling with each digit width. */
+.stat__number {
+  color: var(--ink);
+  font-size: clamp(2rem, 1.4rem + 2.4vw, 3rem);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+}
+
+.stat__claim {
+  color: var(--ink);
+  font-size: 1rem;
+  font-weight: 500;
+  text-wrap: balance;
+}
+
+.stat__detail {
+  margin: 0;
+  color: var(--ink-muted);
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  text-wrap: pretty;
+}
+
+.about__section {
+  margin-block-end: clamp(2.5rem, 6vw, 3.5rem);
+  /* 62 characters. Longer lines cost the reader the return sweep, and this
+     column is 76rem wide on a desktop. */
+  max-inline-size: 62ch;
+}
+
+.about__heading {
+  margin: 0 0 0.75rem;
+  color: var(--ink);
+  font-size: clamp(1.25rem, 1rem + 1vw, 1.625rem);
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+
+.about__body {
+  margin: 0 0 1rem;
+  color: var(--ink-muted);
+  font-size: 1rem;
+  line-height: 1.6;
+  text-wrap: pretty;
+}
+
+.about__body:last-child {
+  margin-block-end: 0;
+}

@@ -4,7 +4,7 @@ import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import defaultConfig from "lighthouse/core/config/default-config.js";
 
 import { audit, withBrowser } from "./audit.mjs";
-import { CATEGORIES, PASSING, RUNS } from "./config.mjs";
+import { CATEGORIES, FORM_FACTOR, PASSING, RUNS } from "./config.mjs";
 import { explainFailures, scoreTable, toScore } from "./report.mjs";
 import { build, start, warm } from "./server.mjs";
 import { targets } from "./targets.mjs";
@@ -101,7 +101,7 @@ async function main() {
     await server.stop();
   }
 
-  console.log(`\nlighthouse ${RUNS} runs/page, median score, desktop simulated`);
+  console.log(`\nlighthouse ${RUNS} runs/page, median score, ${FORM_FACTOR} simulated`);
   console.log(scoreTable(results));
   saveReports(results);
 
