@@ -2,7 +2,8 @@
 
 import { QueryLink } from "@/app/(site)/_listing/query-link";
 import { RESULTS_ANCHOR } from "@/app/(site)/_listing/results-anchor";
-import { withPage, type JobQuery } from "@/lib/search/job-query";
+import { type JobQuery } from "@/lib/search/job-query";
+import { withPage } from "@/lib/search/query-edits";
 import type { PageWindow } from "@/lib/search/paginate";
 
 // A window of page numbers around the current one, so 49 pages do not render 49

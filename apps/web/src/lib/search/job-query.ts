@@ -3,6 +3,10 @@ import { DEFAULT_SORT, sortParam, type SortOrder } from "@/lib/search/sort-order
 // The listing's entire state lives in the URL. This module is the only place
 // that knows how it is spelled there, so a link, a facet toggle and the server
 // render all agree by construction rather than by convention.
+//
+// Spelling only. Editing a query -- ticking a facet, adding a keyword, paging,
+// sorting -- is query-edits.ts, and the country pair is geo-query.ts. Reading a
+// URL back is parse-query.ts.
 
 // prettier-ignore
 export type FacetKey =
@@ -152,66 +156,4 @@ export function jobsHref(query: JobQuery, pathname = "/"): string {
   }
 
   return `${pathname}?${params}`;
-}
-
-// Every mutation below returns a new query and resets to page 1, because the
-// page a visitor was on says nothing about a differently filtered list -- being
-// left on page 7 of 2 is the classic version of this bug.
-export function toggleFacet(query: JobQuery, key: FacetKey, value: string): JobQuery {
-  const selected = query[key];
-  const next = selected.includes(value)
-    ? selected.filter((entry) => entry !== value)
-    : [...selected, value];
-
-  return { ...query, [key]: [...next].sort((a, b) => a.localeCompare(b)), page: 1 };
-}
-
-export function addKeyword(query: JobQuery, keyword: string): JobQuery {
-  const value = keyword.trim();
-
-  if (!value || query.keywords.includes(value)) {
-    return { ...query, page: 1 };
-  }
-
-  return {
-    ...query,
-    keywords: [...query.keywords, value].sort((a, b) => a.localeCompare(b)),
-    page: 1,
-  };
-}
-
-export function removeKeyword(query: JobQuery, keyword: string): JobQuery {
-  return {
-    ...query,
-    keywords: query.keywords.filter((entry) => entry !== keyword),
-    page: 1,
-  };
-}
-
-export function withPage(query: JobQuery, page: number): JobQuery {
-  return { ...query, page };
-}
-
-// Page 1, like every mutation above it. Reordering the list is not the same list
-// scrolled to a different place -- page 3 of a nearest-first list holds entirely
-// different roles from page 3 of a newest-first one, so staying on it would land
-// the visitor somewhere they never chose.
-export function withSort(query: JobQuery, sort: SortOrder): JobQuery {
-  return { ...query, sort, page: 1 };
-}
-
-// How many separate answers the visitor has given. Every ticked box and every
-// keyword chip counts once, which is what the filters toggle says out loud on a
-// narrow screen -- a panel that is collapsed by default has to admit when it is
-// hiding something that is changing the list. Sort is not in it: it reorders
-// the list rather than narrowing it, and it has its own control on the line
-// above the results.
-export function appliedCount(query: JobQuery): number {
-  const facets = FACET_KEYS.reduce((total, key) => total + query[key].length, 0);
-
-  return facets + query.keywords.length;
-}
-
-export function isFiltered(query: JobQuery): boolean {
-  return appliedCount(query) > 0;
 }

@@ -5,7 +5,8 @@ import { useId, useState, type ReactNode } from "react";
 import { FacetOptions } from "@/app/(site)/_listing/facet-options";
 import { useQueryNavigation } from "@/app/(site)/_listing/use-query-navigation";
 import { matchOptions, type FacetOption } from "@/lib/search/facet-counts";
-import { toggleFacet, type FacetKey, type JobQuery } from "@/lib/search/job-query";
+import { type FacetKey, type JobQuery } from "@/lib/search/job-query";
+import { toggleFacet } from "@/lib/search/query-edits";
 
 type FacetGroupProps = {
   facetKey: FacetKey;

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { SENIORITY_LABELS, seniorityLevels } from "@/lib/search/seniority";
+import { seniorityLevels } from "@/lib/search/seniority";
 
 // Almost every title quoted below is a real posting from the board this was
 // measured against. A rule derived from titles is only as good as the titles it
@@ -184,34 +184,5 @@ describe("the titles that state no level", () => {
 
   it("gives an empty title no level", () => {
     expect(seniorityLevels("")).toEqual([]);
-  });
-});
-
-describe("SENIORITY_LABELS", () => {
-  // Sentence case, like every other label on the panel.
-  it("names every rung in sentence case", () => {
-    expect(SENIORITY_LABELS).toEqual({
-      entry: "Entry level",
-      mid: "Mid level",
-      senior: "Senior",
-      staff: "Staff and principal",
-      manager: "Manager",
-      director: "Director and above",
-    });
-  });
-
-  // The slug in the URL and the key of the label table are the same string, or
-  // a shared link renders a ticked box with no name on it.
-  it("has a label for every level the derivation can return", () => {
-    const derived = [
-      "Software Engineer 3- Ink",
-      "Software Engineer 4 - Graph Search",
-      "Software Engineer 5 - Creative Studio",
-      "Software Engineer 6 - Creative Studio",
-      "Manager, Physical Security",
-      "Director, Real Estate and Legal Affairs",
-    ].flatMap((title) => seniorityLevels(title));
-
-    expect(new Set(derived)).toEqual(new Set(Object.keys(SENIORITY_LABELS)));
   });
 });

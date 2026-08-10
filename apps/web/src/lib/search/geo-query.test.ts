@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 
 import { countryChosen, toggleCountry, toggleSite } from "@/lib/search/geo-query";
-import { EMPTY_QUERY, withPage, type JobQuery } from "@/lib/search/job-query";
+import { EMPTY_QUERY, type JobQuery } from "@/lib/search/job-query";
+import { withPage } from "@/lib/search/query-edits";
 
 describe("countryChosen", () => {
   it("is true only when the URL names a country", () => {

@@ -4,7 +4,8 @@ import { useId } from "react";
 
 import { QueryLink } from "@/app/(site)/_listing/query-link";
 import { useQueryNavigation } from "@/app/(site)/_listing/use-query-navigation";
-import { withSort, type JobQuery } from "@/lib/search/job-query";
+import { type JobQuery } from "@/lib/search/job-query";
+import { withSort } from "@/lib/search/query-edits";
 import type { SortOrder } from "@/lib/search/sort-order";
 
 type SortControlProps = {

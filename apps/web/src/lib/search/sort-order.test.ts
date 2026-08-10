@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { EMPTY_QUERY, jobsHref, withSort } from "@/lib/search/job-query";
+import { EMPTY_QUERY, jobsHref } from "@/lib/search/job-query";
+import { withSort } from "@/lib/search/query-edits";
 import { parseJobQuery } from "@/lib/search/parse-query";
 import { DEFAULT_SORT, parseSort, sortParam } from "@/lib/search/sort-order";
 

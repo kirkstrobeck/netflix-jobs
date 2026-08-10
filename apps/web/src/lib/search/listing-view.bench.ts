@@ -4,7 +4,8 @@ import type { Board } from "@/lib/jobs/board";
 import { SITE_COLUMNS, type Site } from "@/lib/jobs/site";
 import { SUMMARY_COLUMNS, toSummary, type JobRow } from "@/lib/jobs/job-summary";
 import { supabaseAnonKey, supabaseUrl } from "@/lib/supabase/env";
-import { EMPTY_QUERY, toggleFacet, withPage } from "@/lib/search/job-query";
+import { EMPTY_QUERY } from "@/lib/search/job-query";
+import { toggleFacet, withPage } from "@/lib/search/query-edits";
 import { deriveListing } from "@/lib/search/listing-view";
 
 /**

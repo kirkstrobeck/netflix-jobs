@@ -3,7 +3,8 @@ import { describe, expect, it } from "vitest";
 import { BOARD } from "@/lib/jobs/job-summary.fixture";
 import { toggleCountry } from "@/lib/search/geo-query";
 import { deriveListing } from "@/lib/search/listing-view";
-import { EMPTY_QUERY, toggleFacet, withPage } from "@/lib/search/job-query";
+import { EMPTY_QUERY } from "@/lib/search/job-query";
+import { toggleFacet, withPage } from "@/lib/search/query-edits";
 
 describe("deriveListing", () => {
   it("returns the page, the window and every facet in one pass", () => {

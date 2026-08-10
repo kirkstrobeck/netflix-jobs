@@ -3,7 +3,8 @@
 import { useId } from "react";
 
 import { useQueryNavigation } from "@/app/(site)/_listing/use-query-navigation";
-import { addKeyword, removeKeyword, type JobQuery } from "@/lib/search/job-query";
+import { type JobQuery } from "@/lib/search/job-query";
+import { addKeyword, removeKeyword } from "@/lib/search/query-edits";
 
 type KeywordFacetProps = {
   query: JobQuery;

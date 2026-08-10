@@ -3,7 +3,8 @@ import { describe, expect, it } from "vitest";
 import { siteCatalog } from "@/lib/jobs/board";
 import { JOBS, SITES, summary } from "@/lib/jobs/job-summary.fixture";
 import { filterJobs } from "@/lib/search/filter-jobs";
-import { EMPTY_QUERY, toggleFacet, type JobQuery } from "@/lib/search/job-query";
+import { EMPTY_QUERY, type JobQuery } from "@/lib/search/job-query";
+import { toggleFacet } from "@/lib/search/query-edits";
 
 const catalog = siteCatalog(SITES);
 const titles = (jobs: { title: string }[]) => jobs.map((job) => job.title).sort();

@@ -6,10 +6,14 @@
 // Animation.currentTime instead of waiting, samples the pixels immediately
 // outside each control, and reports the WORST frame as well as the best.
 //
+// The pixels themselves come from frame-pixels.mjs; this file is the schedule
+// and the verdict.
+//
 // Usage: node tools/probe/cta.mjs [url] [selector,...] [samples] [rest|hover|focus]
 import { chromium } from "playwright-core";
 
 import { brightest, contrast, hex } from "./contrast.mjs";
+import { pixelReader, ringClip, sample } from "./frame-pixels.mjs";
 
 const URL_UNDER_TEST = process.argv[2] ?? "http://127.0.0.1:3100/jobs/JR42023";
 const SELECTORS = (process.argv[3] ?? ".apply-button").split(",");
@@ -24,11 +28,13 @@ const LOOP_MS = 253_850;
 // How far outside the control's own box the backdrop is sampled. 1px would land
 // on the border's own antialiasing. Under focus the ring has to start beyond
 // the focus outline -- 2px at a 3px offset -- or the "backdrop" reading is the
-// indicator itself.
-const RING_INSET = STATE === "focus" ? 8 : 2;
-const RING_WIDTH = 5;
-// Where the boundary is: the border row at rest, the outline under focus.
-const EDGE_BAND = STATE === "focus" ? [3, 6] : [-1, 1];
+// indicator itself. The edge band is where the boundary is: the border row at
+// rest, the outline under focus.
+const GEOMETRY = {
+  ringInset: STATE === "focus" ? 8 : 2,
+  ringWidth: 5,
+  edgeBand: STATE === "focus" ? [3, 6] : [-1, 1],
+};
 
 const browser = await chromium.launch({
   executablePath: process.env.CHROME_PATH,
@@ -47,73 +53,7 @@ if (process.env.PROBE_HIDE) {
   });
 }
 
-// A second page is the PNG decoder: nothing in node reads pixels, and Chromium
-// already has a canvas.
-const reader = await browser.newPage();
-
-async function pixels(clip) {
-  const shot = await page.screenshot({ clip });
-
-  return reader.evaluate(async (data) => {
-    const bitmap = await createImageBitmap(
-      await (await fetch(`data:image/png;base64,${data}`)).blob(),
-    );
-    const canvas = new OffscreenCanvas(bitmap.width, bitmap.height);
-    const context = canvas.getContext("2d");
-
-    context.drawImage(bitmap, 0, 0);
-
-    const { data: rgba } = context.getImageData(0, 0, bitmap.width, bitmap.height);
-
-    return { width: bitmap.width, height: bitmap.height, rgba: Array.from(rgba) };
-  }, shot.toString("base64"));
-}
-
-// Three readings per frame: the band of backdrop just outside the control, the
-// control's own surface, and its boundary.
-//
-// The boundary is taken as the BRIGHTEST pixel in the 3px straddling the box's
-// top edge rather than a single coordinate. A control's box lands on a
-// fractional y (450.6 here), so one nominated pixel is a coin toss between the
-// rim, its antialiasing and the fill behind it. On a control with no rim at all
-// this reads the fill, which is the right answer for that case too.
-function sample(frame, box, clip) {
-  const at = (x, y) => {
-    const i =
-      (Math.round(y - clip.y) * frame.width + Math.round(x - clip.x)) * 4;
-
-    return [frame.rgba[i], frame.rgba[i + 1], frame.rgba[i + 2]];
-  };
-
-
-  const ring = [];
-
-  for (let d = RING_INSET; d < RING_INSET + RING_WIDTH; d += 1) {
-    for (let x = box.x - d; x <= box.x + box.width + d; x += 1) {
-      ring.push(at(x, box.y - d), at(x, box.y + box.height + d));
-    }
-
-    for (let y = box.y - d; y <= box.y + box.height + d; y += 1) {
-      ring.push(at(box.x - d, y), at(box.x + box.width + d, y));
-    }
-  }
-
-  const edge = [];
-
-  for (let x = box.x + 8; x <= box.x + box.width - 8; x += 1) {
-    for (let d = EDGE_BAND[0]; d <= EDGE_BAND[1]; d += 1) {
-      edge.push(at(x, box.y - d), at(x, box.y + box.height + d));
-    }
-  }
-
-  return {
-    ring,
-    // Inside the control's inline padding, so the sample is its surface rather
-    // than a letter of its label.
-    fill: at(box.x + 8, box.y + box.height / 2),
-    edge: brightest(edge),
-  };
-}
+const pixels = await pixelReader(browser, page);
 
 for (const selector of SELECTORS) {
   const handle = page.locator(selector).first();
@@ -142,13 +82,7 @@ for (const selector of SELECTORS) {
   }
 
   const box = await handle.boundingBox();
-  const pad = RING_INSET + RING_WIDTH + 2;
-  const clip = {
-    x: Math.max(0, box.x - pad),
-    y: Math.max(0, box.y - pad),
-    width: box.width + pad * 2,
-    height: box.height + pad * 2,
-  };
+  const clip = ringClip(box, GEOMETRY);
 
   let worst = null;
   let best = null;
@@ -171,17 +105,18 @@ for (const selector of SELECTORS) {
     }, time);
 
     const frame = await pixels(clip);
-    const { ring, fill, edge } = sample(frame, box, clip);
+    const { ring, fill, edge } = sample(frame, box, clip, GEOMETRY);
     // The brightest pixel in the band is the one the edge has to survive, so the
     // frame is scored on its brightest backdrop rather than its average.
     const backdrop = brightest(ring);
+    const rim = brightest(edge);
     const record = {
       time: Math.round(time / 1000),
       backdrop,
       fill,
-      edge,
+      edge: rim,
       fillRatio: contrast(fill, backdrop),
-      edgeRatio: contrast(edge, backdrop),
+      edgeRatio: contrast(rim, backdrop),
     };
 
     if (!worst || record.edgeRatio < worst.edgeRatio) {

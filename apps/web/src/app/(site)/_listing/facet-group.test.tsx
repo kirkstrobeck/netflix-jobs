@@ -8,7 +8,8 @@ import { NavigateProvider } from "@/app/(site)/_listing/use-query-navigation";
 import { siteCatalog } from "@/lib/jobs/board";
 import { JOBS, SITES } from "@/lib/jobs/job-summary.fixture";
 import { facetOptions } from "@/lib/search/facet-counts";
-import { EMPTY_QUERY, jobsHref, toggleFacet, type JobQuery } from "@/lib/search/job-query";
+import { EMPTY_QUERY, jobsHref, type JobQuery } from "@/lib/search/job-query";
+import { toggleFacet } from "@/lib/search/query-edits";
 
 const navigate = vi.fn();
 
