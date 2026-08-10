@@ -24,6 +24,7 @@ Then:
 | `hero.mjs`    | a cropped shot of the results header line                         |
 | `bleed.mjs`   | whether a full-bleed box reaches the page's edges, and overshoots  |
 | `cta.mjs`     | contrast of a control against an ANIMATED backdrop, worst frame   |
+| `label.mjs`   | contrast of the label ON a control, per state, off painted glyphs |
 | `share.mjs`   | the share control's fallback chain, one stubbed browser per rung  |
 | `where.mjs`   | whether the country from /api/where moves the page or filters it  |
 | `wordmark.mjs`| whether both marks still point at the board after a facet tick     |
@@ -42,6 +43,15 @@ lands. It sets `x-vercel-ip-country` per request, which is the only way to
 stand in for Vercel's edge from in here, and the `nfj_country=all` cookie,
 without which the proxy's country hop never lets the cleared state render at
 all.
+
+`label.mjs` is `cta.mjs`'s other half. `cta.mjs` asks whether a control has an
+edge against what is behind it; this asks whether the text on it can be read,
+and it reads the answer off the painted glyphs rather than off the declared
+colour pair, so antialiasing and the webfont are in the number. It takes states,
+because a hover fill is a different colour pair — which is how the apply
+button's label was found sitting at 4.32:1 on hover while resting at 4.79:1:
+
+    node tools/probe/label.mjs URL .apply-button,.share-button rest,hover
 
 `bleed.mjs` is the one that has to force a scrollbar. Headless Chromium uses
 overlay scrollbars, which take no layout width, so `inline-size: 100vw` measures

@@ -1,0 +1,55 @@
+/* The share control's confirmation: the slot it lives in, and the note itself.
+
+   Split out of job-cta.css to keep that file under the 200-line limit, and
+   because the seam is real rather than arbitrary. Everything left in job-cta.css
+   is about two controls holding their own against the bars behind them -- rims,
+   fills, label sizes, all of it measured against a moving backdrop. This is
+   feedback after a click: it has no rim, no fill and nothing to survive, and
+   its one rule about timing is the house's, not the hero's.
+
+   Same tokens, and it still belongs to the hero -- job-cta.css's .job-cta is
+   the flex row both of these sit in. */
+
+/* The confirmation slot. It holds its width whether or not there is anything in
+   it, so copying a link cannot move the control that was just pressed.
+
+   Its own 3rem, not the controls': those are 55px now that their labels are
+   19px, and .job-cta centres its children, so this sits centred on the taller
+   row rather than stretching to it. Nothing paints in the difference. */
+.job-cta__status {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: 3rem;
+}
+
+/* Instant in, fade out -- the house rule, spelled with visibility so the note
+   also enters and leaves the accessibility tree, which is what gives the live
+   region above something to announce.
+
+   The delay is the whole trick: on the way out, opacity fades for 240ms and
+   visibility flips only after it, so the note is not yanked out of the tree
+   mid-fade. On the way in, --on zeroes both.
+
+   --ink-muted, and it sits directly on the bars with no plate under it, so its
+   contrast moves with them: computed against the brightest backdrop cta.mjs
+   measured in this region, rgb(142,2,11), it lands at 4.63:1, and at the
+   dimmest, 9.82:1. The worst frame clears AA for 14px text, which is the frame
+   that has to. There is no room above that number on this palette -- --ink
+   would make a transient toast louder than the posting's own body copy -- so if
+   the bars are ever retuned brighter, this needs a plate rather than a lighter
+   grey. */
+.share-note {
+  color: var(--ink-muted);
+  font-size: 0.875rem;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 240ms ease, visibility 0s linear 240ms;
+}
+
+.share-note--on {
+  opacity: 1;
+  visibility: visible;
+  /* Appears at once. */
+  transition-duration: 0s;
+  transition-delay: 0s;
+}

@@ -30,7 +30,44 @@
    --hairline, the house token, unchanged: 14% white over --accent computes to
    rgb(233,43,53) and measures 2.79:1 at the brightest frame. It is calibrated
    for one near-black surface against another, which is every other place it is
-   used, and this is not that. */
+   used, and this is not that.
+
+   THE SECOND MEASUREMENT: THE LABELS, NOT THE EDGE
+
+   Everything above is about the controls' BOUNDARY against the field. The
+   labels sitting on them were never in that budget, and the numbers say so.
+   Measured off the painted glyphs at 1280 (tools/probe/label.mjs, which reads
+   the brightest glyph pixel against the control's own fill rather than trusting
+   the declared colour pair):
+
+     .share-button   rest 18.89:1   hover 16.38:1
+     .apply-button   rest  4.79:1   hover  4.32:1
+
+   So the share control was never a contrast problem and is not being treated as
+   one: --ink on --surface has fifteen times the headroom AA asks for, in both
+   states. Its label was hard to read for the other reason on the list -- size.
+   At 1rem/500 it was the smallest, lightest text in the hero, under a title
+   running to 3.5rem.
+
+   The apply button is a real failure, and a specific one. At rest its white
+   label on --accent is 4.79:1, which clears AA for normal text by 6% and is the
+   lowest-contrast text anywhere on this page. On HOVER it goes to 4.32:1 and
+   misses -- the state you are in at the moment you are reading it.
+
+   The cause is directly below, in the hover rule, and it is the edge fix
+   spending the label's margin. Lifting the fill 14% toward white to keep the
+   plate off the bars necessarily moves it toward a white label; nobody
+   re-measured the text after the plate was fixed. So the fill was tuned against
+   what is behind the button and the label was left to absorb it.
+
+   Two changes, both about giving the label a budget of its own:
+
+   - The pair goes to 1.1875rem. At 19px/700 the apply label is large text under
+     WCAG (>=18.66px bold), so the threshold it is held to is 3:1 rather than
+     4.5:1 -- and that is not the point, it is the consequence. The point is
+     that 19px is legible where 16px on saturated red was not. Both numbers are
+     reported below.
+   - The hover moves the fill AWAY from the label instead of toward it. */
 
 .job-cta {
   display: flex;
@@ -60,7 +97,20 @@
   min-block-size: 3rem;
   border: 1px solid var(--hairline-bright);
   border-radius: 3px;
-  font-size: 1rem;
+  /* 19px, up from 16px, on BOTH -- the pair has to stay a pair, and the two
+     controls had the same problem for different reasons. On the secondary it is
+     the whole fix: its label always had contrast to spare and never had size.
+     On the primary it is half of one, and it is also what puts the apply label
+     over the 18.66px-bold line at which WCAG measures text against 3:1 instead
+     of 4.5:1.
+
+     Measured, the pair goes from 50px tall to 55px: Netflix Sans's normal line
+     height is ~1.53, so 19px sets a 29px line box, and 29 + 24px of padding + 2
+     of rim clears the 3rem floor above rather than being absorbed by it. The
+     floor stops being what sizes these boxes and goes back to being what it
+     says it is -- a minimum. Nothing else moves with them; .job-cta__status
+     keeps its own 3rem and stays centred on the taller row. */
+  font-size: 1.1875rem;
   text-decoration: none;
   /* Hover-OFF only. Compositor-only for the press; the colours are one element
      each and repaint in well under a frame. */
@@ -107,8 +157,27 @@
   transition-duration: 0s;
 }
 
+/* DEEPENS, where the secondary lifts, and the asymmetry is forced rather than
+   chosen.
+
+   This fill carries a white label. 14% white over --accent computes to
+   rgb(233,43,53), and white on that measures 4.32:1 -- under AA, at the one
+   moment the label is being read. Mixing the other way lands on rgb(202,8,18),
+   where white measures 5.91:1: the hover now RAISES the label's contrast
+   instead of spending it.
+
+   The secondary cannot do the same thing. --surface is eight luminance steps
+   off black; deepening it would take the plate to black and the control would
+   have nothing left but its rim. Its label has 16:1 either way, so lifting
+   costs it nothing. Different constraint, opposite direction, same rim -- and
+   the rim is the hover's real signal on both, going to full white.
+
+   Nor does deepening cost the plate its boundary: 1.4.11 is about the visual
+   information that identifies the control, which here is the rim, not the fill.
+   Measured at the brightest frame, the hovered rim reads 9.71:1 against the
+   backdrop -- the fill never got past 2.02:1 in either direction. */
 .apply-button:hover {
-  background: color-mix(in srgb, #fff 14%, var(--accent));
+  background: color-mix(in srgb, #000 12%, var(--accent));
 }
 
 .share-button:hover {
@@ -120,33 +189,6 @@
   transform: scale(0.985);
 }
 
-/* The confirmation slot. It holds its width whether or not there is anything in
-   it, so copying a link cannot move the control that was just pressed. */
-.job-cta__status {
-  display: inline-flex;
-  align-items: center;
-  min-block-size: 3rem;
-}
-
-/* Instant in, fade out -- the house rule, spelled with visibility so the note
-   also enters and leaves the accessibility tree, which is what gives the live
-   region above something to announce.
-
-   The delay is the whole trick: on the way out, opacity fades for 240ms and
-   visibility flips only after it, so the note is not yanked out of the tree
-   mid-fade. On the way in, --on zeroes both. */
-.share-note {
-  color: var(--ink-muted);
-  font-size: 0.875rem;
-  opacity: 0;
-  visibility: hidden;
-  transition: opacity 240ms ease, visibility 0s linear 240ms;
-}
-
-.share-note--on {
-  opacity: 1;
-  visibility: visible;
-  /* Appears at once. */
-  transition-duration: 0s;
-  transition-delay: 0s;
-}
+/* The confirmation the share control shows after a copy is in share-note.css.
+   It sits in .job-cta above, but it has no rim, no fill and nothing to hold
+   against the bars, which is what the rest of this file is about. */
