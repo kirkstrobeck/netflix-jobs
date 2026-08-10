@@ -196,4 +196,11 @@ fix_volume_ownership
 stop_dev_watch_helpers
 ensure_mac_save_bridge
 
+# A boot that checked 3000 is published and then left nothing listening behind
+# it reads from the Mac exactly like a crash. serve.sh supervises, restarts on
+# every exit, and is idempotent, so calling it on every boot is free.
+docker exec -u agent "$SANDBOX_NAME" \
+  bash -lc 'cd /workspace && tools/sandbox/serve.sh start' >&2 \
+  || echo "WARNING: local server not started — run tools/sandbox/serve.sh start" >&2
+
 printf '%s\n' "$SANDBOX_NAME"
