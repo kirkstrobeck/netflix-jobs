@@ -73,7 +73,14 @@ export default function SiteLayout({ children, footer, header }: SiteLayoutProps
     <div className={`${netflixSans.className} job-page`}>
       {header}
 
-      <main className="shell site-main" id="site-main">
+      {/* No .shell here, and that is the whole of the full-bleed mechanism.
+          <main> is a grid item of .job-page, so with no width cap on it, it
+          stretches to the page's own inline size -- which excludes the
+          scrollbar, because it is a layout box and not a viewport unit. The
+          76rem column moved down to the elements that want a measure (the
+          posting's article, the listing's body) and away from the one thing
+          that wants to reach the edges, which is the masthead's divider. */}
+      <main className="site-main" id="site-main">
         {children}
       </main>
 

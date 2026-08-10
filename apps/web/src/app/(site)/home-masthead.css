@@ -1,22 +1,49 @@
 /* The home page masthead: one headline on the animated red-bar field. Same
-   tokens and the same full-bleed pattern as the job hero -- this is the same
-   effect in the same house style, not a second treatment. */
+   tokens as the job hero -- this is the same effect in the same house style,
+   not a second treatment.
+
+   HOW THE DIVIDER SPANS THE PAGE, AND WHY IT IS NOT 100vw
+
+   The rule under the masthead is this element's border-block-end, so the only
+   way it reaches the edges is for this element to reach the edges. It does,
+   and by layout rather than by measurement: <main> no longer carries .shell,
+   so it stretches as a grid item of .job-page, this band is a plain block
+   inside it and stretches with it, and .bars-stage__content carries the 76rem
+   .shell so the headline stays exactly where it was.
+
+   That is what the full-bleed hack this replaces was working around. It was
+   100vw with a -50vw pull, and 100vw is the VIEWPORT, which on a desktop
+   classic scrollbar includes the scrollbar gutter -- so the field overhung the
+   visible width by 15-17px and raised a horizontal scrollbar, which .job-page's
+   overflow-x: clip then had to trim back off. A width that is wrong and then
+   clipped is not a width. Every box here is now sized by its container, so
+   there is nothing to overhang and nothing to clip: whatever the scrollbar
+   takes, it takes out of the page box, and the band is the page box.
+
+   The alternatives, and why this one:
+
+   - margin-inline: calc(50% - 50vw) is the same 100vw with different spelling
+     and the same scrollbar overhang.
+   - 100cqi against a container on .job-page measures a layout box rather than
+     the viewport, so it is scrollbar-correct -- but it buys that by putting
+     `contain: layout style inline-size` on the element that wraps the whole
+     page, which makes it the containing block for every fixed descendant and a
+     new stacking context, to place one hairline.
+   - A breakout grid on <main> with named [full-start]/[full-end] lines is the
+     textbook answer and is also correct here, but the masthead is two levels
+     down (main > .listing > .masthead), so it needs subgrid at each level and a
+     default `grid-column: content` on children whose specificity then has to be
+     beaten by the one child that bleeds -- across two stylesheets whose import
+     order decides the winner.
+   - This one adds no mechanism at all. It moves the width cap off the ancestor
+     that should never have had it and onto the two boxes that want a measure,
+     which is the shape .site-header has had all along. */
 
 .masthead {
   /* Deep enough that the bars read as a field rather than a stripe behind the
      text, and the headline has room to sit in. */
   padding-block: clamp(4rem, 10vw, 7.5rem) clamp(3.5rem, 8vw, 6rem);
   border-block-end: 1px solid var(--hairline);
-}
-
-/* Full-bleed out of .shell's 76rem column, the same way .job-hero .bars does:
-   pin the field's inline start to the masthead's centre, make it a viewport
-   wide, then pull it back half a viewport. .job-page carries overflow-x: clip,
-   which trims what the scrollbar gutter adds to 100vw. */
-.masthead .bars {
-  inset-inline: 50% auto;
-  inline-size: 100vw;
-  margin-inline-start: -50vw;
 }
 
 /* --ink, and no scrim. See the note in home-masthead.tsx: the worst the bars can

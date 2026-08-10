@@ -35,4 +35,26 @@ describe("SiteLayout", () => {
     expect(html).toContain("<main");
     expect(html).toContain('id="site-main"');
   });
+
+  /**
+   * <main> must NOT carry .shell, and that is a layout mechanism rather than a
+   * tidy-up.
+   *
+   * The 76rem cap used to sit here, which made every page a column and left the
+   * home masthead's divider as wide as the text above it. The cap moved down to
+   * the boxes that want a measure -- the posting's article, the listing's body
+   * -- so that a band placed directly in <main> stretches to the page's own
+   * inline size and its border reaches the edges. Putting .shell back here
+   * would undo the full-bleed silently: nothing would look broken, the divider
+   * would just quietly stop at the column again.
+   *
+   * Sized by the layout, so the scrollbar is already accounted for. The 100vw
+   * this replaced was not: it measures the viewport, gutter included.
+   */
+  it("leaves the width cap off main so a band inside it can span the page", () => {
+    const html = renderLayout(null);
+
+    expect(html).toContain('<main class="site-main"');
+    expect(html).not.toContain("shell site-main");
+  });
 });

@@ -22,6 +22,7 @@ Then:
 | `geo.mjs`     | whether a denied geolocation permission can be re-prompted        |
 | `nearest.mjs` | what the heading and the offer say at each precision tier         |
 | `hero.mjs`    | a cropped shot of the results header line                         |
+| `bleed.mjs`   | whether a full-bleed box reaches the page's edges, and overshoots  |
 | `cta.mjs`     | contrast of a control against an ANIMATED backdrop, worst frame   |
 | `share.mjs`   | the share control's fallback chain, one stubbed browser per rung  |
 | `where.mjs`   | whether the country from /api/where moves the page or filters it  |
@@ -41,6 +42,14 @@ lands. It sets `x-vercel-ip-country` per request, which is the only way to
 stand in for Vercel's edge from in here, and the `nfj_country=all` cookie,
 without which the proxy's country hop never lets the cleared state render at
 all.
+
+`bleed.mjs` is the one that has to force a scrollbar. Headless Chromium uses
+overlay scrollbars, which take no layout width, so `inline-size: 100vw` measures
+correct in here and only overhangs on a desktop with classic scrollbars.
+`scrollbar-gutter: stable` reserves the same strip unconditionally and
+reproduces it — at 1280 with 15px reserved, the home masthead's band reads 1265
+(the page box, no overhang) and the job hero's 100vw backdrop reads 1280, 15px
+past the page and saved only by `.job-page`'s `overflow-x: clip`.
 
 `cta.mjs` is the other one worth keeping. A screenshot answers for one frame,
 and the hero's backdrop is fifteen bars walking on loops of up to 254 seconds —

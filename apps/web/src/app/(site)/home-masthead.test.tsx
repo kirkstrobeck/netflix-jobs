@@ -33,8 +33,25 @@ describe("HomeMasthead", () => {
 
     expect(markup).toContain('<header class="bars-stage masthead">');
     expect(markup).toContain('class="bars"');
-    expect(markup).toContain('class="bars-stage__content"');
+    expect(markup).toContain('class="bars-stage__content');
     expect(markup.indexOf('class="bars"')).toBeLessThan(markup.indexOf("<h1"));
+  });
+
+  /**
+   * The band spans the page and the column lives inside it -- the same shape
+   * .site-header has, and the whole of how the divider under this masthead
+   * reaches the edges without a viewport unit.
+   *
+   * The shell has to be on the CONTENT layer specifically. On the header it
+   * would cap the band itself and take the divider back to the column; below
+   * the h1 there is nothing left to centre. So the assertion names the element
+   * it is on, not just that the class appears somewhere in the markup.
+   */
+  it("puts the 76rem column inside the band, not around it", () => {
+    const markup = html();
+
+    expect(markup).toContain('<div class="bars-stage__content shell">');
+    expect(markup).not.toContain("bars-stage masthead shell");
   });
 });
 
@@ -59,6 +76,26 @@ describe("the headline's size lives in one clamp", () => {
       "font-size: clamp(2.925rem, 1.71rem + 5.58vw, 5.85rem)",
     );
     expect(css.match(/font-size:/g)).toHaveLength(1);
+  });
+
+  /**
+   * The divider is .masthead's own border, so the band has to be the full width
+   * of the page -- and it is, because <main> has no cap on it and this is a
+   * plain block inside it.
+   *
+   * No box here is SIZED from the viewport, which is the point: 100vw counts
+   * the scrollbar gutter, so the field it used to size overhung the page by the
+   * width of the scrollbar and .job-page's overflow-x: clip had to trim it back
+   * off. vw in a clamp is a different thing -- fluid type and fluid padding,
+   * neither of which can overflow -- so the assertion names the two spellings
+   * of the bleed rather than banning the unit.
+   */
+  it("draws the divider as this band's own border and sizes nothing from the viewport", () => {
+    expect(rule(css, ".masthead")).toContain(
+      "border-block-end: 1px solid var(--hairline)",
+    );
+    expect(css).not.toContain("100vw");
+    expect(css).not.toContain("-50vw");
   });
 });
 

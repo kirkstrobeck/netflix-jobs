@@ -12,6 +12,12 @@ export const HEADLINE = "Be part of what’s next";
 // <BarsStage> rather than rebuilt: the stage is the positioned box, <Bars />
 // fills it, and .bars-stage__content lifts the headline over the top.
 //
+// The stage is a FULL-WIDTH BAND with a .shell inside it, which is the same
+// shape .site-header has. That is what puts the masthead's divider across the
+// whole page: the rule is this element's border, so the element is the thing
+// that has to reach the edges. The headline stays in the 76rem column because
+// the shell it now sits in is the same shell it used to inherit from <main>.
+//
 // The headline needs no scrim. The bars are #e50914 at 0.10 alpha each, so the
 // darkest a stack of them can ever make the backdrop is 1 - 0.9^15 = 0.794 --
 // rgb(183,8,16) over --surface -- against which --ink measures 6.28:1. That is
@@ -21,7 +27,7 @@ export const HEADLINE = "Be part of what’s next";
 // frame rather than on a typical one.
 export function HomeMasthead() {
   return (
-    <BarsStage as="header" className="masthead">
+    <BarsStage as="header" className="masthead" contentClassName="shell">
       <h1 className="masthead__title">{HEADLINE}</h1>
     </BarsStage>
   );

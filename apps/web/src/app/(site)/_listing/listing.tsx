@@ -48,7 +48,12 @@ export function Listing({ boardVersion, initialQuery, initialView }: ListingProp
 
   return (
     <NavigateProvider value={navigate}>
-      <div className="listing__body">
+      {/* The 76rem column, carried here rather than inherited from <main>:
+          <main> gave it up so the masthead's divider could span the page, and
+          this is the element below the masthead that wants a measure.
+          ListingSkeleton carries the same pair, so the streamed list lands on
+          exactly the column its placeholder held open. */}
+      <div className="shell listing__body">
         <main className="listing__results">
           {/* Inside the results column, not above the body: it names this column,
               and being the column's first child is what puts it on the same line

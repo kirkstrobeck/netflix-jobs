@@ -8,7 +8,10 @@ import { PAGE_SIZE } from "@/lib/search/paginate";
 // does not jump when it arrives.
 export function ListingSkeleton() {
   return (
-    <div aria-hidden="true" className="listing__body">
+    // "shell listing__body" is <Listing>'s own pair, not a lookalike: the
+    // placeholder has to hold open the same column the real list arrives in, or
+    // the page steps sideways when it streams.
+    <div aria-hidden="true" className="shell listing__body">
       <div className="listing__results">
         <ol className="results">
           {Array.from({ length: PAGE_SIZE }, (_, i) => (

@@ -80,7 +80,11 @@ export default async function JobPage({ params }: JobPageProps) {
   const posting = buildJobPosting(job);
 
   return (
-    <article className="job-article">
+    // The posting carries the 76rem column itself now. It used to inherit one
+    // from <main>, which had to give it up so the home masthead's divider could
+    // reach the edges of the page; this is the same measure in the same class,
+    // one element further down.
+    <article className="shell job-article">
       <JobHeader catalog={catalog} job={job} />
 
       <div className="job-body">
