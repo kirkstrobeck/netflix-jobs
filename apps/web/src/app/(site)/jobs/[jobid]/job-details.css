@@ -48,10 +48,18 @@
  * A card where the underlines appear on hover is a card you have to sweep to
  * read, and a keyboard never sweeps.
  *
- * It keeps --ink rather than taking an accent colour. Colour alone cannot carry
- * this (WCAG 1.4.1), the underline already does carry it, and six values in two
- * colours would read as two kinds of fact rather than as one list where some
- * entries lead somewhere.
+ * THE RULE IS ACCENT, THE TEXT IS INK.
+ *
+ * The underline is drawn in --accent and the words stay --ink. A white rule
+ * under white text is the same mark twice; the accent is the site's one
+ * signal for "this goes somewhere", and the four links in this card are the
+ * only place on the page it was not being used.
+ *
+ * Colour still does not have to carry it (WCAG 1.4.1) -- the underline is
+ * present at rest, before the pointer is, which is what tells the four links
+ * apart from the two plain values. The accent is on top of that mark, not
+ * instead of it, so the card reads the same in a forced-colours palette and to
+ * anyone who cannot separate the two hues.
  *
  * text-underline-offset over the browser default so the rule clears the commas
  * and the descenders in 'Los Angeles, California, United States'; from-font
@@ -59,28 +67,28 @@
 .detail-list__link {
   color: var(--ink);
   text-decoration: underline;
+  text-decoration-color: var(--accent);
   text-decoration-thickness: from-font;
   text-underline-offset: 0.2em;
   /* Hover-OFF only: the state arrives on the frame the pointer lands and takes
      150ms to leave, like every other interaction state on this site. */
-  transition: text-decoration-color 150ms ease, color 150ms ease;
+  transition: text-decoration-thickness 150ms ease, color 150ms ease;
 }
 
 /* Hover and focus are the same statement, so they are the same declaration. The
-   underline goes to the accent and the text stays full ink -- the row is
-   already legible, and what changes is which of the four the pointer is on. */
+   rule is already accent at rest, so what changes is its weight -- the same
+   mark, louder, which is what focus does below as well. */
 .detail-list__link:is(:hover, :focus-visible) {
-  text-decoration-color: var(--accent);
+  text-decoration-thickness: 2px;
   transition-duration: 0s;
 }
 
-/* The underline is doing the work at rest and the accent is doing it on hover,
-   so focus needs to be visible without a second box around a run of text that
-   wraps across three lines. A thicker rule in the same place is the same mark,
-   louder. outline is left alone in forced-colors, where the UA draws its own. */
+/* Focus needs to be visible without a second box around a run of text that
+   wraps across three lines, and the thickening above is that mark -- so the
+   browser's own ring is dropped rather than drawn on top of it. outline is left
+   alone in forced-colors, where the UA draws its own. */
 .detail-list__link:focus-visible {
   outline: none;
-  text-decoration-thickness: 2px;
 }
 
 @media (forced-colors: active) {
