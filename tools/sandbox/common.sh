@@ -14,7 +14,7 @@ CACHE_DIR="$SANDBOX_DIR/.cache"
 # Sibling repo mounted read-only at /reference/easytopjobs when present — the
 # source of the ATS client and jobs schema this project reuses. Optional: boot.sh
 # skips the overlay entirely if the path doesn't exist.
-REFERENCE_ROOT="${REFERENCE_ROOT:-$HOME/sync/git/dev/easytopjobs}"
+REFERENCE_ROOT="${REFERENCE_ROOT:-$(dirname "$REPO_ROOT")/easytopjobs}"
 
 export SANDBOX_DIR REPO_ROOT SANDBOX_NAME CACHE_DIR REFERENCE_ROOT
 

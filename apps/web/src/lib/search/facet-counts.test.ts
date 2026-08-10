@@ -36,7 +36,7 @@ describe("facetOptions", () => {
   });
 
   /**
-   * The country is the level a visitor actually asks at, and it has to answer "how
+   * The country is the level users actually ask at, and it has to answer "how
    * many roles are in the US" with the number of ROLES. The Brand designer is
    * posted in New York and as US-remote; counting it the way the site facet
    * does would make the United States say five over a board of four.
