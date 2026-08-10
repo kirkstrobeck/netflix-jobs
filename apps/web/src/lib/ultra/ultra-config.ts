@@ -1,4 +1,4 @@
-// Ultra mode by Kirk Strobeck – https://UltraDarkMode.com
+// Ultra mode - https://UltraDarkMode.com
 
 /**
  * The one knob.
@@ -15,4 +15,4 @@
  * Never tune brightness with opacity, colour or a CSS filter. This is the value
  * the fill is painted at, and the only place it is decided.
  */
-export const ULTRA_HEADROOM = 1.6;
+export const ULTRA_HEADROOM = 4;

@@ -18,7 +18,7 @@
     "db:stop": "supabase stop",
     "db:reset": "supabase db reset",
     "ingest": "pnpm --filter @netflix-jobs/ingestor ingest",
-    "test:lighthouse:prod": "LIGHTHOUSE_ORIGIN=https://netflix.kirkstrobeck.com node tools/lighthouse/main.mjs"
+    "//test:lighthouse:prod": "Deleted. It was test:lighthouse with one deployment's hostname baked into it, which is deployment configuration and does not belong in the repo. Run the same gate against a deployed origin with: LIGHTHOUSE_ORIGIN=https://<origin> pnpm test:lighthouse"
   },
   "devDependencies": {
     "chrome-launcher": "^1.2.1",

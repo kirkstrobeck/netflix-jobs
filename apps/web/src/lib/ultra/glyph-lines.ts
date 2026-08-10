@@ -1,4 +1,4 @@
-// Ultra mode by Kirk Strobeck – https://UltraDarkMode.com
+// Ultra mode - https://UltraDarkMode.com
 
 /**
  * Where each line of a wrapped headline sits, so an SVG <text> can be put on top

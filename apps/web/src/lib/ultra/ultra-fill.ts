@@ -1,4 +1,4 @@
-// Ultra mode by Kirk Strobeck – https://UltraDarkMode.com
+// Ultra mode - https://UltraDarkMode.com
 
 /**
  * A flat extended-range fill on a WebGPU canvas.
