@@ -28,6 +28,18 @@ vi.mock('../lib/revalidate.ts', () => ({
   revalidateWeb: vi.fn(async () => 'ok'),
 }));
 
+// Mocked as a unit rather than through its parts: the crawl's contract with it
+// is one call at the end, and what it decides from the checksums is
+// cache-diff.test.ts's business, not this file's.
+vi.mock('../lib/cache-flush.ts', () => ({ flushCaches: vi.fn() }));
+
+// The prior digests, read before the writes. Mocked because the harness resets
+// it like every other seam; what it is FOR is bin/ingest-cache.test.ts.
+vi.mock('../lib/db-checksums.ts', () => ({
+  readChecksums: vi.fn(),
+  writeChecksums: vi.fn(),
+}));
+
 beforeEach(() => {
   logged.length = 0;
   vi.spyOn(console, 'log').mockImplementation((message: string) => {

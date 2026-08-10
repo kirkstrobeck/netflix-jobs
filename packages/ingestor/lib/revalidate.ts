@@ -30,10 +30,16 @@ function failed(reason: string): RevalidateOutcome {
   return 'failed';
 }
 
-async function send(url: string, secret: string, jobIds: string[]): Promise<RevalidateOutcome> {
-  // Board-only when no ids are named: JOBS_BOARD_TAG is on the listing AND on
-  // every detail fetch, so one tag covers a full crawl.
-  const body = jobIds.length > 0 ? { jobIds } : {};
+async function send(
+  url: string,
+  secret: string,
+  jobIds: string[],
+  board: boolean,
+): Promise<RevalidateOutcome> {
+  // Both stated outright, never left to the endpoint's default. The board tag no
+  // longer rides along on a posting's page, so "flush these ids" and "flush the
+  // listing" are two independent answers and the caller has computed each.
+  const body = { jobIds, board };
 
   const res = await fetch(url, {
     method: 'POST',
@@ -49,7 +55,10 @@ async function send(url: string, secret: string, jobIds: string[]): Promise<Reva
   return 'ok';
 }
 
-export async function revalidateWeb(jobIds: string[] = []): Promise<RevalidateOutcome> {
+export async function revalidateWeb(
+  jobIds: string[] = [],
+  board = true,
+): Promise<RevalidateOutcome> {
   const secret = process.env.REVALIDATE_SECRET;
 
   // Skipped rather than attempted unauthenticated: the endpoint answers 401 to
@@ -64,7 +73,7 @@ export async function revalidateWeb(jobIds: string[] = []): Promise<RevalidateOu
   }
 
   try {
-    return await send(revalidateUrl(), secret, jobIds);
+    return await send(revalidateUrl(), secret, jobIds, board);
   } catch (err) {
     return failed(`POST ${revalidateUrl()}: ${err instanceof Error ? err.message : String(err)}`);
   }

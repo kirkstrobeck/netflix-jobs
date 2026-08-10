@@ -33,6 +33,8 @@ export type IngestContext = {
   };
   http: { configureReader: Mock; transportCounts: Mock };
   revalidate: { revalidateWeb: Mock };
+  cacheFlush: { flushCaches: Mock };
+  checksums: { readChecksums: Mock };
 };
 
 export function position(id: number): Position {
@@ -65,6 +67,10 @@ export async function loadIngest(env: Record<string, string> = {}): Promise<Inge
   const http = (await import('../lib/http.ts')) as unknown as IngestContext['http'];
   const revalidate = (await import('../lib/revalidate.ts')) as unknown as
     IngestContext['revalidate'];
+  const cacheFlush = (await import('../lib/cache-flush.ts')) as unknown as
+    IngestContext['cacheFlush'];
+  const checksums = (await import('../lib/db-checksums.ts')) as unknown as
+    IngestContext['checksums'];
   const ingest = await import('./ingest.ts');
 
   // resetModules() re-imports bin/ingest.ts but hands back the same mock
@@ -82,6 +88,8 @@ export async function loadIngest(env: Record<string, string> = {}): Promise<Inge
     http.configureReader,
     http.transportCounts,
     revalidate.revalidateWeb,
+    cacheFlush.flushCaches,
+    checksums.readChecksums,
   ];
   for (const mock of mocks) {
     mock.mockReset();
@@ -97,6 +105,11 @@ export async function loadIngest(env: Record<string, string> = {}): Promise<Inge
   db.countJobs.mockResolvedValue(0);
   http.transportCounts.mockReturnValue({ direct: 0, reader: 0 });
   revalidate.revalidateWeb.mockResolvedValue('ok');
+  cacheFlush.flushCaches.mockResolvedValue({
+    report: { jobIds: [], board: false, added: 0, outcome: 'unchanged' },
+    note: 'cache: unchanged | roles=0 board=false added=0',
+  });
+  checksums.readChecksums.mockResolvedValue(new Map());
 
-  return { main: ingest.main, eightfold, db, http, revalidate };
+  return { main: ingest.main, eightfold, db, http, revalidate, cacheFlush, checksums };
 }

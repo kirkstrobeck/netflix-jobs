@@ -55,7 +55,7 @@ describe('revalidateUrl', () => {
 });
 
 describe('revalidateWeb', () => {
-  it('posts the secret and an empty body for a whole-board flush', async () => {
+  it('posts the secret and a whole-board flush when nothing is named', async () => {
     fetchMock.mockResolvedValue(ok('{"revalidated":true,"tags":["jobs-board"]}'));
 
     await expect(revalidateWeb()).resolves.toBe('ok');
@@ -64,7 +64,9 @@ describe('revalidateWeb', () => {
     expect(url).toBe('http://127.0.0.1:3000/api/revalidate');
     expect(init.method).toBe('POST');
     expect((init.headers as Record<string, string>)['x-revalidate-secret']).toBe('shared-secret');
-    expect(sentBody()).toEqual({});
+    // Both stated outright. The board tag no longer rides along on a posting's
+    // page, so the two answers are independent and neither is left to a default.
+    expect(sentBody()).toEqual({ jobIds: [], board: true });
     expect(init.signal).toBeInstanceOf(AbortSignal);
     expect(logged.at(-1)).toContain('jobs-board');
   });
@@ -74,7 +76,17 @@ describe('revalidateWeb', () => {
 
     await expect(revalidateWeb(['JR41912'])).resolves.toBe('ok');
 
-    expect(sentBody()).toEqual({ jobIds: ['JR41912'] });
+    expect(sentBody()).toEqual({ jobIds: ['JR41912'], board: true });
+  });
+
+  // The case the checksums make possible: some role pages are wrong and the
+  // listing is not, so the board is left alone.
+  it('can name roles while leaving the board standing', async () => {
+    fetchMock.mockResolvedValue(ok('{"revalidated":true}'));
+
+    await expect(revalidateWeb(['JR41912'], false)).resolves.toBe('ok');
+
+    expect(sentBody()).toEqual({ jobIds: ['JR41912'], board: false });
   });
 
   it('posts to REVALIDATE_URL when set', async () => {

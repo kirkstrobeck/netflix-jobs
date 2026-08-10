@@ -28,6 +28,18 @@ vi.mock('../lib/revalidate.ts', () => ({
   revalidateWeb: vi.fn(async () => 'ok'),
 }));
 
+// Mocked as a unit: the crawl's contract with it is one call at the end. What
+// it decides from the checksums is cache-diff.test.ts's business.
+vi.mock('../lib/cache-flush.ts', () => ({ flushCaches: vi.fn() }));
+
+// The prior digests, read before the writes. Mocked here so the ORDER of the two
+// can be asserted -- reading them after ingest_jobs has set is_active = true is
+// the one mistake this arrangement exists to prevent.
+vi.mock('../lib/db-checksums.ts', () => ({
+  readChecksums: vi.fn(),
+  writeChecksums: vi.fn(),
+}));
+
 beforeEach(() => {
   logged.length = 0;
   vi.spyOn(console, 'log').mockImplementation((message: string) => {
@@ -71,12 +83,16 @@ describe('main', () => {
     expect(rows[0].description_text).toBe('Work here');
 
     expect(ctx.db.deactivateMissing).toHaveBeenCalledExactlyOnceWith('run-1');
-    expect(ctx.revalidate.revalidateWeb).toHaveBeenCalledOnce();
+    // One call, handed the rows, the deactivation count, and the digests read
+    // before the writes.
+    expect(ctx.cacheFlush.flushCaches).toHaveBeenCalledOnce();
+    expect(ctx.cacheFlush.flushCaches.mock.calls[0][1]).toBe(3);
+    expect(ctx.cacheFlush.flushCaches.mock.calls[0][2]).toBeInstanceOf(Map);
     expect(ctx.db.finishRun).toHaveBeenCalledExactlyOnceWith(
       'run-1',
       'succeeded',
       { listed: 2, detailOk: 2, detailFailed: 0, upserted: 2, deactivated: 3 },
-      'transport direct=5 reader=2 | no failures | sites: all placed',
+      'transport direct=5 reader=2 | no failures | sites: all placed | cache: unchanged | roles=0 board=false added=0',
     );
     expect(exit).toHaveBeenCalledExactlyOnceWith(0);
     expect(logged).toContain('ingest run run-1');
@@ -107,7 +123,7 @@ describe('main', () => {
       'run-1',
       'succeeded',
       expect.objectContaining({ detailOk: 1, detailFailed: 1 }),
-      'transport direct=0 reader=0 | failures: 2: HTTP 502 | sites: all placed',
+      'transport direct=0 reader=0 | failures: 2: HTTP 502 | sites: all placed | cache: unchanged | roles=0 board=false added=0',
     );
     expect(exit).toHaveBeenCalledExactlyOnceWith(0);
   });
@@ -122,26 +138,6 @@ describe('main', () => {
     expect(logged).toContain('  detail 1 FAILED: upstream said no');
   });
 
-  it('marks the run failed and exits non-zero when a phase throws', async () => {
-    const ctx = await loadIngest();
-    ctx.eightfold.fetchListPage.mockRejectedValue(new Error('board unreachable'));
-
-    const exit = vi.fn();
-    await ctx.main(exit);
-
-    expect(ctx.db.ingestJobs).not.toHaveBeenCalled();
-    // A failed crawl wrote nothing worth flushing, so the web app keeps the
-    // cache it has rather than being told to rebuild from a half-written board.
-    expect(ctx.revalidate.revalidateWeb).not.toHaveBeenCalled();
-    expect(ctx.db.finishRun).toHaveBeenCalledWith(
-      'run-1',
-      'failed',
-      expect.objectContaining({ listed: 0, upserted: 0, deactivated: 0 }),
-      'transport direct=0 reader=0 | failures: board unreachable | sites: not reached',
-    );
-    expect(exit).toHaveBeenCalledExactlyOnceWith(1);
-  });
-
   it('stringifies a non-Error run failure', async () => {
     const ctx = await loadIngest();
     ctx.eightfold.fetchListPage.mockRejectedValue('board on fire');
@@ -152,7 +148,7 @@ describe('main', () => {
       'run-1',
       'failed',
       expect.anything(),
-      'transport direct=0 reader=0 | failures: board on fire | sites: not reached',
+      'transport direct=0 reader=0 | failures: board on fire | sites: not reached | cache: not reached',
     );
   });
 

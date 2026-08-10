@@ -26,9 +26,10 @@ import {
   upsertLocations,
   type JobRow,
 } from '../lib/db.ts';
+import { flushCaches } from '../lib/cache-flush.ts';
+import { readChecksums } from '../lib/db-checksums.ts';
 import { createSemaphore } from '../lib/semaphore.ts';
 import { mapPosition } from '../lib/map-position.ts';
-import { revalidateWeb } from '../lib/revalidate.ts';
 import { reportUnplaced } from '../lib/sites-report.ts';
 import { seedRows } from '../lib/sites.ts';
 
@@ -139,6 +140,7 @@ export async function main(
   const started = Date.now();
   let status = 'succeeded';
   let sites = 'sites: not reached';
+  let cache = 'cache: not reached';
 
   try {
     const positions = await enumeratePositions();
@@ -151,13 +153,22 @@ export async function main(
     console.log(`seeding ${await upsertLocations(seedRows())} locations`);
     sites = reportUnplaced(rows.map((row) => row.locations)).note;
 
+    // READ BEFORE THE WRITE, and the order is load-bearing: each stored digest
+    // carries whether its posting was on the board, and ingest_jobs sets
+    // is_active = true on conflict. Read after the write, a role that had been
+    // deactivated and has just come back reads as unchanged and flushes nothing.
+    const prior = await readChecksums();
+
     await writeRows(rows, runId);
     counts.deactivated = await deactivateMissing(runId);
 
-    // Last, and only on the path where every write landed: the web app's cache
-    // is keyed on the crawl, not on a clock. revalidateWeb never throws, so a
-    // web app that is down cannot demote a finished crawl to a failed run.
-    await revalidateWeb();
+    // Last, and only on the path where every write landed. The web app caches a
+    // finished render per posting and per facet combination, and only a tag can
+    // replace one -- so this compares what was just crawled against what the
+    // last crawl rendered and names exactly the tags that are now wrong. A run
+    // that changed nothing sends nothing. It never throws, so a web app that is
+    // down cannot demote a finished crawl to a failed run.
+    cache = (await flushCaches(rows, counts.deactivated, prior)).note;
   } catch (err) {
     status = 'failed';
     failures.push(err instanceof Error ? err.message : String(err));
@@ -169,6 +180,7 @@ export async function main(
     `transport direct=${transports.direct} reader=${transports.reader}`,
     failures.length > 0 ? `failures: ${failures.slice(0, 20).join('; ')}` : 'no failures',
     sites,
+    cache,
   ].join(' | ');
 
   await finishRun(runId, status, counts, notes);

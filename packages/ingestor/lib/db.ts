@@ -48,7 +48,7 @@ function serviceKey(): string {
   return process.env.SUPABASE_SERVICE_ROLE_KEY ?? DEFAULT_SERVICE_KEY;
 }
 
-function headers(extra: Record<string, string> = {}): Record<string, string> {
+export function authHeaders(extra: Record<string, string> = {}): Record<string, string> {
   const key = serviceKey();
   return {
     apikey: key,
@@ -65,7 +65,7 @@ async function request(
 ): Promise<unknown> {
   const res = await fetch(`${supabaseUrl()}${path}`, {
     ...init,
-    headers: headers(extraHeaders),
+    headers: authHeaders(extraHeaders),
   });
   const body = await res.text();
   if (!res.ok) throw new Error(`${init.method} ${path} -> ${res.status}: ${body}`);
@@ -167,7 +167,7 @@ export async function replaceJobSites(
 
 export async function countJobs(): Promise<number> {
   const res = await fetch(`${supabaseUrl()}/rest/v1/jobs?select=position_id`, {
-    headers: headers({ Prefer: 'count=exact', Range: '0-0' }),
+    headers: authHeaders({ Prefer: 'count=exact', Range: '0-0' }),
   });
   const range = res.headers.get('content-range') ?? '';
   return Number(range.split('/')[1] ?? 0);
