@@ -11,7 +11,8 @@ import type { Fix } from "@/lib/geo/fix";
  *   REVERSE   a position -> a place name. This is what would let the heading say
  *             "nearest to Beaverton, Oregon" instead of "nearest to you".
  *
- * Neither exists in this app today and no credential has been provisioned. The
+ * Neither is implemented and no credential has been provisioned, so no
+ * deployment names a provider and the switch below is off everywhere. The
  * geocoding service the reference implementation uses could not be identified
  * from in here -- that repository is not on this filesystem; see the report.
  *
@@ -36,9 +37,23 @@ import type { Fix } from "@/lib/geo/fix";
  * -city half of the location offer, and both call sites already handle null.
  */
 
-/** Configured when the provider and its credential are both present. */
+/**
+ * Configured when a provider has been named for this deployment.
+ *
+ * THE NAME IS PUBLIC, THE CREDENTIAL IS NOT
+ *
+ * This is read in the browser -- `placeName` is called from the nearest-sort
+ * hook -- so it cannot be the key, and deliberately is not. All the browser is
+ * allowed to know is whether a provider exists at all, which is the only thing
+ * it needs in order to decide between offering the feature and rendering it
+ * away. The key lives beside the route handler that will do the call.
+ *
+ * Unset is the deployed answer today, and an empty string counts as unset: that
+ * is what a deployment variable holds when it has been declared and never
+ * given a value, and it must not read as "yes, there is a geocoder".
+ */
 export function geocoderConfigured(): boolean {
-  return false;
+  return (process.env.NEXT_PUBLIC_GEOCODER ?? "").trim() !== "";
 }
 
 // Both entry points check `geocoderConfigured()` first and return null, so the
