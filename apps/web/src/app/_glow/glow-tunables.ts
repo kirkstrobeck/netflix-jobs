@@ -15,8 +15,31 @@ export const WIDTH_PCT_MAX = 141.14;
 export const HOP_DURATION_FAST_S = 7.98;
 export const HOP_DURATION_SLOW_S = 20.52;
 export const HOP_DURATION_FLOOR_S = 0.7;
-export const LOOP_DURATION_MIN_S = 207.69;
-export const LOOP_DURATION_MAX_S = 253.85;
+/**
+ * The two loops an orb's drift is composed from, in seconds — X first, then Y.
+ *
+ * There used to be ONE loop of 207–254s, written out as a keyframe stop per
+ * hop. A hop lasts about 2.3s, so that was ~100 stops per orb and ~9,900 stops
+ * in the sheet: 768KB of the 785KB it came to. The size of the stylesheet was
+ * the LENGTH of the loop, which is the wrong thing for it to be proportional
+ * to — none of those stops says anything the ones around it do not.
+ *
+ * The two axes are separate animations on two elements now — X on .glow__orb,
+ * Y on its ::before — and transforms multiply down the tree, so the orb's
+ * position is still their sum. What changes is when the pair REPEATS: not when
+ * either loop comes round, but when both do at once. `alternate` doubles each
+ * to ~44–56s and ~50–62s, no two orbs share a duration, and the two ranges do
+ * not overlap, so no orb's pair comes back into phase inside a session. That is
+ * a longer effective loop than the single one it replaces, from a fifth of the
+ * stops.
+ *
+ * Raise these and the sheet grows in step; each extra second of loop is another
+ * 0.43 of a stop per axis per orb.
+ */
+export const LOOP_X_MIN_S = 22.14;
+export const LOOP_X_MAX_S = 28.06;
+export const LOOP_Y_MIN_S = 25.31;
+export const LOOP_Y_MAX_S = 31.47;
 export const TRAVEL_X_MIN = 10;
 export const TRAVEL_X_MAX = 22;
 export const TRAVEL_Y_MIN = 6;

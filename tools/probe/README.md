@@ -28,6 +28,9 @@ Then:
 | `share.mjs`   | the share control's fallback chain, one stubbed browser per rung  |
 | `where.mjs`   | whether the country from /api/where moves the page or filters it  |
 | `wordmark.mjs`| whether both marks still point at the board after a facet tick     |
+| `first-paint.mjs` | what the render-blocking stylesheets cost first contentful paint |
+| `css-parse.mjs` | what a stylesheet costs the main thread, transfer excluded       |
+| `orbs.mjs`    | where the glow's hundred lights actually are, frame by frame     |
 
 `wordmark.mjs` is the one that has to be a browser. The marks are served by the
 `@header`/`@footer` slots, which do not re-render for the panel's pushState, so
@@ -43,6 +46,22 @@ lands. It sets `x-vercel-ip-country` per request, which is the only way to
 stand in for Vercel's edge from in here, and the `nfj_country=all` cookie,
 without which the proxy's country hop never lets the cleared state render at
 all.
+
+`first-paint.mjs` and `css-parse.mjs` are the pair that settled the glow. The
+first loads a real page N times cold and reports FCP, optionally over a slow 4G
+pipe and optionally with one sheet aborted, so the cost of a single stylesheet
+is a subtraction rather than an argument. The second takes the transfer out
+entirely -- it hands the sheet to a blank page as a `<style>` and stops the
+clock once the engine has resolved it -- which is the number that does not move
+when the network does. On localhost the first measures almost nothing but the
+second; over 4G it is the other way round, and both were needed to say which
+half of 785KB was hurting.
+
+`orbs.mjs` reads the glow's lights through `translate`, not `transform`:
+the drift is two individual transform properties on two elements -- the frame
+and its `::before` -- and `transform` on both of them is still `none`. It
+drives the animations to chosen times and reports the envelope, which is how the
+top edge is held to TOP_CEILING in a real engine rather than only in a unit test.
 
 `label.mjs` is `cta.mjs`'s other half. `cta.mjs` asks whether a control has an
 edge against what is behind it; this asks whether the text on it can be read,
@@ -61,7 +80,8 @@ reproduces it — at 1280 with 15px reserved, the home masthead's band reads 126
 (the page box, no overhang) and the job hero's 100vw backdrop reads 1280, 15px
 past the page and saved only by `.job-page`'s `overflow-x: clip`.
 
-`cta.mjs` is the other one worth keeping. A screenshot answers for one frame,
+`cta.mjs` is the other one worth keeping. Its pixel reading lives in
+`frame-pixels.mjs`, which is shared rather than inlined. A screenshot answers for one frame,
 and the hero's backdrop is fifteen bars walking on loops of up to 254 seconds —
 so it drives every time-based animation to a chosen `currentTime`, samples the
 pixels around the control, and reports the best and worst frames rather than

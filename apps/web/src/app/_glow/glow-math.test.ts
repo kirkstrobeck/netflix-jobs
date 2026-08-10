@@ -1,11 +1,29 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  buildOrbPath,
+  buildWalk,
   hopDuration,
+  LOOP_Y_MAX_S,
   mix,
   ORB_COUNT,
+  TRAVEL_Y_MAX,
+  TRAVEL_Y_MIN,
+  type WalkSpec,
 } from "@/app/_glow/glow-math";
+
+// One axis of one orb, with only the parts a case cares about spelled out.
+const walk = (over: Partial<WalkSpec> = {}) =>
+  buildWalk({
+    seed: 0,
+    axis: 1,
+    size: 0.5,
+    lo: 30,
+    hi: 90,
+    travelMin: TRAVEL_Y_MIN,
+    travelMax: TRAVEL_Y_MAX,
+    target: LOOP_Y_MAX_S,
+    ...over,
+  });
 
 describe("mix", () => {
   it("stays within the requested range", () => {
@@ -25,12 +43,12 @@ describe("hopDuration", () => {
   });
 });
 
-describe("buildOrbPath", () => {
+describe("buildWalk", () => {
   it("builds closed loops for many seeds and sizes", () => {
-    const paths = Array.from({ length: ORB_COUNT }, (_, i) =>
-      buildOrbPath(i, (i % 10) / 10, 0.4, 200 + i, 30, 90),
+    const walks = Array.from({ length: ORB_COUNT }, (_, i) =>
+      walk({ seed: i, size: (i % 10) / 10 }),
     );
-    paths.forEach((path) => {
+    walks.forEach((path) => {
       expect(path.stops[0].at).toBe(0);
       expect(path.stops[path.stops.length - 1].at).toBe(100);
       expect(path.duration).toBeGreaterThan(0);
@@ -38,9 +56,29 @@ describe("buildOrbPath", () => {
     });
   });
 
-  it("covers bounce and direction flips with tight vertical bounds", () => {
-    const path = buildOrbPath(7, 0.5, 0.5, 100, 40, 45);
-    expect(path.stops.length).toBeGreaterThan(5);
+  // The sheet is the sum of these. A walk of 26 seconds at roughly two seconds
+  // a hop is a dozen or so stops, and that ratio is the whole reason the
+  // stylesheet is 156KB instead of 785KB -- if a walk ever came back with a
+  // hundred stops again, so would the file.
+  it("spends about a dozen stops on a loop, not a hundred", () => {
+    const counts = Array.from({ length: ORB_COUNT }, (_, i) =>
+      walk({ seed: i, size: (i % 10) / 10 }).stops.length,
+    );
+
+    expect(Math.max(...counts)).toBeLessThan(40);
+    expect(Math.min(...counts)).toBeGreaterThan(3);
+  });
+
+  it("covers bounce and direction flips with tight bounds", () => {
+    expect(walk({ seed: 7, lo: 40, hi: 45 }).stops.length).toBeGreaterThan(5);
+  });
+
+  // Only the X walk carries the flame, and it carries one reading per stop.
+  it("puts an opacity on the stops that were asked for one", () => {
+    expect(walk().stops.every((s) => s.opacity === undefined)).toBe(true);
+    expect(walk({ peak: 0.4 }).stops.every((s) => typeof s.opacity === "number")).toBe(
+      true,
+    );
   });
 
   // Regression: the bounce used to reverse without clamping, so a walk that
@@ -56,17 +94,19 @@ describe("buildOrbPath", () => {
       { topMin: 73, topMax: 92 },
     ];
 
-    // The stop stores `bottom` as (top - height) rounded to 2dp, so adding
-    // height back reintroduces a float tail: an orb clamped exactly to 55.4
-    // reconstructs as 55.400000000000006. Hence the epsilon -- it is measurement
-    // noise from this reconstruction, not slack in the clamp.
+    // The walk rounds each hop to 2dp, so a value clamped exactly to 55.4 can
+    // come back as 55.400000000000006. Hence the epsilon -- it is rounding
+    // noise, not slack in the clamp.
     const EPSILON = 0.001;
 
     cases.forEach(({ topMin, topMax }) => {
       Array.from({ length: 25 }, (_, i) => {
-        const height = 200 + i;
-        const path = buildOrbPath(i, (i % 10) / 10, 0.4, height, topMin, topMax);
-        const tops = path.stops.map((s) => s.bottom + height);
+        const tops = walk({
+          seed: i,
+          size: (i % 10) / 10,
+          lo: topMin,
+          hi: topMax,
+        }).stops.map((s) => s.value);
 
         expect(Math.max(...tops)).toBeLessThanOrEqual(topMax + EPSILON);
         expect(Math.min(...tops)).toBeGreaterThanOrEqual(topMin - EPSILON);
@@ -75,9 +115,9 @@ describe("buildOrbPath", () => {
   });
 
   it("covers opposite initial directions across seeds", () => {
-    const lefts = Array.from({ length: 20 }, (_, i) =>
-      buildOrbPath(i, 0.2, 0.3, 150, 35, 80).stops[1].left,
+    const seconds = Array.from({ length: 20 }, (_, i) =>
+      walk({ seed: i, lo: 35, hi: 80 }).stops[1].value,
     );
-    expect(new Set(lefts.map((n) => Math.sign(n - 50))).size).toBeGreaterThan(0);
+    expect(new Set(seconds.map((n) => Math.sign(n - 50))).size).toBeGreaterThan(0);
   });
 });

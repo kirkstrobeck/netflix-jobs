@@ -18,14 +18,6 @@ import {
   HOP_DURATION_FAST_S,
   HOP_DURATION_FLOOR_S,
   HOP_DURATION_SLOW_S,
-  LOOP_DURATION_MAX_S,
-  LOOP_DURATION_MIN_S,
-  TRAVEL_X_MAX,
-  TRAVEL_X_MIN,
-  TRAVEL_Y_MAX,
-  TRAVEL_Y_MIN,
-  WALK_X_MAX,
-  WALK_X_MIN,
 } from "@/app/_glow/glow-tunables";
 
 export function mix(i: number, a: number, b: number, salt: number): number {
@@ -34,11 +26,25 @@ export function mix(i: number, a: number, b: number, salt: number): number {
   return a + (b - a) * u;
 }
 
-export type OrbStop = {
-  at: number;
-  left: number;
-  bottom: number;
-  opacity: number;
+/**
+ * One stop of one axis. `value` is cqw along X and cqh up Y; `opacity` is on
+ * the X stops only, because that is the one track carrying it.
+ */
+export type WalkStop = { at: number; value: number; opacity?: number };
+
+export type Walk = { duration: number; stops: WalkStop[] };
+
+/** Which walk to build. `peak` opts the stops into carrying the flame. */
+export type WalkSpec = {
+  seed: number;
+  axis: 0 | 1;
+  size: number;
+  lo: number;
+  hi: number;
+  travelMin: number;
+  travelMax: number;
+  target: number;
+  peak?: number;
 };
 
 function clamp(n: number, lo: number, hi: number): number {
@@ -93,11 +99,9 @@ function nudge(
 type Acc = {
   time: number;
   leg: number;
-  left: number;
-  top: number;
-  dirX: 1 | -1;
-  dirY: 1 | -1;
-  stops: OrbStop[];
+  at: number;
+  dir: 1 | -1;
+  stops: WalkStop[];
 };
 
 function flameOpacity(i: number, leg: number, peak: number): number {
@@ -105,80 +109,83 @@ function flameOpacity(i: number, leg: number, peak: number): number {
     Math.sin(leg * 0.7 + i * 1.3) * 0.55 + Math.sin(leg * 1.9 + i * 0.4) * 0.45,
   );
   const floor = mix(i, 0.2, 0.45, 33 + (leg % 5));
-  return +(peak * (floor + (1 - floor) * pulse)).toFixed(4);
+  return +(peak * (floor + (1 - floor) * pulse)).toFixed(3);
 }
 
-function step(
-  i: number,
-  size: number,
-  peak: number,
-  height: number,
-  topMin: number,
-  topMax: number,
-  target: number,
-  acc: Acc,
-): Acc {
-  if (acc.time >= target) {
+// The flame rides the X walk rather than a track of its own. An element takes
+// several animations at once as long as they touch different properties, so a
+// third one here would cost a third @keyframes block to say what these stops
+// have room for -- and the pulse is per-leg, which is the rhythm this walk
+// already keeps.
+function walkStop(spec: WalkSpec, leg: number, at: number, value: number): WalkStop {
+  if (spec.peak === undefined) {
+    return { at, value };
+  }
+
+  return { at, value, opacity: flameOpacity(spec.seed, leg, spec.peak) };
+}
+
+function step(spec: WalkSpec, acc: Acc): Acc {
+  if (acc.time >= spec.target) {
     return acc;
   }
-  const travelX = +mix(i * 7 + acc.leg * 13, TRAVEL_X_MIN, TRAVEL_X_MAX, 12).toFixed(2);
-  const travelY = +mix(i * 11 + acc.leg * 19, TRAVEL_Y_MIN, TRAVEL_Y_MAX, 16).toFixed(2);
-  const x = nudge(acc.left, nextDir(i, acc.leg, 0, acc.dirX), travelX, WALK_X_MIN, WALK_X_MAX);
-  const y = nudge(acc.top, nextDir(i, acc.leg, 1, acc.dirY), travelY, topMin, topMax);
-  const dur = hopDuration(i, size, Math.max(travelX, travelY));
-  const pct = (s: number) => +((s / target) * 100).toFixed(2);
-  return step(i, size, peak, height, topMin, topMax, target, {
-    time: acc.time + dur,
+
+  const travel = +mix(
+    spec.seed * (7 + spec.axis * 4) + acc.leg * (13 + spec.axis * 6),
+    spec.travelMin,
+    spec.travelMax,
+    12 + spec.axis * 4,
+  ).toFixed(2);
+  const next = nudge(
+    acc.at,
+    nextDir(spec.seed, acc.leg, spec.axis, acc.dir),
+    travel,
+    spec.lo,
+    spec.hi,
+  );
+  const time = acc.time + hopDuration(spec.seed, spec.size, travel);
+
+  return step(spec, {
+    time,
     leg: acc.leg + 1,
-    left: x.to,
-    top: y.to,
-    dirX: x.dir,
-    dirY: y.dir,
+    at: next.to,
+    dir: next.dir,
     stops: [
       ...acc.stops,
-      {
-        at: pct(acc.time + dur),
-        left: x.to,
-        bottom: +(y.to - height).toFixed(2),
-        opacity: flameOpacity(i, acc.leg, peak),
-      },
+      walkStop(spec, acc.leg, +((time / spec.target) * 100).toFixed(2), next.to),
     ],
   });
 }
 
-export function buildOrbPath(
-  i: number,
-  size: number,
-  peak: number,
-  height: number,
-  topMin: number,
-  topMax: number,
-): { duration: number; stops: OrbStop[] } {
-  const target = mix(i, LOOP_DURATION_MIN_S, LOOP_DURATION_MAX_S, 4);
-  const startLeft = +mix(i, -5, 105, 6).toFixed(2);
-  const startTop = +mix(i, topMin, topMax, 15).toFixed(2);
-  const dirX: 1 | -1 = mix(i, 0, 1, 50) >= 0.5 ? 1 : -1;
-  const dirY: 1 | -1 = mix(i, 0, 1, 51) >= 0.5 ? 1 : -1;
-  const first: OrbStop = {
-    at: 0,
-    left: startLeft,
-    bottom: +(startTop - height).toFixed(2),
-    opacity: flameOpacity(i, 0, peak),
-  };
-  const acc = step(i, size, peak, height, topMin, topMax, target, {
+/**
+ * One axis of one orb's drift, as a loop of `target` seconds.
+ *
+ * Both axes are the same walk with different bounds, so they are the same
+ * function: a bounded hop that bounces off its own limits. What used to make
+ * this one function do two axes at once was the belief that a stop has to carry
+ * a whole position. It does not -- the two loops live on two elements and
+ * multiply, so each may repeat on its own schedule, which is the entire reason
+ * the sheet is a fifth of the size.
+ *
+ * Stops land on hop boundaries, and the last is dragged to exactly 100% so the
+ * loop closes on a stop rather than a fraction past one.
+ */
+export function buildWalk(spec: WalkSpec): Walk {
+  const start = +mix(spec.seed, spec.lo, spec.hi, 6 + spec.axis * 9).toFixed(2);
+  const dir: 1 | -1 = mix(spec.seed, 0, 1, 50 + spec.axis) >= 0.5 ? 1 : -1;
+  const acc = step(spec, {
     time: 0,
     leg: 0,
-    left: startLeft,
-    top: startTop,
-    dirX,
-    dirY,
-    stops: [first],
+    at: start,
+    dir,
+    stops: [walkStop(spec, 0, 0, start)],
   });
   const scale = acc.stops[acc.stops.length - 1].at;
   const normalized = acc.stops.map((s) => ({
     ...s,
     at: +((s.at / scale) * 100).toFixed(2),
   }));
+
   return {
     duration: +acc.time.toFixed(2),
     stops: [

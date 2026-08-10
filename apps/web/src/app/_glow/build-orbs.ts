@@ -1,5 +1,5 @@
 import {
-  buildOrbPath,
+  buildWalk,
   HEIGHT_EXTRA_MAX,
   mix,
   OPACITY_MAX,
@@ -14,19 +14,38 @@ import {
   WIDTH_PCT_MIN,
   WIDTH_REM_MAX,
   WIDTH_REM_MIN,
+  LOOP_X_MAX_S,
+  LOOP_X_MIN_S,
+  LOOP_Y_MAX_S,
+  LOOP_Y_MIN_S,
+  TRAVEL_X_MAX,
+  TRAVEL_X_MIN,
+  TRAVEL_Y_MAX,
+  TRAVEL_Y_MIN,
+  WALK_X_MAX,
+  WALK_X_MIN,
   Y_SPAN_MAX,
   Y_SPAN_MIN,
-  type OrbStop,
+  type Walk,
 } from "@/app/_glow/glow-math";
 import { uniquify } from "@/app/_glow/uniquify";
+
+/**
+ * One orb: a size, and the two loops its drift is the sum of.
+ *
+ * `x` is written on .glow__orb and `y` on its ::before, so the browser
+ * multiplies the two transforms rather than the generator adding them into one
+ * list of stops. Each carries its own duration and its own negative delay, and
+ * neither has to be a whole number of the other.
+ */
+export type Track = Walk & { delay: number };
 
 export type Orb = {
   width: string;
   height: number;
-  duration: number;
-  delay: number;
   ease: string;
-  stops: OrbStop[];
+  x: Track;
+  y: Track;
 };
 
 export function clamp01(n: number): number {
@@ -92,23 +111,46 @@ export function buildOrbs(): Orb[] {
 
   return Array.from({ length: ORB_COUNT }, (_, i) => {
     const size = sizeNorm(widthRems[i], widthPcts[i], i % 5 === 0);
-    const path = buildOrbPath(
-      i,
-      size,
-      peaks[i],
-      heights[i],
-      topMins[i],
-      topMaxes[i],
-    );
+    const common = { seed: i, size };
+    const x = buildWalk({
+      ...common,
+      axis: 0,
+      lo: WALK_X_MIN,
+      hi: WALK_X_MAX,
+      travelMin: TRAVEL_X_MIN,
+      travelMax: TRAVEL_X_MAX,
+      target: mix(i, LOOP_X_MIN_S, LOOP_X_MAX_S, 4),
+      peak: peaks[i],
+    });
+    // The Y walk is built in top edges and stored as the box's BOTTOM edge, the
+    // way the keyframe has to say it: the orb sits at bottom: 0 and is
+    // `height` tall, so putting its top edge at t means pushing the box down by
+    // height - t. Subtracting here keeps that arithmetic in one place.
+    const y = buildWalk({
+      ...common,
+      axis: 1,
+      lo: topMins[i],
+      hi: topMaxes[i],
+      travelMin: TRAVEL_Y_MIN,
+      travelMax: TRAVEL_Y_MAX,
+      target: mix(i, LOOP_Y_MIN_S, LOOP_Y_MAX_S, 9),
+    });
     const width =
       i % 5 === 0 ? `${widthPcts[i]}%` : `${widthRems[i].toFixed(2)}rem`;
+
     return {
       width,
       height: heights[i],
-      duration: path.duration,
-      delay: +(-mix(i, 0, path.duration, 5)).toFixed(2),
       ease: easings[i],
-      stops: path.stops,
+      x: { ...x, delay: +(-mix(i, 0, x.duration, 5)).toFixed(2) },
+      y: {
+        ...y,
+        delay: +(-mix(i, 0, y.duration, 8)).toFixed(2),
+        stops: y.stops.map((stop) => ({
+          ...stop,
+          value: +(stop.value - heights[i]).toFixed(2),
+        })),
+      },
     };
   });
 }

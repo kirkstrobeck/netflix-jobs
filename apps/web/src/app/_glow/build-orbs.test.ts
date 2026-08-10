@@ -3,12 +3,12 @@ import { describe, expect, it } from "vitest";
 import { buildOrbs, clamp01 } from "@/app/_glow/build-orbs";
 import { ORB_COUNT, TOP_CEILING, TOP_FLOOR } from "@/app/_glow/glow-math";
 
-// An orb's box top edge, in cqh above the band's bottom. The keyframe carries
-// `bottom` (the box's bottom edge) and the rule carries `height`, both as a
-// percentage of the band, so the top edge is their sum. 100 is the band's own
-// top edge -- reach it and .glow's overflow: hidden cuts the orb off flat.
+// An orb's box top edge, in cqh above the band's bottom. The Y track carries
+// the box's BOTTOM edge and the rule carries `height`, both as a percentage of
+// the band, so the top edge is their sum. 100 is the band's own top edge --
+// reach it and .glow's overflow: hidden cuts the orb off flat.
 function boxTopEdges(orb: ReturnType<typeof buildOrbs>[number]): number[] {
-  return orb.stops.map((stop) => stop.bottom + orb.height);
+  return orb.y.stops.map((stop) => stop.value + orb.height);
 }
 
 describe("clamp01", () => {
@@ -27,9 +27,14 @@ describe("buildOrbs", () => {
     expect(orbs.some((o) => o.width.endsWith("rem"))).toBe(true);
     orbs.forEach((orb) => {
       expect(orb.ease.startsWith("cubic-bezier(")).toBe(true);
-      expect(orb.stops.length).toBeGreaterThan(1);
-      expect(orb.duration).toBeGreaterThan(0);
-      expect(orb.delay).toBeLessThanOrEqual(0);
+      [orb.x, orb.y].forEach((track) => {
+        expect(track.stops.length).toBeGreaterThan(1);
+        expect(track.duration).toBeGreaterThan(0);
+        expect(track.delay).toBeLessThanOrEqual(0);
+      });
+      // Two loops that never come round together is the whole trick. Sharing a
+      // duration would put the orb back on a single loop as long as one of them.
+      expect(orb.x.duration).not.toBe(orb.y.duration);
     });
   });
 
