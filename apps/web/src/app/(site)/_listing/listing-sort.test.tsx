@@ -77,22 +77,26 @@ describe("the sort control", () => {
     mount();
     await board();
 
-    const header = screen.getByRole("heading", { level: 2, name: "Newest open roles" })
+    const header = screen.getByRole("heading", { level: 2, name: "Open roles" })
       .parentElement;
 
     expect(header?.querySelector(".sort")).not.toBeNull();
     expect(screen.getByRole("group", { name: "Sort" })).toBeTruthy();
   });
 
-  // The heading carries the sort. "Open roles" over a newest-first list is a
-  // heading declining to say the one thing it knows.
-  it("states the order in the heading, keeping the anchor id fixed", async () => {
+  // THE HEADING DOES NOT CARRY THE SORT.
+  //
+  // It used to: a newest list was headed "Newest open roles". That prefix rode
+  // on every default first load, captioning the control six inches to its right.
+  // The anchor id is the half that was always fixed and still is.
+  it("names the column without stating the order, keeping the anchor id fixed", async () => {
     mount();
     await board();
 
-    const heading = screen.getByRole("heading", { level: 2, name: "Newest open roles" });
+    const heading = screen.getByRole("heading", { level: 2, name: "Open roles" });
 
     expect(heading.id).toBe("open-roles");
+    expect(heading.textContent).not.toContain("Newest");
   });
 
   it("says nothing about distance on a newest first load", async () => {

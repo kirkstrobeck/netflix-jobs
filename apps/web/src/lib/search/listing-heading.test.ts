@@ -3,34 +3,67 @@ import { describe, expect, it } from "vitest";
 import { listingHeading } from "@/lib/search/listing-heading";
 
 /**
- * The heading carries the sort, so the thing worth pinning is that its grammar
- * never overstates the precision it was built from -- and, since the country
- * callout was removed, that it never names a country again.
+ * The heading does not carry the sort, so what is worth pinning is the absence
+ * of the prefix -- and that its grammar never overstates the precision it was
+ * built from, nor names a country again.
  */
 describe("listingHeading", () => {
-  it("states the order on a newest list, whatever place is known", () => {
-    expect(listingHeading("newest", null)).toBe("Newest open roles");
-    expect(listingHeading("newest", { precision: "country", code: "JP", name: "Japan" })).toBe(
-      "Newest open roles",
-    );
+  it("says a bare Open roles when nowhere is known", () => {
+    expect(listingHeading(null)).toBe("Open roles");
   });
 
   it("says nearest to a place only once there is a real position", () => {
-    expect(
-      listingHeading("nearest", { precision: "device", name: "Beaverton, Oregon" }),
-    ).toBe("Open roles nearest to Beaverton, Oregon");
+    expect(listingHeading({ precision: "device", name: "Beaverton, Oregon" })).toBe(
+      "Open roles nearest to Beaverton, Oregon",
+    );
   });
 
   // No geocoder is configured, so a device fix has no name. "you" is true and
   // claims exactly what a position tells us; inventing a city would not be.
   it("falls back to you rather than naming a place it cannot name", () => {
-    expect(listingHeading("nearest", { precision: "device", name: null })).toBe(
+    expect(listingHeading({ precision: "device", name: null })).toBe(
       "Open roles nearest to you",
     );
   });
+});
 
-  it("claims nothing when nearest is asked for and nowhere is known", () => {
-    expect(listingHeading("nearest", null)).toBe("Open roles");
+/**
+ * THE SORT PREFIX THAT WAS REMOVED, PINNED SO IT CANNOT COME BACK.
+ *
+ * "Newest open roles" was the heading of every unsorted first load, which is to
+ * say of the default board. It is gone, and the strongest guarantee available is
+ * structural: `sort` is not an argument any more, so there is no value anyone can
+ * pass that reintroduces a prefix. These assertions are the behavioural half --
+ * every heading this function can produce, checked for the word.
+ */
+describe("the sort the heading no longer states", () => {
+  const every = [
+    listingHeading(null),
+    listingHeading({ precision: "country", code: "US", name: "United States" }),
+    listingHeading({ precision: "device", name: null }),
+    listingHeading({ precision: "device", name: "Beaverton, Oregon" }),
+  ];
+
+  it("never says Newest, in any state", () => {
+    for (const heading of every) {
+      expect(heading).not.toContain("Newest");
+      expect(heading).not.toContain("newest");
+    }
+  });
+
+  // Not just the newest wording: no heading is allowed to OPEN with anything but
+  // the two words the column is called. A future sort mode adding "Closest open
+  // roles" or "Relevant open roles" fails here.
+  it("opens with Open roles, whatever else it goes on to say", () => {
+    for (const heading of every) {
+      expect(heading.startsWith("Open roles")).toBe(true);
+    }
+  });
+
+  // The one argument it does take cannot be a sort mode by construction, so the
+  // signature itself is the regression. This fails to compile if `sort` returns.
+  it("takes a place and nothing else", () => {
+    expect(listingHeading).toHaveLength(1);
   });
 });
 
@@ -54,21 +87,21 @@ describe("the country the heading no longer names", () => {
   const ticked = { precision: "country", code: "US", name: "United States" } as const;
 
   it("says a bare Open roles for a country the visitor ticked", () => {
-    expect(listingHeading("nearest", ticked)).toBe("Open roles");
+    expect(listingHeading(ticked)).toBe("Open roles");
   });
 
   it("says a bare Open roles when nowhere is known at all", () => {
-    expect(listingHeading("nearest", null)).toBe("Open roles");
+    expect(listingHeading(null)).toBe("Open roles");
   });
 
   // Both old sentences at once, including the article the country tier used to
   // add for four of the board's twenty-two countries.
   it("names no country, with or without its article", () => {
     const every = [
-      listingHeading("nearest", ticked),
-      listingHeading("nearest", null),
-      listingHeading("nearest", { precision: "country", code: "JP", name: "Japan" }),
-      listingHeading("nearest", { precision: "country", code: "GB", name: "United Kingdom" }),
+      listingHeading(ticked),
+      listingHeading(null),
+      listingHeading({ precision: "country", code: "JP", name: "Japan" }),
+      listingHeading({ precision: "country", code: "GB", name: "United Kingdom" }),
     ];
 
     for (const heading of every) {

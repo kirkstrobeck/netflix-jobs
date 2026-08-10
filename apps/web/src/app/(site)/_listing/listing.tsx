@@ -44,7 +44,7 @@ export function Listing({ boardVersion, initialQuery, initialView }: ListingProp
   // only once a fix has landed. See heading-place.ts for why that split is what
   // keeps the heading out of the cache key.
   const place = headingPlace(query, view.facets.country, nearest);
-  const heading = listingHeading(query.sort, place);
+  const heading = listingHeading(place);
 
   return (
     <NavigateProvider value={navigate}>
@@ -68,10 +68,13 @@ export function Listing({ boardVersion, initialQuery, initialView }: ListingProp
 
                 THE ID IS FIXED; THE TEXT IS NOT.
 
-                This heading carries the sort -- "Newest open roles", "Open
-                roles", "Open roles nearest to you" -- instead of a separate
-                status line under it restating what the list is. Two things it
-                is load-bearing for survive that:
+                The heading does NOT carry the sort. It is "Open roles", and the
+                only thing that ever lengthens it is a device position that has
+                actually landed -- "Open roles nearest to you". The sort lives in
+                the control on this same line, which is a thing you can read AND
+                change; a prefix restating it was a caption on the widget six
+                inches to its right. Two things it is load-bearing for survive
+                that:
 
                 the id never changes with the wording, so #open-roles keeps
                 landing here from every pager link; and the enable-location offer
