@@ -113,21 +113,22 @@ describe("the sort control", () => {
   // The shared-link case. The URL asks for Nearest, no permission has been
   // given, so nothing is asked of the device -- and the list is the roles in
   // the country the URL names, which is a real answer to "nearest" at the
-  // precision we actually have. The heading states that country as a country.
-  it("names the country tier when a link arrives already asking for nearest", async () => {
+  // precision we actually have. The heading does not restate that country: the
+  // URL carries it and the facets panel shows it ticked.
+  it("leaves the heading plain when a link arrives already asking for nearest", async () => {
     mount({ ...EMPTY_QUERY, sort: "nearest" });
     await board();
 
     expect(sortOption("Nearest").getAttribute("aria-current")).toBe("true");
-    expect(
-      screen.getByRole("heading", { level: 2, name: "Open roles in the United States" }),
-    ).toBeTruthy();
+    expect(screen.getByRole("heading", { level: 2, name: "Open roles" })).toBeTruthy();
     expect(titles()[0]).toBe("Role 0");
   });
 
   // The grammar has to be true at the tier. "nearest to the United States" is
   // nonsense -- a country is not a point -- and it is exactly what one shared
-  // sentence across all three tiers would produce.
+  // sentence across all three tiers would produce. Removing the country from
+  // the copy settled it, so the assertion is now that no country is there at
+  // all.
   it("never claims to be nearest TO a country", async () => {
     mount({ ...EMPTY_QUERY, sort: "nearest" });
     await board();
@@ -135,6 +136,7 @@ describe("the sort control", () => {
     const heading = screen.getByRole("heading", { level: 2, name: /Open roles/ });
 
     expect(heading.textContent).not.toContain("nearest to");
+    expect(heading.textContent).not.toContain("United States");
   });
 
   it("offers to sharpen the order instead of apologising for it", async () => {

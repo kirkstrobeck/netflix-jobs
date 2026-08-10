@@ -14,18 +14,21 @@ vi.mock("next/navigation", async () => {
 });
 
 /**
- * The tier that names a place and filters nothing.
+ * The tier that names a place and filters nothing -- now that it names nothing
+ * either.
  *
  * A visitor who cleared the country and asked for Nearest has answered
  * "everywhere" and given us no position. The edge still knows which country the
- * request came from, so the heading may SAY it -- but the list is every open
- * role, and a heading reading "Open roles in the United States" over twenty-six
- * roles in two countries is a filter the visitor can read and believe and that
- * is not there.
+ * request came from, and the heading used to say so in a clause of its own. The
+ * clause is gone: the URL already carries the country wherever there is one to
+ * carry, and the facets panel already shows it, so the heading was restating a
+ * filter rather than adding anything.
  *
- * So the clause is a separate element rather than a longer string: at 320px the
- * whole sentence wraps to three lines and takes the list down the page with it,
- * and jobs-listing.css drops the clause rather than the heading.
+ * What still matters here is that the answer from /api/where cannot leak into
+ * the heading OR into the list. A heading reading "Open roles in the United
+ * States" over twenty-six roles in two countries was a filter the visitor could
+ * read and believe and that was not there; the fix removed the sentence, and
+ * these tests are what keep it removed.
  */
 
 // One role in Tokyo and 25 in the United States, the Tokyo one first so it is
@@ -79,59 +82,53 @@ async function mount() {
 // The results heading specifically -- the facets panel has an h2 of its own.
 const title = () => document.querySelector(".listing-title")!;
 
+// The answer has landed and been given every chance to reach the heading.
+async function settle() {
+  await waitFor(() => expect(fetch).toHaveBeenCalled());
+  await act(async () => undefined);
+}
+
 describe("the heading when the edge knows the country and the URL does not", () => {
-  it("names the country as a fact about the reader, not about the list", async () => {
+  it("stays a bare Open roles rather than naming the country", async () => {
     respond("US");
     await mount();
+    await settle();
 
-    await waitFor(() =>
-      expect(title().textContent).toBe("Open roles — you are in the United States"),
-    );
+    expect(title().textContent).toBe("Open roles");
   });
 
-  // The clause is added to the lead, never a second copy of it. A stylesheet
-  // that never arrives has to show the long sentence, not the word twice.
-  it("writes 'Open roles' once, in a clause the stylesheet is allowed to drop", async () => {
+  // The clause was a separate element so a media query could drop it on a
+  // narrow screen. With the copy gone there is nothing to drop, and the heading
+  // is a single text node again.
+  it("leaves no clause element behind for a stylesheet to hide", async () => {
     respond("US");
     await mount();
-
-    await waitFor(() =>
-      expect(document.querySelector(".listing-title__where")).toBeTruthy(),
-    );
+    await settle();
 
     const heading = title();
 
+    expect(heading.querySelector(".listing-title__where")).toBeNull();
     expect(heading.textContent?.match(/Open roles/g)).toHaveLength(1);
-    expect(heading.querySelector(".listing-title__where")?.textContent).toBe(
-      " — you are in the United States",
-    );
   });
 
   it("leaves every role on the board, including the ones in other countries", async () => {
     respond("US");
     await mount();
-
-    await waitFor(() =>
-      expect(document.querySelector(".listing-title__where")).toBeTruthy(),
-    );
+    await settle();
 
     expect(screen.getByRole("heading", { level: 3, name: "Tokyo role" })).toBeTruthy();
   });
 
   /**
-   * The fail-closed path. The facet list only names countries this board hires
-   * in, so a request placed somewhere with no roles has nothing to be called --
-   * and the heading stays plain rather than naming a country the board has
-   * never heard of.
+   * The fail-closed path, which the removal made indistinguishable from the
+   * happy one. A country with no roles on this board never had anything to be
+   * called; now neither does a country that has them.
    */
-  it("says nothing when the country it was told has no roles on this board", async () => {
+  it("says the same thing when the country it was told has no roles here", async () => {
     respond("BR");
     await mount();
-
-    await waitFor(() => expect(fetch).toHaveBeenCalled());
-    await act(async () => undefined);
+    await settle();
 
     expect(title().textContent).toBe("Open roles");
-    expect(document.querySelector(".listing-title__where")).toBeNull();
   });
 });

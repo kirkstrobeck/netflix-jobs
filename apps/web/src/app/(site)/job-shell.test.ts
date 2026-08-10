@@ -93,23 +93,21 @@ describe("line balancing", () => {
 });
 
 /**
- * THE CLAUSE THAT ARRIVES AFTER PAINT.
+ * THE CLAUSE THAT USED TO ARRIVE AFTER PAINT.
  *
- * GET /api/where lands a country into the results heading seconds after the
- * page. This label shares its line with the sort control, so it is 134px wide
- * at a 320px viewport and 189px at 375px -- measured against the running page
- * -- and "Open roles — you are in the United States" (387px) is three lines
- * there against one from 640px up. A heading that grows two lines when the
- * answer lands takes the whole list down with it.
+ * GET /api/where landed a country into the results heading seconds after the
+ * page, in a clause of its own. This label shares its line with the sort
+ * control, so it is 134px wide at a 320px viewport -- measured against the
+ * running page -- and "Open roles — you are in the United States" (387px) was
+ * three lines there, which is why the stylesheet hid it below 42rem.
  *
- * So the clause is hidden where it does not fit, rather than the heading
- * reserving three lines from first paint: reserving would spend a permanent
- * band of empty space above every phone's results on a refinement that, in the
- * fail-closed case this tier is built around, never arrives.
+ * The clause was removed from the copy: the URL already carries the country and
+ * the facets panel already shows it ticked. The rule that hid it went with it,
+ * and this test is what keeps a heading that can grow a line after paint from
+ * coming back with it.
  */
-describe("a refinement that cannot move the page", () => {
-  it("hides the where-clause below the width it fits on one line", () => {
-    expect(rule(listing, ".listing-title__where")).toContain("display: none");
-    expect(listing).toContain("@media (min-width: 42rem)");
+describe("a heading that cannot move the page", () => {
+  it("has no after-paint clause left to hide", () => {
+    expect(listing).not.toContain(".listing-title__where");
   });
 });

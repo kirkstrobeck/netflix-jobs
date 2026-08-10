@@ -11,7 +11,7 @@ import { useListing } from "@/app/(site)/_listing/use-listing";
 import { NavigateProvider } from "@/app/(site)/_listing/use-query-navigation";
 import { headingPlace } from "@/app/(site)/_listing/heading-place";
 import type { JobQuery } from "@/lib/search/job-query";
-import { headingParts } from "@/lib/search/listing-heading";
+import { listingHeading } from "@/lib/search/listing-heading";
 import type { ListingView } from "@/lib/search/listing-view";
 
 type ListingProps = {
@@ -44,7 +44,7 @@ export function Listing({ boardVersion, initialQuery, initialView }: ListingProp
   // and then the device only once each has landed. See heading-place.ts for why
   // that split is what keeps the heading out of the cache key.
   const place = headingPlace(query, view.facets.country, nearest, where);
-  const heading = headingParts(query.sort, place);
+  const heading = listingHeading(query.sort, place);
 
   return (
     <NavigateProvider value={navigate}>
@@ -68,28 +68,25 @@ export function Listing({ boardVersion, initialQuery, initialView }: ListingProp
 
                 THE ID IS FIXED; THE TEXT IS NOT.
 
-                This heading now carries the sort and the place -- "Newest open
-                roles", "Open roles in the United States", "Open roles nearest to
-                you" -- instead of a separate status line under it restating what
-                the list is. Two things it is load-bearing for survive that:
+                This heading carries the sort -- "Newest open roles", "Open
+                roles", "Open roles nearest to you" -- instead of a separate
+                status line under it restating what the list is. Two things it
+                is load-bearing for survive that:
 
                 the id never changes with the wording, so #open-roles keeps
                 landing here from every pager link; and the enable-location offer
                 is NOT nested in here, because this is a document-outline heading
                 and a button inside it would become part of the heading's text.
-                The offer is a sibling, below. */}
+                The offer is a sibling, below.
+
+                One text node, no spans. The heading used to end in a clause
+                naming the visitor's country, split into its own element so a
+                media query could drop it on a screen too narrow to hold it.
+                That clause is gone -- the URL already carries the country and
+                the facets panel already shows it ticked -- and with nothing
+                left to drop, the element and its media query went with it. */}
             <h2 className="listing-title" id={RESULTS_ANCHOR}>
-              {heading.lead}
-              {/* The clause naming where the request came from, in its own
-                  element so the stylesheet can drop it on a screen too narrow
-                  to hold it on one line. Nothing here duplicates the lead, so a
-                  missing stylesheet shows the long sentence rather than the
-                  word twice -- and a heading that grows a line after paint
-                  would push the whole list down, which is the one thing this
-                  refinement is not allowed to do. */}
-              {heading.where ? (
-                <span className="listing-title__where">{heading.where}</span>
-              ) : null}
+              {heading}
             </h2>
 
             {/* Inside the header and after the heading, so it reads as "these
