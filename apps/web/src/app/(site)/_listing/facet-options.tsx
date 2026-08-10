@@ -2,34 +2,12 @@
 
 import type { ReactNode } from "react";
 
+import {
+  hiddenOptions,
+  shownOptions,
+} from "@/app/(site)/_listing/facet-disclosure";
 import { OptionCount } from "@/app/(site)/_listing/option-count";
 import type { FacetOption } from "@/lib/search/facet-counts";
-
-/**
- * How many options a facet shows before the rest go behind a disclosure.
- *
- * 5, chosen against the real data rather than as a round number. The five
- * largest of the 31 teams account for 264 of 481 postings, and the five largest
- * of the 21 countries -- United States 303, Canada 35, Australia 22, Poland 22,
- * South Korea 19 -- account for 401 of them, with a tail of sixteen that
- * finishes on four countries holding one role each. That is the shape the
- * disclosure is for: a short answer to almost everyone, and the long tail one
- * click away rather than sixteen rows down the panel. Work type has exactly two
- * values and so never shows the control at all.
- *
- * The OFFICES under a country are the deliberate exception and show in full.
- * Seventeen of the 21 countries have exactly one, and a "show 1 more site"
- * disclosure over a single row is a control that costs a click to reveal
- * nothing. Only the United States has more than three, and its ten only appear
- * after the country has been ticked -- by which point the visitor has asked
- * this exact question and hiding half the answer is the wrong instinct.
- *
- * Five rows per group is also what lets every group stand open beside the first
- * screen of results at once: the panel is a summary of the board rather than
- * one long team list with everything else below the fold. Past the fifth row,
- * the search box above each group is the faster route anyway.
- */
-export const VISIBLE_OPTIONS = 5;
 
 /**
  * What hangs UNDER one option, if anything.
@@ -46,8 +24,6 @@ type FacetOptionsProps = {
   options: FacetOption[];
   /** The group's name as a plural noun, for "Show 16 more locations". */
   plural: string;
-  /** The same noun in the singular, for the one-row case. */
-  singular: string;
   onToggle: (value: string) => void;
   renderNested?: RenderNested;
 };
@@ -82,15 +58,19 @@ function Option({
   );
 }
 
-// A selected option is always in the open list, wherever it sits in the order.
-// Leaving it behind the disclosure would hide the only control that could clear
-// it, and the list does not reorder to achieve that -- the slice is widened, not
-// sorted, so nothing moves under the pointer as boxes are ticked.
-const isOpen = (option: FacetOption, index: number) =>
-  index < VISIBLE_OPTIONS || option.selected;
-
 /**
- * The top five, and a <details> holding the rest.
+ * The top five, and a <details> holding the rest -- or the whole list and no
+ * control at all.
+ *
+ * Which of those it is comes from facet-disclosure.ts, which owns both the
+ * cut-off and the "at least three, or show everything" rule. Work type has two
+ * values and never shows the control; a group whose sixth option is its last
+ * two does not show it either.
+ *
+ * The OFFICES under a country never reach here and show in full: seventeen of
+ * the 21 countries have exactly one, and the ten under the United States only
+ * appear once it has been ticked -- by which point the visitor has asked this
+ * exact question.
  *
  * No state and no JavaScript: <details> is the disclosure, the summary is its
  * own button, and the browser announces expanded/collapsed without an
@@ -101,19 +81,22 @@ const isOpen = (option: FacetOption, index: number) =>
 export function FacetOptions({
   options,
   plural,
-  singular,
   onToggle,
   renderNested,
 }: FacetOptionsProps) {
-  const open = options.filter(isOpen);
-  const rest = options.filter((option, index) => !isOpen(option, index));
+  const open = shownOptions(options);
+  const rest = hiddenOptions(options);
   // What opening it costs, not what the list totals. "Show all 21 locations"
   // made the reader do the subtraction to find out whether this was two more
   // rows or sixteen -- and it did the subtraction WRONG whenever a selected
   // option had already been pulled up out of the tail, because the open list was
   // six rows and the promise still counted twenty-one. rest.length is by
   // construction exactly what is behind the control, in every state.
-  const more = rest.length === 1 ? `1 more ${singular}` : `${rest.length} more ${plural}`;
+  //
+  // Always the plural. There used to be a singular branch for "1 more team", and
+  // the three-row floor is what deleted it: a tail of one or two is not folded
+  // away at all now, so the smallest number this string can ever carry is 3.
+  const more = `${rest.length} more ${plural}`;
 
   return (
     <>

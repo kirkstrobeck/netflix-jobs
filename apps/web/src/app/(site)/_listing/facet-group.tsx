@@ -2,6 +2,7 @@
 
 import { useId, useState, type ReactNode } from "react";
 
+import { hidesOptions } from "@/app/(site)/_listing/facet-disclosure";
 import { FacetOptions } from "@/app/(site)/_listing/facet-options";
 import { useQueryNavigation } from "@/app/(site)/_listing/use-query-navigation";
 import { matchOptions, type FacetOption } from "@/lib/search/facet-counts";
@@ -14,10 +15,6 @@ type FacetGroupProps = {
   options: FacetOption[];
   /** The group's name as a plural noun: "teams", "work types", "countries". */
   plural: string;
-  /** The same noun in the singular. Both are written out rather than one
-   *  derived from the other: "business unit" -> "business units" is a rule that
-   *  holds for today's four groups and for nothing in particular after that. */
-  singular: string;
   query: JobQuery;
   /**
    * What ticking a box does, when it is not just "toggle this value".
@@ -44,7 +41,6 @@ export function FacetGroup({
   legend,
   options,
   plural,
-  singular,
   query,
   onToggle,
   renderNested,
@@ -55,6 +51,20 @@ export function FacetGroup({
   const searchId = useId();
   const visible = matchOptions(options, search);
   const selected = query[facetKey].length;
+  // THE SEARCH BOX IS THE DISCLOSURE'S QUESTION, ASKED ONCE.
+  //
+  // A field that narrows a list you can already see in full is a control with
+  // nothing to find: every answer it could reach is two inches below it, and
+  // typing into it can only ever take rows away. Work type is two rows; on a
+  // filtered board a country group can be three. Those get the list and nothing
+  // above it.
+  //
+  // Both this and the "Show n more" control below turn on the same fact --
+  // whether this group is holding anything back -- so the fact is computed in
+  // one place, over the FULL option list. Deriving it from `visible` instead
+  // would let a search that narrowed the list to four rows delete the box that
+  // was being typed into.
+  const searchable = hidesOptions(options);
   // Built from the same noun the disclosure below uses, so "Search teams" and
   // "Show 26 more teams" cannot drift into naming the same group two ways.
   const searchLabel = `Search ${plural}`;
@@ -88,20 +98,24 @@ export function FacetGroup({
         ) : null}
       </legend>
 
-      {/* A real <label>, visually hidden rather than absent: the legend names the
-          group, and this names the input inside it. */}
-      <label className="visually-hidden" htmlFor={searchId}>
-        {searchLabel}
-      </label>
-      <input
-        autoComplete="off"
-        className="facet__search"
-        id={searchId}
-        onChange={(event) => setSearch(event.target.value)}
-        placeholder={searchLabel}
-        type="search"
-        value={search}
-      />
+      {searchable ? (
+        <>
+          {/* A real <label>, visually hidden rather than absent: the legend names
+              the group, and this names the input inside it. */}
+          <label className="visually-hidden" htmlFor={searchId}>
+            {searchLabel}
+          </label>
+          <input
+            autoComplete="off"
+            className="facet__search"
+            id={searchId}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder={searchLabel}
+            type="search"
+            value={search}
+          />
+        </>
+      ) : null}
 
       {visible.length === 0 ? (
         <p className="facet__none">No matches</p>
@@ -111,7 +125,6 @@ export function FacetGroup({
           options={visible}
           plural={plural}
           renderNested={renderNested}
-          singular={singular}
         />
       )}
 

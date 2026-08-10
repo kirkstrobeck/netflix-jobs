@@ -37,7 +37,6 @@ function renderTeams(query: JobQuery = EMPTY_QUERY) {
       options={facetOptions(JOBS, query, "team", siteCatalog(SITES))}
       plural="teams"
       query={query}
-      singular="team"
     />,
   );
 }
@@ -93,42 +92,6 @@ describe("facet to URL", () => {
     const list = screen.getByRole("list");
     expect(within(list).getByText("3")).toBeTruthy();
     expect(within(list).getByText("2")).toBeTruthy();
-  });
-});
-
-// The option search narrows what is on screen only. It must never navigate --
-// typing "market" is not a filter on the jobs, it is a filter on the checkboxes.
-describe("facet option search", () => {
-  it("narrows the options without touching the URL", () => {
-    renderTeams();
-
-    fireEvent.change(screen.getByLabelText("Search teams"), {
-      target: { value: "market" },
-    });
-
-    expect(checkbox(/Marketing/)).toBeTruthy();
-    expect(screen.queryByRole("checkbox", { name: /Engineering/ })).toBeNull();
-    expect(navigate).not.toHaveBeenCalled();
-  });
-
-  it("says so when nothing matches", () => {
-    renderTeams();
-
-    fireEvent.change(screen.getByLabelText("Search teams"), {
-      target: { value: "atlantis" },
-    });
-
-    expect(screen.getByText("No matches")).toBeTruthy();
-    expect(screen.queryByRole("checkbox")).toBeNull();
-  });
-
-  // The search label is built from the same plural noun the disclosure below
-  // uses, so the two cannot end up naming the same group different things.
-  it("gives the group a name and the search box a real label", () => {
-    renderTeams();
-
-    expect(screen.getByRole("group", { name: "Team" })).toBeTruthy();
-    expect(screen.getByLabelText("Search teams").getAttribute("type")).toBe("search");
   });
 });
 

@@ -2,7 +2,7 @@ import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { FacetGroup } from "@/app/(site)/_listing/facet-group";
-import { VISIBLE_OPTIONS } from "@/app/(site)/_listing/facet-options";
+import { VISIBLE_OPTIONS } from "@/app/(site)/_listing/facet-disclosure";
 import { NavigateProvider } from "@/app/(site)/_listing/use-query-navigation";
 import type { FacetOption } from "@/lib/search/facet-counts";
 import { EMPTY_QUERY, type JobQuery } from "@/lib/search/job-query";
@@ -29,7 +29,6 @@ function renderGroup(options: FacetOption[], query: JobQuery = EMPTY_QUERY) {
         options={options}
         plural="teams"
         query={query}
-        singular="team"
       />
     </NavigateProvider>,
   );
@@ -98,16 +97,6 @@ describe("option list length", () => {
     );
   });
 
-  // One hidden row is "1 more team", not "1 more teams". The singular is passed
-  // in beside the plural rather than derived by chopping an s off the end.
-  it("agrees with its own number when only one option is hidden", () => {
-    renderGroup(OPTIONS.slice(0, VISIBLE_OPTIONS + 1));
-
-    expect(disclosure()!.querySelector("summary")!.textContent).toContain(
-      "Show 1 more team",
-    );
-  });
-
   // Work type has exactly two values; a disclosure there would be noise.
   it("offers no disclosure when everything already fits", () => {
     renderGroup(OPTIONS.slice(0, VISIBLE_OPTIONS));
@@ -142,3 +131,4 @@ describe("option list length", () => {
     expect(openList().className).toBe("facet__options");
   });
 });
+

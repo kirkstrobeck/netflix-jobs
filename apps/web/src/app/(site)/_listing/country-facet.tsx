@@ -107,7 +107,6 @@ export function CountryFacet({ countries, sites, query }: CountryFacetProps) {
       plural="locations"
       query={query}
       renderNested={nested}
-      singular="location"
     />
   );
 }

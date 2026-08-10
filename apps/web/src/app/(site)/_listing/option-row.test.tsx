@@ -31,7 +31,6 @@ function renderGroup(options: FacetOption[], query: JobQuery = EMPTY_QUERY) {
         options={options}
         plural="teams"
         query={query}
-        singular="team"
       />
     </NavigateProvider>,
   );

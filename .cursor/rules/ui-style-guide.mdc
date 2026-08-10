@@ -1,5 +1,5 @@
 ---
-description: UI style guide — interaction state timing, sentence case for all titles
+description: UI style guide — interaction state timing, disclosure threshold, sentence case for all titles
 alwaysApply: true
 ---
 
@@ -53,6 +53,39 @@ so a keyboard reaches every state the mouse does.
 Two things this rule does **not** cover: entrance animations for content arriving
 on the page, and state that takes real time (a pending request). Those are not
 interaction states.
+
+## A disclosure has to hide at least three things
+
+**Never render a "show more" control unless opening it would reveal three or
+more items. Below that, render the whole list and no control.**
+
+A disclosure is not free. It takes a row of its own, it has to be noticed, read
+and pressed, and until it is pressed the reader does not know whether what is
+behind it is worth the click. Over one or two hidden rows that price buys
+nothing: the control is about as tall as the thing it is hiding, so the list is
+no shorter, and the reader has been made to work for rows that would have fitted
+on screen anyway. "Show 1 more seniority level" is the shape to watch for.
+
+The same fact decides anything else that only exists because rows are hidden. A
+search box over a list narrows it to what you can see, so a list that is already
+entirely on screen has nothing for it to do — a facet showing all its options
+shows no search input.
+
+Both are the same question, so compute it once. A threshold copied into two
+components is two components that will disagree the first time one of them is
+edited.
+
+```tsx
+// One module owns the cut-off, the floor, and the split.
+const hidden = hiddenOptions(options);   // [] when the tail is under three
+
+{hidesOptions(options) ? <SearchInput /> : null}
+{hidden.length > 0 ? <details>…</details> : null}
+```
+
+Prefer markup and CSS for the disclosure itself: `<details>` / `<summary>` gives
+the keyboard behaviour and the expanded/collapsed announcement for free, with no
+state to hold and no `aria-expanded` to keep in step.
 
 ## Sentence case for all titles
 
