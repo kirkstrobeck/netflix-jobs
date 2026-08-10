@@ -4,7 +4,11 @@ import { siteLabel } from "@/lib/jobs/site";
 import { filterJobs } from "@/lib/search/filter-jobs";
 import { facetValues } from "@/lib/search/job-index";
 import type { FacetKey, JobQuery } from "@/lib/search/job-query";
-import { SENIORITY_LABELS, type SeniorityLevel } from "@/lib/search/seniority";
+import {
+  SENIORITY_LABELS,
+  seniorityRank,
+  type SeniorityLevel,
+} from "@/lib/search/seniority-rank";
 
 export type FacetOption = {
   value: string;
@@ -48,6 +52,34 @@ function labelFor(key: FacetKey, value: string, catalog: SiteCatalog): string {
   return value;
 }
 
+/**
+ * The order one facet's options come back in, and the one facet that is not
+ * sorted by count.
+ *
+ * ORDINAL VS NOMINAL, WHICH IS THE WHOLE RULE
+ *
+ * Seniority is a ladder. Its values have an order that exists before this board
+ * does, every reader already knows it, and sorting it by count produced "Entry
+ * level, Staff and principal, Mid level" -- which does not read as "these are
+ * the popular ones", it reads as a list that has been shuffled. The rank comes
+ * from seniority-rank.ts so that this comparator holds no opinion of its own.
+ *
+ * Every other facet is nominal. Canada is not more or less than Poland, Payments
+ * is not more or less than Marketing, and there is no sequence to restore -- so
+ * the useful order is the one that puts the biggest answers first, and they keep
+ * it. Alphabetical breaks ties in both, so equal keys never shuffle between
+ * renders.
+ */
+function ordering(key: FacetKey) {
+  if (key === "seniority") {
+    return (a: FacetOption, b: FacetOption) =>
+      seniorityRank(a.value) - seniorityRank(b.value) || a.label.localeCompare(b.label);
+  }
+
+  return (a: FacetOption, b: FacetOption) =>
+    b.count - a.count || a.label.localeCompare(b.label);
+}
+
 function groupFor(key: FacetKey, value: string, catalog: SiteCatalog) {
   if (key !== "site") {
     return undefined;
@@ -65,9 +97,10 @@ function groupFor(key: FacetKey, value: string, catalog: SiteCatalog) {
  * open means "Marketing (28)" answers "how many would I get if I added this",
  * which is the question ticking a box asks.
  *
- * Sorted by count, then alphabetically so equal counts have a stable order.
- * Selected options are NOT floated to the top: they keep their place so the list
- * does not reorder under the pointer as a box is ticked.
+ * Sorted by `ordering` below -- by count for a nominal facet, by rank for the
+ * one ordinal facet -- with the label breaking ties either way. Selected options
+ * are NOT floated to the top: they keep their place so the list does not reorder
+ * under the pointer as a box is ticked.
  */
 export function facetOptions(
   jobs: JobSummary[],
@@ -100,7 +133,7 @@ export function facetOptions(
       selected: query[key].includes(value),
       group: groupFor(key, value, catalog),
     }))
-    .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label));
+    .sort(ordering(key));
 }
 
 // Client-side narrowing of a long option list -- the "search bar, not a dropdown

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { SENIORITY_LABELS, seniorityLevels } from "@/lib/search/seniority";
+import { seniorityLevels } from "@/lib/search/seniority";
+import { SENIORITY_LABELS } from "@/lib/search/seniority-rank";
 
 // The panel's vocabulary, kept apart from the derivation it names. Reading a
 // rung off a title is one claim; having a word on screen for every rung that

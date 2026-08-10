@@ -1,3 +1,5 @@
+import type { SeniorityLevel } from "@/lib/search/seniority-rank";
+
 // THE ONE FACET THE BOARD DOES NOT HAND US
 //
 // Every other facet reads a column. `team`, `business_unit` and `work_type` are
@@ -24,25 +26,12 @@
 // to this facet, exactly as a job with a null `team` would offer none to that
 // one, and they are counted in no option.
 
-export type SeniorityLevel =
-  | "entry"
-  | "mid"
-  | "senior"
-  | "staff"
-  | "manager"
-  | "director";
-
-// The URL carries the slug and the panel shows the label, the same split the
-// country facet already uses -- a code in the address, a name on screen. Written
-// once here so the two cannot drift.
-export const SENIORITY_LABELS: Record<SeniorityLevel, string> = {
-  entry: "Entry level",
-  mid: "Mid level",
-  senior: "Senior",
-  staff: "Staff and principal",
-  manager: "Manager",
-  director: "Director and above",
-};
+// The rungs themselves -- their sequence and their names -- are seniority-rank.ts.
+// This file only READS titles, and the order it lists rungs in below is matcher
+// precedence, which is the ladder upside down: a title states its highest rung,
+// so staff has to be tried before senior. Keeping the two orders in two files is
+// what stops one being mistaken for the other.
+export type { SeniorityLevel };
 
 /**
  * The management track, which wins outright when it matches.
