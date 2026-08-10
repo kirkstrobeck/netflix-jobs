@@ -2,56 +2,59 @@
 
 import { useEffect, useRef } from "react";
 
-export function AmbientVideo() {
-  const videoRef = useRef<HTMLVideoElement>(null);
+// The playback wiring, taking the element rather than reading a ref, so that
+// "there is no element" is an argument a test can pass rather than a state only
+// React can produce. Returns the teardown, or nothing when there was nothing to
+// wire up.
+export function drivePlayback(
+  video: HTMLVideoElement | null,
+): (() => void) | undefined {
+  if (!video) {
+    return undefined;
+  }
 
-  useEffect(() => {
-    const video = videoRef.current;
+  video.loop = true;
 
-    // The ref is always attached by the time the effect runs; the guard exists
-    // to narrow the type, so there is no way to exercise it.
-    /* v8 ignore next 3 */
-    if (!video) {
+  const motion = window.matchMedia("(prefers-reduced-motion: reduce)");
+
+  const play = () => {
+    video.play().catch(() => {
+      // Autoplay can still be refused; the poster remains visible.
+    });
+  };
+
+  const syncPlayback = () => {
+    if (motion.matches) {
+      video.pause();
       return;
     }
 
-    video.loop = true;
+    play();
+  };
 
-    const motion = window.matchMedia("(prefers-reduced-motion: reduce)");
+  const restart = () => {
+    if (motion.matches) {
+      return;
+    }
 
-    const play = () => {
-      video.play().catch(() => {
-        // Autoplay can still be refused; the poster remains visible.
-      });
-    };
+    video.currentTime = 0;
+    play();
+  };
 
-    const syncPlayback = () => {
-      if (motion.matches) {
-        video.pause();
-        return;
-      }
+  syncPlayback();
+  motion.addEventListener("change", syncPlayback);
+  video.addEventListener("ended", restart);
 
-      play();
-    };
+  return () => {
+    motion.removeEventListener("change", syncPlayback);
+    video.removeEventListener("ended", restart);
+  };
+}
 
-    const restart = () => {
-      if (motion.matches) {
-        return;
-      }
+export function AmbientVideo() {
+  const videoRef = useRef<HTMLVideoElement>(null);
 
-      video.currentTime = 0;
-      play();
-    };
-
-    syncPlayback();
-    motion.addEventListener("change", syncPlayback);
-    video.addEventListener("ended", restart);
-
-    return () => {
-      motion.removeEventListener("change", syncPlayback);
-      video.removeEventListener("ended", restart);
-    };
-  }, []);
+  useEffect(() => drivePlayback(videoRef.current), []);
 
   // Filenames carry a content hash: these are served immutable for a year, so
   // re-encoding an asset requires a new hash or returning visitors keep the old file.

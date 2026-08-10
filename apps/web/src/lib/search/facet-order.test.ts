@@ -56,6 +56,21 @@ describe("the order options come back in", () => {
     expect(values).toEqual(["senior", "staff", "manager", "archmage"]);
   });
 
+  // Two hand-typed levels rank the same -- `seniorityRank` gives every value the
+  // ladder does not hold the one rank after the last rung -- so the subtraction
+  // is 0 and the label has to settle it. Handed in reverse alphabetical order so
+  // input order cannot be what comes back.
+  it("breaks a tie between two off-ladder levels alphabetically", () => {
+    const values = facetOptions(
+      JOBS,
+      { ...EMPTY_QUERY, seniority: ["wizard", "archmage"] },
+      "seniority",
+      catalog,
+    ).map((o) => o.value);
+
+    expect(values).toEqual(["senior", "staff", "manager", "archmage", "wizard"]);
+  });
+
   // Nominal facets have no ladder to restore, so they keep the count order.
   // Regression against a rank comparator that leaked past its one facet.
   it("leaves every nominal facet on count-descending", () => {

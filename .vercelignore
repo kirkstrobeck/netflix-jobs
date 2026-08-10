@@ -1,0 +1,7 @@
+# The deploy archive is built by walking the tree, so anything a concurrent
+# test run writes and then deletes underneath it aborts the whole upload with
+# an ENOENT on a temp file that no longer exists. Coverage output is the one
+# tree that churns while a deploy is in flight.
+coverage
+.sandbox-run
+core

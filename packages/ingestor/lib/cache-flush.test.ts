@@ -114,6 +114,23 @@ describe('flushCaches', () => {
     },
   );
 
+  // The split the two digests exist for: a rewritten description is in the
+  // content digest and out of the board one, so one posting's page is thrown
+  // away and the listing -- every cached facet combination of it -- is left
+  // alone. The line says so out loud, because "board unchanged" in the run log
+  // is the only place a crawl reports that it did NOT flush hundreds of renders.
+  it('names the role but leaves the board when only the description moved', async () => {
+    const { report } = await flushCaches(
+      [row({ description_text: 'A rewritten description.' })],
+      0,
+      unchanged(row()),
+    );
+
+    expect(post).toHaveBeenCalledExactlyOnceWith(['JR00001'], false);
+    expect(report.board).toBe(false);
+    expect(logged.at(-2)).toBe('  cache: 1 role page(s) changed, board unchanged');
+  });
+
   it('flushes the board alone when a role was removed', async () => {
     const job = row();
 

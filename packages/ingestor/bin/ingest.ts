@@ -191,8 +191,6 @@ export async function main(
   exit(status === 'succeeded' ? 0 : 1);
 }
 
-// Only true when this file is the process entry point, which no test can be.
-/* v8 ignore next 3 */
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   void main();
 }

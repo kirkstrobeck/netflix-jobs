@@ -43,7 +43,6 @@ export function seedRows(): LocationRow[] {
   return SITE_SEED.map((site) => {
     const country = countryName(site.country);
 
-    /* v8 ignore next 3 -- guarded by the seed test, not reachable at runtime */
     if (!country) {
       throw new Error(`seed site ${site.slug} has unknown country ${site.country}`);
     }

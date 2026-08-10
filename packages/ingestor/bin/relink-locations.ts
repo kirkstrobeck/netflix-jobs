@@ -42,7 +42,6 @@ export async function main(
   exit(report.unplaced === 0 ? 0 : 1);
 }
 
-/* v8 ignore next 3 -- true only as a process entry point, which no test is */
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   void main();
 }

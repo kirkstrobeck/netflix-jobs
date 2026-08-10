@@ -1,7 +1,7 @@
 import { render } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { AmbientVideo } from "@/app/ambient-video";
+import { AmbientVideo, drivePlayback } from "@/app/ambient-video";
 
 function mockMediaPlayback(playImpl?: () => Promise<void>) {
   const play = vi
@@ -124,5 +124,21 @@ describe("AmbientVideo", () => {
 
     expect(() => render(<AmbientVideo />)).not.toThrow();
     await Promise.resolve();
+  });
+});
+
+// The element is always attached by the time the effect runs, so this branch
+// belongs to the helper's contract rather than to anything React does. It is
+// what keeps a future caller -- a conditional render, a detached ref -- from
+// getting a TypeError instead of a no-op.
+describe("drivePlayback without an element", () => {
+  it("wires nothing up and hands back no teardown", () => {
+    const matchMedia = vi.fn();
+    vi.stubGlobal("matchMedia", matchMedia);
+
+    expect(drivePlayback(null)).toBeUndefined();
+    expect(matchMedia).not.toHaveBeenCalled();
+
+    vi.unstubAllGlobals();
   });
 });
