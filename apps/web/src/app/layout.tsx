@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { Suspense } from "react";
 
 import { siteUrl } from "@/lib/seo/site";
 
@@ -62,6 +63,33 @@ export const viewport: Viewport = {
   themeColor: "#000000",
 };
 
+/**
+ * THE ONE LINE THAT MAKES THE DOCUMENTS WHOLE.
+ *
+ * `<Suspense fallback={null}>` above `<body>` is the documented way to opt out of
+ * the static shell (01-getting-started/08-caching.md, "Opting out of the static
+ * shell"): "Because the fallback is empty, there is no static shell to send
+ * immediately, so every request blocks until the page is fully rendered."
+ *
+ * That sentence reads like a cost and here it is the product. Both routes under
+ * it hold their render in a `use cache` entry keyed on the whole of their input
+ * -- the listing on the parsed query, a posting on its job code -- so "fully
+ * rendered" is a cache read, not a Supabase round trip. What the shell was buying
+ * was the right to send a ghost list early and stream the real one in behind it,
+ * and a streamed-in boundary is delivered out-of-order: the rows landed in a
+ * <div hidden> at the foot of the document and an inline script moved them.
+ * Filtered results that need JavaScript to become visible are not server-rendered
+ * results.
+ *
+ * With no shell to protect, the pages have no <Suspense> left inside them either,
+ * so nothing suspends below this line and React emits one complete document per
+ * request.
+ *
+ * It is in the ROOT layout rather than per route because that is the only place
+ * it can be: the escape is a property of the document, and `<body>` is declared
+ * here. The alternative the docs offer -- multiple root layouts -- would buy
+ * nothing, since every route this app serves wants the same answer.
+ */
 export default function Base({
   children,
 }: Readonly<{
@@ -69,7 +97,9 @@ export default function Base({
 }>) {
   return (
     <html className="h-full bg-black" lang="en">
-      <body className="min-h-full bg-black">{children}</body>
+      <Suspense fallback={null}>
+        <body className="min-h-full bg-black">{children}</body>
+      </Suspense>
     </html>
   );
 }

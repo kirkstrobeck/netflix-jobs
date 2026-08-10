@@ -1,14 +1,15 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
 
-import { JobListing } from "@/app/(site)/_listing/job-listing";
+import { BoardPage } from "@/app/(site)/_listing/board-page";
 import Home from "@/app/(site)/page";
+import { renderAsync } from "@/app/(site)/render-async";
 import { boardVersion } from "@/lib/jobs/board-payload";
 import { SITES, summary } from "@/lib/jobs/job-summary.fixture";
 import { listJobSummaries } from "@/lib/jobs/list-jobs";
 import { listSites } from "@/lib/jobs/list-sites";
 import { PAGE_SIZE } from "@/lib/search/paginate";
-import type { RawSearchParams } from "@/lib/search/parse-query";
+import { parseJobQuery, type RawSearchParams } from "@/lib/search/parse-query";
 
 vi.mock("@/lib/jobs/list-jobs", () => ({ listJobSummaries: vi.fn() }));
 vi.mock("@/lib/jobs/list-sites", () => ({ listSites: vi.fn() }));
@@ -42,11 +43,11 @@ async function renderListing(params: RawSearchParams) {
   listMock.mockResolvedValue(BOARD);
 
   return renderToStaticMarkup(
-    await JobListing({ searchParams: Promise.resolve(params) }),
+    await BoardPage({ query: parseJobQuery(params) }),
   );
 }
 
-describe("JobListing", () => {
+describe("BoardPage", () => {
   it("shows the first page of twenty and the total", async () => {
     const html = await renderListing({});
 
@@ -122,17 +123,30 @@ describe("JobListing", () => {
 });
 
 describe("Home", () => {
-  // The masthead is outside the Suspense boundary, so the h1 belongs to the
-  // static shell. "Open roles" moved inside the boundary when it moved into the
-  // results column, so it streams with the results it names.
-  it("renders the static masthead around the streamed listing", () => {
-    listMock.mockResolvedValue([]);
+  // ONE DOCUMENT, NOT A SHELL AND A STREAM.
+  //
+  // The masthead used to be the static shell and the results used to arrive
+  // behind a <Suspense> as a ghost list. React delivers a resolved boundary
+  // out-of-order -- the rows landed in a <div hidden> at the foot of the
+  // document and an inline script moved them into place -- so the filtered list
+  // was in the bytes and not on the screen until JavaScript ran. Both halves are
+  // now in one pass, which is what this asserts: the masthead AND the rows AND
+  // the count, with no boundary between them.
+  it("renders the masthead and the filtered rows in one pass", async () => {
+    listMock.mockResolvedValue(BOARD);
 
-    const html = renderToStaticMarkup(<Home searchParams={Promise.resolve({})} />);
+    const html = await renderAsync(
+      await Home({ searchParams: Promise.resolve({ team: "Engineering" }) }),
+    );
 
     expect(html).toContain("masthead__title");
     // One h1 for the whole page -- the masthead's.
     expect(html.match(/<h1/g)).toHaveLength(1);
+    // The results, in the same document, already filtered and already counted.
+    expect(html).toContain("Showing 1 thru 10 of 10 roles");
+    expect(html).not.toContain("result--ghost");
+    // A fallback would leave one of these behind. There is no boundary at all.
+    expect(html).not.toContain("<template");
   });
 
   // Both columns' headers are their column's first child, which is what puts

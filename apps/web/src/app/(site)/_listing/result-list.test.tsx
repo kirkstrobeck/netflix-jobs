@@ -1,10 +1,8 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
-import { ListingSkeleton } from "@/app/(site)/_listing/listing-skeleton";
 import { ResultList } from "@/app/(site)/_listing/result-list";
 import { JOBS, summary } from "@/lib/jobs/job-summary.fixture";
-import { PAGE_SIZE } from "@/lib/search/paginate";
 
 describe("ResultList", () => {
   it("renders one linked row per job", () => {
@@ -77,12 +75,3 @@ describe("ResultList", () => {
   });
 });
 
-describe("ListingSkeleton", () => {
-  // A placeholder announcing a page of empty rows is worse than silence.
-  it("is a full page of rows and is hidden from assistive tech", () => {
-    const html = renderToStaticMarkup(<ListingSkeleton />);
-
-    expect(html.match(/result--ghost/g)).toHaveLength(PAGE_SIZE);
-    expect(html).toContain('aria-hidden="true"');
-  });
-});

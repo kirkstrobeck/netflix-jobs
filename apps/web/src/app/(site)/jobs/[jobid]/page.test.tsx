@@ -1,3 +1,4 @@
+import { cacheLife, cacheTag } from "next/cache";
 import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -81,6 +82,26 @@ describe("JobPage", () => {
     expect(html).toContain("Job details");
   });
 
+  // ONE ENTRY PER POSTING, NAMED AFTER THAT POSTING AND NOTHING ELSE.
+  //
+  // The board tag is deliberately absent, here and on getJob. It used to be on
+  // both, so that "the crawl ran" flushed all 481 job pages at once; the
+  // ingestor now compares checksums and names the roles that moved, and keeping
+  // the blunt tag would put every posting inside the blast radius of one added
+  // role.
+  it("caches the rendered article under this job's tag alone", async () => {
+    vi.mocked(getJob).mockResolvedValue(SAMPLE_JOB);
+
+    await JobPage({ params });
+
+    expect(cacheLife).toHaveBeenCalledWith("jobs");
+    expect(cacheTag).toHaveBeenCalledWith("job:JR73020");
+    expect(cacheTag).not.toHaveBeenCalledWith("jobs-board");
+  });
+
+  // notFound() throws a navigation signal, and a signal thrown out of a cached
+  // function would put "this is a 404" in the cache entry. The miss is spelled
+  // as a returned null inside the scope and answered outside it.
   it("calls notFound when the job does not exist", async () => {
     vi.mocked(getJob).mockResolvedValue(null);
 

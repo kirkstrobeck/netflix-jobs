@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
+import { cacheLife, cacheTag } from "next/cache";
 import { notFound } from "next/navigation";
 
 import { JobDescription } from "@/app/(site)/jobs/[jobid]/job-description";
 import { JobDetails } from "@/app/(site)/jobs/[jobid]/job-details";
 import { JobHeader } from "@/app/(site)/jobs/[jobid]/job-header";
+import { jobTag } from "@/lib/jobs/cache-tags";
 import { getJob } from "@/lib/jobs/get-job";
 import { listRecentJobIds } from "@/lib/jobs/job-ids";
 import { listSites } from "@/lib/jobs/list-sites";
@@ -56,17 +58,31 @@ export async function generateMetadata({ params }: JobPageProps): Promise<Metada
   };
 }
 
-export default async function JobPage({ params }: JobPageProps) {
-  const { jobid: jobId } = await params;
-  // Both cached under the same tag and the same profile, so they cannot be a
-  // crawl apart, and the site table is 36 rows the listing has already paid for
-  // -- this page is what turns a posting's location slugs into the words for
-  // them and the links to them. Requested together rather than in sequence: the
-  // second does not depend on the first.
+/**
+ * ONE CACHE ENTRY PER POSTING, HOLDING FINISHED MARKUP.
+ *
+ * `jobId` is the whole cache key, so 481 postings are 481 entries and each is
+ * replaced on its own. cacheTag names only that posting: the board tag is
+ * deliberately NOT here, and is no longer on getJob either. A crawl that adds
+ * one role used to flush all 481 of these; now the ingestor names the roles
+ * whose content actually moved and nothing else is touched.
+ *
+ * `notFound()` stays OUTSIDE this scope. Throwing a navigation signal out of a
+ * cached function would put "this is a 404" in the cache entry, so the miss is
+ * spelled as a returned null and answered by the caller.
+ */
+async function jobArticle(jobId: string) {
+  "use cache";
+  cacheLife("jobs");
+  cacheTag(jobTag(jobId));
+
+  // The site table is 36 rows -- this page is what turns a posting's location
+  // slugs into the words for them and the links to them. Requested alongside
+  // the posting rather than after it: the second does not depend on the first.
   const [job, catalog] = await Promise.all([getJob(jobId), listSites()]);
 
   if (!job) {
-    notFound();
+    return null;
   }
 
   // This is the leaf page for one posting, which is the only place Google
@@ -107,4 +123,18 @@ export default async function JobPage({ params }: JobPageProps) {
       <JsonLd data={buildBreadcrumbs(job)} />
     </article>
   );
+}
+
+// `params` is not a request-time API here -- generateStaticParams above supplies
+// samples -- so it can be awaited outright and the render below is a cache read,
+// not a Supabase round trip.
+export default async function JobPage({ params }: JobPageProps) {
+  const { jobid: jobId } = await params;
+  const article = await jobArticle(jobId);
+
+  if (!article) {
+    notFound();
+  }
+
+  return article;
 }

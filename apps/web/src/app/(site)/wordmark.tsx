@@ -1,6 +1,5 @@
 import Image from "next/image";
 import Link from "next/link";
-import { Suspense } from "react";
 
 import { BoardLink } from "@/app/(site)/wordmark-link";
 import { EMPTY_QUERY, jobsHref } from "@/lib/search/job-query";
@@ -142,20 +141,20 @@ async function BoardMark({
 // One component for both instances, because the accessible name and the address
 // are the parts worth writing once.
 //
-// searchParams is a request-time API, so the read has to sit behind a boundary
-// -- and the boundary is HERE rather than around the masthead, so what streams
-// in is one anchor and not the chrome. The fallback is the same mark at the
-// same size pointing at the bare board, which is what a role page renders
-// outright: nothing moves when the real href lands, and the no-JavaScript case
-// degrades to exactly today's link rather than to a hole.
+// NO <Suspense> HERE ANY MORE. It used to wrap the read of searchParams and
+// stream one anchor in behind a fallback pointing at the bare board. A resolved
+// boundary is delivered out-of-order, so on the listing the mark in the document
+// was the FALLBACK and the real href only arrived when React's inline script
+// ran. The listing page now awaits searchParams outright (see (site)/page.tsx),
+// which leaves nothing for a boundary to buy: this awaits it too, in one pass,
+// and the href in the served HTML is the one with the visitor's facets on it.
+//
+// A role page passes no searchParams and takes the first branch, unchanged: it
+// has no listing state to carry and nothing to await.
 export function Wordmark({ className, loading, searchParams }: WordmarkProps) {
   if (!searchParams) {
     return <Mark className={className} href={BOARD} loading={loading} />;
   }
 
-  return (
-    <Suspense fallback={<Mark className={className} href={BOARD} loading={loading} />}>
-      <BoardMark className={className} loading={loading} searchParams={searchParams} />
-    </Suspense>
-  );
+  return <BoardMark className={className} loading={loading} searchParams={searchParams} />;
 }

@@ -1,13 +1,11 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
-import { Suspense } from "react";
 
-import { JobListing } from "@/app/(site)/_listing/job-listing";
-import { ListingSkeleton } from "@/app/(site)/_listing/listing-skeleton";
+import { BoardPage } from "@/app/(site)/_listing/board-page";
 import { HomeMasthead } from "@/app/(site)/home-masthead";
 import { JsonLd } from "@/lib/seo/json-ld";
 import { netflixOrganization } from "@/lib/seo/organization";
-import type { RawSearchParams } from "@/lib/search/parse-query";
+import { parseJobQuery, type RawSearchParams } from "@/lib/search/parse-query";
 
 import "@/app/(site)/home-masthead.css";
 import "@/app/(site)/_listing/jobs-listing.css";
@@ -55,15 +53,31 @@ const netflixSansUltraCondensed = localFont({
 
 type HomeProps = { searchParams: Promise<RawSearchParams> };
 
-// searchParams is a request-time API, so everything downstream of it has to sit
-// inside <Suspense> -- without one, Cache Components fails the route with
-// "Uncached data was accessed outside of <Suspense>" rather than prerendering a
-// shell. The heading above the boundary is therefore static, and the results and
-// facets stream in.
+// AWAITED HERE, NOT STREAMED PAST.
 //
-// The promise is passed down rather than awaited here on purpose: awaiting it in
-// this component would make the whole page dynamic, including the heading.
-export default function Home({ searchParams }: HomeProps) {
+// This used to hand the promise down into a <Suspense> and let the results
+// arrive after the shell. That is what Cache Components asks for by default, and
+// for this page it was the wrong trade: React streams a resolved boundary
+// out-of-order -- the shell carries a ghost list, the real one lands in a
+// <div hidden> at the end of the document, and an inline script moves it. So the
+// filtered rows were IN the bytes and NOT on the screen until JavaScript ran.
+//
+// Awaiting it here removes the boundary, and with it the only reason the
+// document was ever in two pieces: nothing in this tree suspends now, so React
+// emits one complete document and the twenty rows and their count are in the
+// markup a crawler, a reader-mode and a scriptless browser all see.
+//
+// What that costs is the prerendered shell -- the route is dynamic, since
+// searchParams is request-time and there is no boundary left to defer it behind.
+// The render it does per request is a cache read: BoardPage holds finished
+// markup keyed on this exact query. See the root layout for the one line that
+// makes awaiting a request-time API up here legal.
+export default async function Home({ searchParams }: HomeProps) {
+  // Parsed here rather than inside the cached component, because the PARSED
+  // query is the cache key and parsing normalises: case, order and duplicates
+  // all collapse, so two spellings of one screen share one entry.
+  const query = parseJobQuery(await searchParams);
+
   return (
     <div className={`${netflixSansUltraCondensed.variable} listing`}>
       {/* Netflix, described once, here. Google's Organization guidance is to
@@ -82,9 +96,7 @@ export default function Home({ searchParams }: HomeProps) {
 
       <HomeMasthead />
 
-      <Suspense fallback={<ListingSkeleton />}>
-        <JobListing searchParams={searchParams} />
-      </Suspense>
+      <BoardPage query={query} />
     </div>
   );
 }

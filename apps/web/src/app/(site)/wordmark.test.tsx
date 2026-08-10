@@ -127,17 +127,29 @@ describe("the wordmark on a filtered board", () => {
     expect(html).not.toContain("/?");
   });
 
-  // What the shell carries before the query lands, and what a visitor with no
-  // JavaScript is left with: the same mark, at the same size, pointing at the
-  // unfiltered board. Nothing moves when the real href arrives.
-  it("falls back to the unfiltered board, not to a hole", () => {
-    const html = renderToStaticMarkup(
-      <Wordmark className="wordmark" loading="eager" searchParams={Promise.resolve({})} />,
-    );
+  // THERE IS NOTHING LEFT TO FALL BACK TO, AND THAT IS THE ASSERTION.
+  //
+  // This used to wrap the read in <Suspense> and paint a mark pointing at the
+  // bare board until the real href arrived. A resolved boundary is delivered
+  // out-of-order, so the anchor in the document WAS the fallback and only became
+  // right once React's inline script ran -- a link that needs JavaScript to
+  // point anywhere. One pass, one anchor, already carrying the query.
+  it("emits one mark, already final, with no fallback behind it", async () => {
+    const html = await renderFiltered({ country: "US" });
 
-    expect(markHref(html)).toBe(jobsHref(EMPTY_QUERY));
+    expect(markHref(html)).toBe("/?country=US");
+    expect(html.match(/<a /g)).toHaveLength(1);
+    expect(html).not.toContain("<template");
     expect(html).toContain(WORDMARK_RED);
     expect(html).toContain(">Jobs</span>");
+  });
+
+  // A page with no listing state -- a posting -- passes no searchParams, awaits
+  // nothing, and gets the unfiltered board in a plain synchronous render.
+  it("needs no await at all when there is no query to carry", () => {
+    const html = renderToStaticMarkup(<Wordmark className="wordmark" loading="eager" />);
+
+    expect(markHref(html)).toBe(jobsHref(EMPTY_QUERY));
   });
 });
 

@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
@@ -51,5 +52,25 @@ describe("Base", () => {
     expect(html).toContain('lang="en"');
     expect(html).toContain("<body");
     expect(html).toContain("hello");
+  });
+
+  // THE ONE LINE THAT MAKES THE DOCUMENTS WHOLE.
+  //
+  // An empty-fallback boundary above <body> is the documented way to opt out of
+  // the static shell (01-getting-started/08-caching.md): with no shell to send
+  // early, a request blocks until the page is fully rendered. That is what lets
+  // the listing await searchParams at the top of the page instead of streaming
+  // the results in behind a ghost -- and a streamed-in boundary is delivered
+  // out-of-order, so those results only became visible once JavaScript ran.
+  //
+  // The fallback must stay null. A fallback with markup in it is a shell again,
+  // and the whole arrangement quietly goes back to streaming.
+  it("opts out of the static shell with an empty boundary above the body", () => {
+    const tree = Base({ children: null });
+    const boundary = tree.props.children;
+
+    expect(boundary.type).toBe(Suspense);
+    expect(boundary.props.fallback).toBeNull();
+    expect(boundary.props.children.type).toBe("body");
   });
 });
