@@ -35,29 +35,52 @@ function FilterLink({ href, label }: { href: string; label: string }) {
   );
 }
 
+/** One place, linked to its filter when the catalog knows the site. */
+function Place({ place, catalog }: { place: Place; catalog: Site[] }) {
+  if (!place.site) {
+    return place.label;
+  }
+
+  return <FilterLink href={locationHref(place.site, catalog)} label={place.label} />;
+}
+
 /**
- * The location row: one link per place, or the raw string when there is no
- * place to link to.
+ * The location row: a real list when there is more than one place, and a bare
+ * value when there is one.
  *
- * The separator is a character in the markup, not a gap in a stylesheet. Two
- * adjacent links with only a margin between them are one run of text to a
- * screen reader and to anything that copies the line -- 'Los AngelesLos Gatos'
- * -- and they render that way the moment the stylesheet is late.
+ * A REAL <ul>, NOT BULLETS DRAWN IN CSS.
+ *
+ * Several places used to be one run of text joined with ' · '. On screen that
+ * reads as a list; to a screen reader it is a single value with punctuation in
+ * it, and the one thing a listener most needs -- how many places this role is
+ * open in -- has to be counted out of a sentence. A <ul> is announced as a list
+ * with its item count before the first item is read. ::before content would put
+ * the bullets back on screen and leave the semantics exactly as broken, which is
+ * the trade this deliberately does not take.
+ *
+ * ONE PLACE GETS NO LIST, for the same reason a facet holding two options back
+ * gets no disclosure: a list of one announces "list, 1 item" and then the item,
+ * which is chrome charged for nothing. The row renders the value alone.
+ *
+ * The separator went with the run of text. It was a character in the markup
+ * rather than a gap in a stylesheet, precisely so two adjacent links could not
+ * read as 'Los AngelesLos Gatos' when the stylesheet was late -- the list
+ * element carries that guarantee now, and carries it in the accessibility tree
+ * as well as on screen.
  */
 function Places({ places, catalog }: { places: Place[]; catalog: Site[] }) {
+  if (places.length === 1) {
+    return <Place catalog={catalog} place={places[0]} />;
+  }
+
   return (
-    <>
-      {places.map((place, index) => (
-        <span key={place.label}>
-          {index > 0 ? " · " : null}
-          {place.site ? (
-            <FilterLink href={locationHref(place.site, catalog)} label={place.label} />
-          ) : (
-            place.label
-          )}
-        </span>
+    <ul className="detail-places">
+      {places.map((place) => (
+        <li className="detail-places__item" key={place.label}>
+          <Place catalog={catalog} place={place} />
+        </li>
       ))}
-    </>
+    </ul>
   );
 }
 

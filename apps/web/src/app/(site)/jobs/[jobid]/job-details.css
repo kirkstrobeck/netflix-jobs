@@ -40,6 +40,33 @@
   overflow-wrap: anywhere;
 }
 
+/* A ROLE OPEN IN SEVERAL PLACES, AS A LIST.
+
+   The markers are the list's own -- list-style-type, not a ::before drawing a
+   dot. That distinction is the whole reason this element exists: a screen reader
+   announces a <ul> as a list and says how many items are in it before reading
+   the first, and how many places a role is open in is exactly the fact a
+   listener would otherwise have to count out of a comma-joined sentence. Faked
+   bullets would look identical and announce nothing.
+
+   `inside`, not the default `outside`: outside hangs the marker in the margin,
+   and this card's rows have no inline padding to hang it into -- the value
+   column starts at the card's edge. Inside keeps every marker in the column the
+   value already occupies, and a wrapped second line indents under the text
+   rather than under the dot.
+
+   A single-place role renders no list at all, so there is no rule here for one.
+   See job-details.tsx. */
+.detail-places {
+  margin: 0;
+  padding: 0;
+  list-style: disc inside;
+}
+
+.detail-places__item::marker {
+  color: var(--ink-faint);
+}
+
 /* A VALUE THAT IS ALSO A FILTER.
  *
  * Underlined at rest, not on hover. Four of the six values in this card are
