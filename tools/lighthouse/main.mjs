@@ -60,16 +60,33 @@ function saveReports(results) {
   console.log(`\nreports: ${dir}/`);
 }
 
-async function main() {
-  assertCategoriesCovered();
-  prepareBrowser();
+// Where the bytes come from. Against a deployed origin there is nothing to
+// build, nothing to start and nothing to stop -- and, more to the point, the
+// numbers then describe what visitors actually get: Vercel's compression, its
+// CDN cache, the real TLS handshake. A local `next start` measures none of
+// that. LIGHTHOUSE_ORIGIN=https://... switches the same gate onto it.
+async function origin() {
+  const deployed = process.env.LIGHTHOUSE_ORIGIN;
+
+  if (deployed) {
+    return { url: deployed.replace(/\/+$/, ""), stop: async () => {} };
+  }
 
   if (!process.env.LIGHTHOUSE_SKIP_BUILD) {
     await build();
   }
 
-  const server = await start(PORT);
-  const pages = await targets(`http://127.0.0.1:${PORT}`);
+  const local = await start(PORT);
+
+  return { url: `http://127.0.0.1:${PORT}`, stop: () => local.stop() };
+}
+
+async function main() {
+  assertCategoriesCovered();
+  prepareBrowser();
+
+  const server = await origin();
+  const pages = await targets(server.url);
 
   const results = [];
   try {

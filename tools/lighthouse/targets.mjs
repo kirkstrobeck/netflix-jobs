@@ -8,9 +8,33 @@ const restBase = () =>
 // rather than pinned. A pinned id rots the day the ingestor deactivates that
 // posting, and the gate would then be measuring a 404 and scoring it well.
 // LIGHTHOUSE_JOB_ID overrides it when you want to re-check one specific page.
-async function newestJobId() {
+// Against a deployed origin the local Supabase is the wrong database to ask --
+// it may hold a different set of postings than the one that origin is serving.
+// The board itself is the authority on what it will render, so take the first
+// posting it links to.
+async function jobIdFromBoard(origin) {
+  const response = await fetch(`${origin}/`, { redirect: "follow" });
+
+  if (!response.ok) {
+    throw new Error(`${origin} said ${response.status} asking for the board`);
+  }
+
+  const [, jobId] = /\/jobs\/([A-Za-z0-9]+)/.exec(await response.text()) ?? [];
+
+  if (!jobId) {
+    throw new Error(`No job links on ${origin}; nothing to audit`);
+  }
+
+  return jobId;
+}
+
+async function newestJobId(origin) {
   if (process.env.LIGHTHOUSE_JOB_ID) {
     return process.env.LIGHTHOUSE_JOB_ID;
+  }
+
+  if (process.env.LIGHTHOUSE_ORIGIN) {
+    return jobIdFromBoard(origin);
   }
 
   const url =
@@ -35,7 +59,7 @@ async function newestJobId() {
 }
 
 export async function targets(origin) {
-  const jobId = await newestJobId();
+  const jobId = await newestJobId(origin);
 
   return [
     { label: "listing  /", url: `${origin}/` },
