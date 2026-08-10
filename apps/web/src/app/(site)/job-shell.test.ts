@@ -9,6 +9,7 @@ const shell = read("job-shell.css");
 const listing = read("_listing/jobs-listing.css");
 const facets = read("_listing/jobs-facets.css");
 const options = read("_listing/jobs-options.css");
+const pager = read("_listing/jobs-pager.css");
 
 /**
  * .shell is a grid item, and CSS Box Alignment says an auto margin absorbs free
@@ -109,6 +110,37 @@ describe("the facet panel's spacing scale", () => {
         "utf8",
       ),
     ).not.toContain("facet__options--rest");
+  });
+});
+
+/**
+ * ONE NUMBER AT BOTH ENDS OF THE PAGER.
+ *
+ * Three tracks, the outer two 5.5rem whether or not a control is in them, so the
+ * numbers do not slide when Previous or Next is not rendered. That held. What
+ * did not is that the two controls hugged their own labels inside those equal
+ * tracks, so the leftover all landed on one side: measured on the running page
+ * with tools/probe/pager.mjs, 9px between Previous and the first number and 33px
+ * between the last number and Next, at 390, 768 and 1280 alike.
+ *
+ * Filling the track makes both plates 5.5rem and leaves the column-gap as the
+ * only space between a control and the numbers -- 12px on both sides at all
+ * three widths, with .pager__pages landing at the same x on page 1, page 3 and
+ * page 24.
+ */
+describe("the pager's two ends", () => {
+  it("reserves the outer tracks and lets the controls fill them", () => {
+    const body = rule(pager, ".pager");
+
+    expect(body).toContain("grid-template-columns: 5.5rem auto 5.5rem");
+    expect(body).toContain("column-gap: 0.75rem");
+    // justify-self is what pushed each control to its own outer edge and left
+    // the slack inside the row, unequal because the two words are.
+    expect(pager).not.toContain("justify-self");
+  });
+
+  it("centres the numbers in the track between them", () => {
+    expect(rule(pager, ".pager__pages")).toContain("justify-content: center");
   });
 });
 

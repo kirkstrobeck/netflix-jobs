@@ -46,26 +46,47 @@
    So the space is reserved rather than the control. Each of the three is placed
    in a named track, and an absent one leaves its track standing and empty.
    5.5rem is "Previous" at 0.875rem plus the 0.75rem of inline padding either
-   side -- the wider of the two words, so both edges take the same width and the
-   numbers stay centred between them.
+   side -- the wider of the two words, so both edges take the same width.
 
-   justify-self pushes each step outward, so Previous sits at the left edge of
-   the row and Next at the right whatever the numbers do between them. */
+   THE STEPS FILL THEIR TRACKS, AND THAT IS WHAT MAKES THE ROW SYMMETRIC.
+
+   They used to be pushed outward with justify-self, each one hugging its own
+   label inside a track sized for the longer of the two. Equal tracks and unequal
+   labels put all the leftover on one side: measured on the running page at 390,
+   768 and 1280 (tools/probe/pager.mjs), Previous ended 9px from the first page
+   number while Next stood 33px off the last one. The numbers were not centred
+   between the two controls, they were jammed against Previous -- and the two
+   ends of one control pair read as two different amounts of space.
+
+   Filling the track instead makes both plates 5.5rem, so the gap on each side is
+   the column-gap and nothing else: one number, stated once, identical at both
+   ends. It costs nothing -- the space was already reserved, this only stops it
+   being reserved as a hole -- and the wider plate is a wider hit target for the
+   control that is pressed most.
+
+   0.75rem, matching .pager__link's own inline padding, so the space between a
+   step and the first number is the same as the space inside the step around its
+   word. Grid gaps sit between TRACKS, not between items, so an absent Previous
+   still leaves its track and its gap standing and the row does not move. */
 .pager {
   display: grid;
   grid-template-columns: 5.5rem auto 5.5rem;
+  column-gap: 0.75rem;
   align-items: center;
 }
 
 .pager__step--prev {
   grid-column: 1;
-  justify-self: start;
 }
 
+/* Centred in the middle track rather than hugging its start: at 390 the five
+   numbers wrap to two rows, and a start-aligned second row left a ragged edge
+   against a Next that is pinned to the far side of the row. */
 .pager__pages {
   display: flex;
   flex-wrap: wrap;
   grid-column: 2;
+  justify-content: center;
   gap: 0.25rem;
   margin: 0;
   padding: 0;
@@ -74,7 +95,6 @@
 
 .pager__step--next {
   grid-column: 3;
-  justify-self: end;
 }
 
 .pager__link {
