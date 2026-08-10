@@ -22,7 +22,9 @@ const ultra = stripComments(
  */
 describe("the Ultra overlay's bleed", () => {
   it("states the growth once, and derives the inset and the size from it", () => {
-    expect(rule(ultra, ".ultra")).toContain(`--ultra-bleed: ${ULTRA_BLEED}%`);
+    expect(rule(ultra, ".ultra,\n.ultra-plate")).toContain(
+      `--ultra-bleed: ${ULTRA_BLEED}%`,
+    );
 
     const layers = rule(ultra, ".ultra__mask,\n.ultra__fill");
 

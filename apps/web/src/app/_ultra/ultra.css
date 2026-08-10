@@ -1,13 +1,22 @@
 /* Ultra mode - https://UltraDarkMode.com */
 
-/* The h1 itself, and the only thing it gains: a positioned box for the mask and
-   the canvas to fill. Every type rule still comes from the class beside this one
-   -- .masthead__title or .job-title -- and both copies of the word inherit it.
+/* THE TWO HOSTS.
+
+   .ultra is a run of text whose glyphs are the mask -- a headline, a button
+   label. .ultra-plate is an element whose own SHAPE is the mask, which today is
+   each of the hero's two buttons. Both need the same two things and nothing
+   else: a positioned box for the overlay layers, and the bleed in scope.
+
+   Neither takes any typography or fill of its own. A headline still gets every
+   type rule from .masthead__title or .job-title beside it, and a button still
+   gets its plate from job-cta.css -- the Ultra pass is painted OVER what those
+   rules already decided, not instead of it.
 
    --ultra-bleed is how far the two overlay layers grow past that box on every
    side. It is ULTRA_BLEED in lib/ultra/ultra-config.ts, and ultra-bleed.test.ts
    holds the two to the same number. */
-.ultra {
+.ultra,
+.ultra-plate {
   --ultra-bleed: 50%;
 
   position: relative;

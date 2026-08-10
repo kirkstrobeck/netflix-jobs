@@ -3,6 +3,9 @@
 import { useCallback, useEffect, useState } from "react";
 import type { MouseEvent } from "react";
 
+import { UltraSurface } from "@/app/_ultra/ultra-surface";
+import { UltraText } from "@/app/_ultra/ultra-text";
+import { CTA_RADIUS, ULTRA_SURFACE } from "@/app/(site)/jobs/[jobid]/cta-ultra";
 import type { JobShare } from "@/lib/jobs/job-share";
 
 /**
@@ -128,13 +131,17 @@ export function ShareButton({ share }: { share: JobShare }) {
           Apply and clears the same 44px target, because a control that is hard
           to hit is not modest, it is broken. */}
       <a
-        className="share-button"
+        className="share-button ultra-plate"
         href={share.url}
         onClick={onClick}
         rel="noopener noreferrer"
         target="_blank"
       >
-        Share
+        {/* Two Ultra passes, as on Apply: the plate and the label are separate
+            elements so the words stay a real, selectable text node rather than
+            being drawn into the canvas. See apply-button.tsx. */}
+        <UltraSurface colour={ULTRA_SURFACE} radius={CTA_RADIUS} />
+        <UltraText className="cta__label">Share</UltraText>
         <span className="visually-hidden">: {share.title}</span>
       </a>
 

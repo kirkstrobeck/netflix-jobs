@@ -9,6 +9,8 @@ import { startUltraFill } from "@/lib/ultra/ultra-fill";
 type UltraFillCanvasProps = {
   /** Overrides ULTRA_HEADROOM for this one fill. */
   intensity?: number;
+  /** Linear RGB multiplied by the headroom. Defaults to white. */
+  colour?: [number, number, number];
   /** True once the surface is painting, false when there is no WebGPU. */
   onPainting?: (painting: boolean) => void;
   className?: string;
@@ -29,6 +31,7 @@ type UltraFillCanvasProps = {
  */
 export function UltraFillCanvas({
   intensity,
+  colour,
   onPainting,
   className,
   style,
@@ -38,7 +41,7 @@ export function UltraFillCanvas({
   useEffect(() => {
     if (!canvas) return;
 
-    const session = startUltraFill(canvas, { intensity, onPainting });
+    const session = startUltraFill(canvas, { intensity, colour, onPainting });
     // WebGPU surfaces are dropped on tab restore and on resize, and a dropped
     // surface paints nothing -- which, through the mask, is an invisible
     // headline rather than a dim one.
@@ -52,7 +55,7 @@ export function UltraFillCanvas({
       window.removeEventListener("resize", repaint);
       session.stop();
     };
-  }, [canvas, intensity, onPainting]);
+  }, [canvas, intensity, colour, onPainting]);
 
   return (
     <canvas

@@ -1,5 +1,5 @@
 import { BarsStage } from "@/app/_bars/bars-stage";
-import { UltraHeadline } from "@/app/_ultra/ultra-headline";
+import { UltraText } from "@/app/_ultra/ultra-text";
 
 // The page's one h1. "Open roles" below it is an h2, so the outline runs
 // h1 -> h2 (the listing, and the filters panel) -> h3 (each result).
@@ -29,11 +29,11 @@ export const HEADLINE = "Be part of what’s next";
 export function HomeMasthead() {
   return (
     <BarsStage as="header" className="masthead" contentClassName="shell">
-      {/* The h1 is <UltraHeadline>'s, and it still carries .masthead__title --
+      {/* The h1 is <UltraText>'s, and it still carries .masthead__title --
           every type rule below is unchanged and both copies of the word inherit
           it. What is added is the Ultra fill: a WebGPU canvas painted past SDR
           reference white and masked to these letterforms. */}
-      <UltraHeadline className="masthead__title">{HEADLINE}</UltraHeadline>
+      <UltraText as="h1" className="masthead__title">{HEADLINE}</UltraText>
     </BarsStage>
   );
 }

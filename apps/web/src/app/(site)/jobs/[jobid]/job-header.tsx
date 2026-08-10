@@ -2,7 +2,7 @@ import { ApplyButton } from "@/app/(site)/jobs/[jobid]/apply-button";
 import { PostedDate } from "@/app/(site)/jobs/[jobid]/posted-date";
 import { ShareButton } from "@/app/(site)/jobs/[jobid]/share-button";
 import { BarsStage } from "@/app/_bars/bars-stage";
-import { UltraHeadline } from "@/app/_ultra/ultra-headline";
+import { UltraText } from "@/app/_ultra/ultra-text";
 import { formatPostedDate } from "@/lib/format/posted-date";
 import { applyUrl } from "@/lib/jobs/apply-url";
 import { postedOn } from "@/lib/jobs/date-posted";
@@ -47,7 +47,7 @@ export function JobHeader({ job, catalog }: { job: Job; catalog: Site[] }) {
 
       {/* Same treatment as the board's own headline, and the same h1: the type
           rules stay on .job-title, the Ultra fill is masked to them. */}
-      <UltraHeadline className="job-title">{job.title}</UltraHeadline>
+      <UltraText as="h1" className="job-title">{job.title}</UltraText>
 
       <ul className="job-facts">
         <li className="job-facts__item">{placeLine(places)}</li>

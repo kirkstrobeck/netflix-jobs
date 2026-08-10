@@ -91,6 +91,11 @@
    longer carries 1.4.11 on its own -- that is a deliberate call about how loud
    the edge should be, not an oversight, and the measurements above are what it
    was traded against. */
+/* Both carry .ultra-plate in the markup, which is what gives the surface pass a
+   positioned box to fill and puts --ultra-bleed in scope. The radius below is
+   also the radius the surface mask is cut with -- CTA_RADIUS in cta-ultra.ts,
+   held to this number by job-cta.test.ts, because a mask with a different corner
+   from the box it covers shows as a bright sliver at each corner. */
 .apply-button,
 .share-button {
   display: inline-flex;

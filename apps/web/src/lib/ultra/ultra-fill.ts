@@ -52,19 +52,32 @@ export type UltraFillOptions = {
   /** Overrides ULTRA_HEADROOM for this one fill. */
   intensity?: number;
   /**
+   * Linear RGB, each channel multiplied by the intensity. Defaults to white.
+   *
+   * A plate is Ultra the same way a word is -- past reference white -- but it
+   * still has to be its own colour, or the Apply button stops being red. Scaling
+   * a hue by the headroom keeps the hue and moves the luminance, which is the
+   * whole point of an extended-range surface.
+   */
+  colour?: [number, number, number];
+  /**
    * True once the surface is configured and painted, false when there is no
    * WebGPU to paint with. The headline gives up its own ink only on true.
    */
   onPainting?: (painting: boolean) => void;
 };
 
-function paint(device: UltraDevice, surface: UltraContext, intensity: number): void {
+function paint(
+  device: UltraDevice,
+  surface: UltraContext,
+  fill: { r: number; g: number; b: number; a: number },
+): void {
   const encoder = device.createCommandEncoder();
   const pass = encoder.beginRenderPass({
     colorAttachments: [
       {
         view: surface.getCurrentTexture().createView(),
-        clearValue: { r: intensity, g: intensity, b: intensity, a: 1 },
+        clearValue: fill,
         loadOp: "clear",
         storeOp: "store",
       },
@@ -89,6 +102,13 @@ export function startUltraFill(
   options: UltraFillOptions = {},
 ): UltraFillSession {
   const intensity = options.intensity ?? ULTRA_HEADROOM;
+  const [red, green, blue] = options.colour ?? [1, 1, 1];
+  const fill = {
+    r: red * intensity,
+    g: green * intensity,
+    b: blue * intensity,
+    a: 1,
+  };
   let device: UltraDevice | undefined;
   let surface: UltraContext | undefined;
   let stopped = false;
@@ -127,7 +147,7 @@ export function startUltraFill(
 
     device = next;
     surface = context;
-    paint(device, surface, intensity);
+    paint(device, surface, fill);
     canvas.dataset.ultraFill = "on";
     options.onPainting?.(true);
   })();
@@ -138,7 +158,7 @@ export function startUltraFill(
       // when it does, is the one this would have been.
       if (!device || !surface) return;
 
-      paint(device, surface, intensity);
+      paint(device, surface, fill);
     },
     stop() {
       stopped = true;

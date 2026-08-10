@@ -2,7 +2,7 @@ import { act, cleanup, render } from "@testing-library/react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { UltraHeadline } from "@/app/_ultra/ultra-headline";
+import { UltraText } from "@/app/_ultra/ultra-text";
 
 const WORD = "Be part of what’s next";
 
@@ -37,7 +37,7 @@ beforeEach(() => {
 
 afterEach(cleanup);
 
-describe("UltraHeadline", () => {
+describe("UltraText", () => {
   /**
    * The canvas is decoration; this is the headline. A crawler, a reader mode, a
    * visitor with JavaScript off and a visitor with no WebGPU all get an h1
@@ -46,7 +46,9 @@ describe("UltraHeadline", () => {
    */
   it("is an h1 with real text in it, under its own type class", () => {
     const html = renderToStaticMarkup(
-      <UltraHeadline className="masthead__title">{WORD}</UltraHeadline>,
+      <UltraText as="h1" className="masthead__title">
+        {WORD}
+      </UltraText>,
     );
 
     expect(html).toContain('<h1 class="ultra masthead__title">');
@@ -61,7 +63,7 @@ describe("UltraHeadline", () => {
    */
   it("is not lit until there is both a mask and a fill", () => {
     const html = renderToStaticMarkup(
-      <UltraHeadline className="job-title">{WORD}</UltraHeadline>,
+      <UltraText className="job-title">{WORD}</UltraText>,
     );
 
     expect(html).not.toContain("data-ultra=");
@@ -71,7 +73,9 @@ describe("UltraHeadline", () => {
   it("lights up once the fill paints and the lines are measured", () => {
     lines.mockReturnValue([{ text: "Be part of", x: 4, y: 40 }]);
     const { container } = render(
-      <UltraHeadline className="job-title">{WORD}</UltraHeadline>,
+      <UltraText as="h1" className="job-title">
+        {WORD}
+      </UltraText>,
     );
 
     expect(container.querySelector("h1")?.dataset.ultra).toBeUndefined();
@@ -86,7 +90,7 @@ describe("UltraHeadline", () => {
   it("stays unlit when the fill cannot paint", () => {
     lines.mockReturnValue([{ text: "Be part of", x: 4, y: 40 }]);
     const { container } = render(
-      <UltraHeadline className="job-title">{WORD}</UltraHeadline>,
+      <UltraText className="job-title">{WORD}</UltraText>,
     );
 
     act(() => painting.on?.(false));
@@ -107,7 +111,7 @@ describe("UltraHeadline", () => {
       { text: "what’s next", x: 4, y: 120 },
     ]);
     const { container } = render(
-      <UltraHeadline className="masthead__title">{WORD}</UltraHeadline>,
+      <UltraText className="masthead__title">{WORD}</UltraText>,
     );
     const texts = [...container.querySelectorAll(".ultra__mask text")];
 
@@ -127,7 +131,7 @@ describe("UltraHeadline", () => {
    */
   it("gives the mask a css-safe id, and points the canvas at it", () => {
     const html = renderToStaticMarkup(
-      <UltraHeadline className="job-title">{WORD}</UltraHeadline>,
+      <UltraText className="job-title">{WORD}</UltraText>,
     );
     const id = /<mask id="([^"]+)"/.exec(html)?.[1];
 
@@ -141,8 +145,8 @@ describe("UltraHeadline", () => {
   it("gives two headlines two ids", () => {
     const html = renderToStaticMarkup(
       <>
-        <UltraHeadline className="job-title">One</UltraHeadline>
-        <UltraHeadline className="job-title">Two</UltraHeadline>
+        <UltraText className="job-title">One</UltraText>
+        <UltraText className="job-title">Two</UltraText>
       </>,
     );
     const ids = [...html.matchAll(/<mask id="([^"]+)"/g)].map((match) => match[1]);
@@ -153,7 +157,7 @@ describe("UltraHeadline", () => {
   // The mask sits over the words, and is not a thing to read or point at.
   it("keeps the decoration out of the pointer's and the reader's way", () => {
     const html = renderToStaticMarkup(
-      <UltraHeadline className="job-title">{WORD}</UltraHeadline>,
+      <UltraText className="job-title">{WORD}</UltraText>,
     );
 
     expect(html).toContain('<svg aria-hidden="true" class="ultra__mask">');
