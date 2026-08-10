@@ -10,13 +10,6 @@
   --ink-muted: #b3b3b3;
   --ink-faint: #8c8c8c;
   --hairline: rgba(255, 255, 255, 0.14);
-  /* The same idea at the strength an ANIMATED backdrop demands. --hairline is
-     calibrated for one near-black surface meeting another, which is every place
-     it is used; over the hero's bars it measures 2.79:1 and disappears at the
-     bright end of the cycle. 70% white is what clears 3:1 on both the red fill
-     and the dark one -- the numbers, and the frames they were taken from, are
-     in jobs/[jobid]/job-cta.css. */
-  --hairline-bright: rgba(255, 255, 255, 0.7);
   --accent: #e50914;
   --gutter: clamp(1.25rem, 4vw, 3rem);
 

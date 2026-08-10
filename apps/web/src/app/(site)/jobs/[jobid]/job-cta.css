@@ -84,10 +84,13 @@
    both -- what separates primary from secondary is the fill and the weight, not
    how visible the control is.
 
-   --hairline-bright is 70% white. Measured at the brightest frame: 5.63:1 on
-   the red fill and 4.69:1 on the dark one; at the dimmest, 11.07:1 and 9.23:1.
-   The value comes from the weaker of the two -- 55% white over --surface lands
-   at 2.93:1 and misses. */
+   The rim is 15% white, set here because these two controls are the only place
+   it is used. It replaces the 70% white this file's measurements were taken
+   against, which read as too dramatic: at 70% the numbers were 5.63:1 on the
+   red fill and 4.69:1 on the dark one at the brightest frame. At 15% the rim no
+   longer carries 1.4.11 on its own -- that is a deliberate call about how loud
+   the edge should be, not an oversight, and the measurements above are what it
+   was traded against. */
 .apply-button,
 .share-button {
   display: inline-flex;
@@ -95,7 +98,7 @@
   justify-content: center;
   /* 48px clears the 44px minimum hit target. */
   min-block-size: 3rem;
-  border: 1px solid var(--hairline-bright);
+  border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 3px;
   /* 19px, up from 16px, on BOTH -- the pair has to stay a pair, and the two
      controls had the same problem for different reasons. On the secondary it is

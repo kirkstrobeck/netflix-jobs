@@ -23,18 +23,15 @@ describe("the edge that survives the bars", () => {
    * all for much of the cycle. No red fixes that: the brightest possible red
    * reaches 2.41:1 at the bright end. So the boundary is a rim.
    */
-  it("rims both controls, and with the bright token rather than --hairline", () => {
+  it("rims both controls, once, at 15% white", () => {
     const body = rule(cta, ".apply-button,\n.share-button");
 
-    expect(body).toContain("border: 1px solid var(--hairline-bright)");
-    expect(shell).toContain("--hairline-bright: rgba(255, 255, 255, 0.7)");
-  });
-
-  // 14% white over --accent computes to rgb(233,43,53), which measures 2.79:1
-  // at the brightest frame. It is the right token between two near-black
-  // surfaces and the wrong one here, so it must not creep back.
-  it("does not reach for the near-black hairline on this backdrop", () => {
-    expect(cta).not.toContain("solid var(--hairline)");
+    expect(body).toContain("border: 1px solid rgba(255, 255, 255, 0.15)");
+    // One rim for the pair: neither control states a border of its own, so the
+    // rule above is the only place the edge is defined.
+    expect(cta.match(/border: /g)).toHaveLength(1);
+    // The bright token existed only for this border and went with it.
+    expect(shell).not.toContain("--hairline-bright");
   });
 
   /**
