@@ -1,51 +1,64 @@
 /* The facet panel. Same tokens and the same interaction-state rule as the rest
-   of the page: every state arrives instantly and only fades on the way out. */
+   of the page: every state arrives instantly and only fades on the way out.
 
-/* No scroll container anywhere in here, and no sticky.
+   NO SCROLL CONTAINER ANYWHERE IN HERE, AND NO STICKY.
 
    The panel used to be sticky with max-block-size + overflow-y: auto. Two things
    were wrong with that. The panel scrolled inside the page, which is a second
    scrollbar to discover and get lost in -- "Show all" below is how a long facet
    is reached now. And overflow-y: auto forced overflow-x from visible to auto
-   (the spec computes the visible axis to auto when the other one is not
-   visible), which made this a scroll container on BOTH axes and clipped the
-   3px-offset focus ring on the full-width search inputs at their left and right
-   edges -- leaving a bar above and below the field and nothing at the sides.
-   Nothing here scrolls now, so the ring draws whole. */
+   (the spec computes the visible axis to auto when the other is not visible),
+   making this a scroll container on BOTH axes and clipping the search inputs'
+   3px-offset focus ring at their left and right edges. */
+
 /* THE PANEL'S ONE SPACING SCALE
 
-   Three steps, declared here and read everywhere below, because the grouping is
-   what the spacing has to express and per-element nudges cannot express it
-   consistently across four groups.
+   Three steps, declared here and read everywhere below: the grouping is what the
+   spacing has to express, and per-element nudges cannot express it consistently
+   across five groups.
 
    The rule: the space ABOVE a group heading is clearly larger than the space
-   below it, so each heading binds to the group it names rather than to the one
-   it follows. It used to be 28px above and 9px below -- a ratio of about 2:1,
-   which sounds sufficient and is not, because the gap below the heading is not
-   empty. A filled, bordered search field sits in it, and a heavy edge that
-   close reads as a boundary; the heading ended up looking like the last line of
-   the group above rather than the first line of the group below.
+   below it, so each heading binds to the group it names rather than the one it
+   follows. It was 28px above and 9px below -- about 2:1, which sounds sufficient
+   and is not, because the gap below is not empty. A filled, bordered search
+   field sits in it, and a heavy edge that close reads as a boundary.
 
-   So the two numbers are pushed apart to 5:1 and the middle step sits between
-   them: 8px binds a heading to its own controls, 12px separates controls inside
-   one group, 40px separates the groups themselves. Ascending, unambiguous, and
-   the same three numbers in every group. */
+   So the numbers are pushed apart and the middle step sits between them: 8px
+   binds a heading to its own controls, 12px separates controls inside one group,
+   24px separates the groups themselves.
+
+   The top step was 40px, set to clear the 2:1 that had failed, and it overshot
+   three times over: at four groups of it the panel stopped reading as one list
+   of filters and started reading as four unrelated blocks sharing a column. 24px
+   is still 3:1 against the 8px lead -- a last step, not a chasm.
+
+   ONE RHYTHM, SAID ONCE. .facets is a two-item stack of its own -- the head,
+   then the panel -- and it reads --facet-gap for exactly the reason
+   .facets__panel does, so the space above the first filter IS the space between
+   every pair after it. A pass that dropped it, arguing that "above the first
+   group" is not "between two groups", left the first legend hard against the
+   hairline while every later one had 24px over it -- which reads as a list that
+   has been clipped, not one that starts tight.
+
+   The alternative -- a margin on .facet:first-of-type, or padding on the panel
+   -- is the same pixel expressed twice, and it has already been reverted once
+   for drifting. No per-child margin anywhere: a collapsed panel is
+   `display: none` and therefore not a grid item, so .facets' gap goes with it
+   and leaves no blank strip under the head. See jobs-collapse.css. */
 .facets {
   --facet-lead: 0.5rem;
   --facet-inner: 0.75rem;
-  --facet-gap: 2.5rem;
+  --facet-gap: 1.5rem;
 
   display: grid;
   gap: var(--facet-gap);
   align-content: start;
 }
 
-/* min-block-size and centring, both from the pair's shared token in
-   jobs-listing.css. This head holds two runs of 0.8125rem text and the other one
-   now holds a boxed control, so left to their contents the two rules would no
-   longer line up and neither would the two labels. Both are centred inside the
-   same declared height instead. See the note on .listing for the reasoning and
-   the number. */
+/* min-block-size and centring, from the pair's shared token in jobs-listing.css.
+   This head holds two runs of 0.8125rem text and the other holds a boxed
+   control, so left to their contents neither the rules nor the labels would line
+   up. Both are centred in the same declared height instead. */
 .facets__head {
   display: flex;
   align-items: center;
@@ -56,9 +69,9 @@
   border-block-end: 1px solid var(--hairline);
 }
 
-/* The heading and its tally, grouped left, so .facets__head's space-between has
-   two things to push apart rather than three to spread. baseline, not center:
-   the tally is a different size and it should sit ON the heading's line. */
+/* Grouped left, so .facets__head's space-between has two things to push apart
+   rather than three. baseline: the tally is a different size and sits ON the
+   heading's line. */
 .facets__title {
   display: flex;
   align-items: baseline;
@@ -76,9 +89,7 @@
 }
 
 /* How many filters are on, at both widths. Deliberately NOT the heading's
-   treatment: no tracking, no uppercase, smaller, and it keeps the number
-   legible as a number. It reads as a piece of state attached to the heading
-   rather than as a second label competing with it. */
+   treatment -- state attached to it, not a second label competing with it. */
 .facets__applied {
   margin: 0;
   color: var(--ink-faint);
@@ -107,8 +118,8 @@
   transition-duration: 0s;
 }
 
-/* A <fieldset> with its browser chrome removed -- kept for the semantics, since
-   a group of checkboxes needs a group name and <legend> is how that is said. */
+/* A <fieldset> with its chrome removed, kept for the semantics: a group of
+   checkboxes needs a name and <legend> is how that is said. */
 .facet {
   min-inline-size: 0;
   margin: 0;
@@ -116,10 +127,8 @@
   border: 0;
 }
 
-/* The tightest step in the scale. A heading binds hardest to the thing it
-   names, so the distance from it to its own first control is smaller than the
-   distance between controls inside the group -- and far smaller than the gap to
-   the group above. */
+/* The tightest step in the scale: a heading binds hardest to the thing it names,
+   so the distance to its own first control is the smallest of the three. */
 .facet__legend {
   display: block;
   margin-block-end: var(--facet-lead);
@@ -129,6 +138,8 @@
   font-weight: 700;
 }
 
+/* No :focus-visible rule of its own: the shared .job-page ring, 2px white at 3px
+   offset, is the whole focus state. */
 .facet__search {
   inline-size: 100%;
   min-block-size: 2.5rem;
@@ -144,10 +155,6 @@
 .facet__search::placeholder {
   color: var(--ink-faint);
 }
-
-/* No :focus-visible rule of its own. The shared .job-page :focus-visible ring --
-   2px white at 3px offset -- is the whole focus state; brightening the border
-   underneath it as well only muddied the edge it sits outside of. */
 
 .facet__form {
   display: contents;
@@ -182,9 +189,8 @@
   transition-duration: 0s;
 }
 
-/* "No matches" -- what the option search says when it has narrowed a group
-   down to nothing. It sits where the option list would, so it lives with the
-   group rather than with the options it is standing in for. */
+/* "No matches" -- what the option search says when it has narrowed a group to
+   nothing. It sits where the option list would. */
 .facet__none {
   margin: 0.75rem 0 0;
   color: var(--ink-faint);

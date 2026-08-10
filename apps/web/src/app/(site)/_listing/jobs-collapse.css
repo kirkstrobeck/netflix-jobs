@@ -15,7 +15,9 @@
    second copy of the markup to keep in step. */
 
 /* The groups. Its own grid so the panel is one child of .facets that can be
-   hidden whole, on the same between-groups step the rest of the panel uses. */
+   hidden whole, on the same between-groups step .facets uses above it -- one
+   token, so the space over the first filter and the space between every pair
+   after it cannot drift apart. See the scale note in jobs-facets.css. */
 .facets__panel {
   display: grid;
   gap: var(--facet-gap);
