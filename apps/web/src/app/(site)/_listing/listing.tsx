@@ -34,16 +34,16 @@ type ListingProps = {
  * components are the same ones throughout, only their data changed hands.
  */
 export function Listing({ boardVersion, initialQuery, initialView }: ListingProps) {
-  const { query, view, draft, setDraft, navigate, nearest, where } = useListing(
+  const { query, view, draft, setDraft, navigate, nearest } = useListing(
     initialQuery,
     initialView,
     boardVersion,
   );
 
-  // Country on the server and on the first client render; the request's country
-  // and then the device only once each has landed. See heading-place.ts for why
-  // that split is what keeps the heading out of the cache key.
-  const place = headingPlace(query, view.facets.country, nearest, where);
+  // The URL's country on the server and on the first client render; the device
+  // only once a fix has landed. See heading-place.ts for why that split is what
+  // keeps the heading out of the cache key.
+  const place = headingPlace(query, view.facets.country, nearest);
   const heading = listingHeading(query.sort, place);
 
   return (

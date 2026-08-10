@@ -32,27 +32,21 @@ import type { HeadingPlace } from "@/lib/search/listing-heading";
  * of the board's countries take "the" and the rest do not, and that is a
  * property of the country rather than of the string it is spelled with.
  *
- * A country with no label in the facet list is dropped. That is the fail-closed
- * path for /api/where: the facets only name countries this board hires in, so a
- * request placed in a country with no roles has nothing to be called here and
- * the heading stays plain rather than naming somewhere the board has never
- * heard of.
+ * A country with no label in the facet list is dropped. The facets only name
+ * countries this board hires in, so a code that reached here without one has
+ * nothing to be called and the heading stays plain rather than naming somewhere
+ * the board has never heard of.
  */
-function named(
-  countries: FacetOption[],
-  code: string,
-  precision: "country" | "request",
-): HeadingPlace | null {
+function named(countries: FacetOption[], code: string): HeadingPlace | null {
   const name = countries.find((option) => option.value === code)?.label;
 
-  return name ? { precision, code, name } : null;
+  return name ? { precision: "country", code, name } : null;
 }
 
 export function headingPlace(
   query: JobQuery,
   countries: FacetOption[],
   nearest: Nearest,
-  where: string | null,
 ): HeadingPlace | null {
   if (query.sort !== "nearest") {
     return null;
@@ -74,22 +68,17 @@ export function headingPlace(
   }
 
   if (code) {
-    return named(countries, code, "country");
+    return named(countries, code);
   }
 
   // THE COUNTRY IS IN THE URL, OR IT IS NOT A FILTER.
   //
   // Past this line the visitor has NOT answered the country question -- they
-  // cleared it, or they arrived on a link that says everywhere -- so what
-  // follows can only name a place, never narrow the list. `where` comes from
-  // GET /api/where after paint, and the tier it produces is a different
-  // sentence for exactly that reason: see listing-heading.ts.
-  //
-  // An office ticked without its country is still an answer to "where", so the
-  // guess stays quiet there too.
-  if (query.site.length > 0 || !where) {
-    return null;
-  }
-
-  return named(countries, where, "request");
+  // cleared it, or they arrived on a link that says everywhere -- and the
+  // heading has nothing left to read. There used to be one more tier here: the
+  // country the edge read off the request, fetched from GET /api/where after
+  // paint. It could only ever name a place, never narrow the list, and once the
+  // copy stopped naming countries at all it named nothing either -- a per-page
+  // round trip that moved no pixel. Both the tier and the route are gone.
+  return null;
 }

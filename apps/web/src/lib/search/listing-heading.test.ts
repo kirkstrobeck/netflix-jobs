@@ -44,29 +44,31 @@ describe("listingHeading", () => {
  * panel is on screen with that country ticked, so the heading was restating a
  * filter the visitor can already see.
  *
- * These tests are the regression: the tiers still exist, because LocationOffer
- * reads them, so a future edit could quietly teach one of them to speak again.
+ * The request tier went further and no longer exists at all -- with nothing
+ * left to say, the hook and the route feeding it were a round trip that moved
+ * no pixel. The country tier does still exist, because LocationOffer reads it,
+ * so a future edit could quietly teach it to speak again. These tests are the
+ * regression for the half that survives.
  */
 describe("the country the heading no longer names", () => {
   const ticked = { precision: "country", code: "US", name: "United States" } as const;
-  const guessed = { precision: "request", code: "US", name: "United States" } as const;
 
   it("says a bare Open roles for a country the visitor ticked", () => {
     expect(listingHeading("nearest", ticked)).toBe("Open roles");
   });
 
-  it("says a bare Open roles for a country read off the request", () => {
-    expect(listingHeading("nearest", guessed)).toBe("Open roles");
+  it("says a bare Open roles when nowhere is known at all", () => {
+    expect(listingHeading("nearest", null)).toBe("Open roles");
   });
 
   // Both old sentences at once, including the article the country tier used to
   // add for four of the board's twenty-two countries.
-  it("names no country in any tier, with or without its article", () => {
+  it("names no country, with or without its article", () => {
     const every = [
       listingHeading("nearest", ticked),
-      listingHeading("nearest", guessed),
+      listingHeading("nearest", null),
       listingHeading("nearest", { precision: "country", code: "JP", name: "Japan" }),
-      listingHeading("nearest", { precision: "request", code: "GB", name: "United Kingdom" }),
+      listingHeading("nearest", { precision: "country", code: "GB", name: "United Kingdom" }),
     ];
 
     for (const heading of every) {

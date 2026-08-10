@@ -95,16 +95,16 @@ describe("line balancing", () => {
 /**
  * THE CLAUSE THAT USED TO ARRIVE AFTER PAINT.
  *
- * GET /api/where landed a country into the results heading seconds after the
- * page, in a clause of its own. This label shares its line with the sort
- * control, so it is 134px wide at a 320px viewport -- measured against the
+ * A fetch of the request's country landed one into the results heading seconds
+ * after the page, in a clause of its own. This label shares its line with the
+ * sort control, so it is 134px wide at a 320px viewport -- measured against the
  * running page -- and "Open roles — you are in the United States" (387px) was
  * three lines there, which is why the stylesheet hid it below 42rem.
  *
  * The clause was removed from the copy: the URL already carries the country and
  * the facets panel already shows it ticked. The rule that hid it went with it,
- * and this test is what keeps a heading that can grow a line after paint from
- * coming back with it.
+ * then the fetch itself did, and this test is what keeps a heading that can
+ * grow a line after paint from coming back with any of them.
  */
 describe("a heading that cannot move the page", () => {
   it("has no after-paint clause left to hide", () => {

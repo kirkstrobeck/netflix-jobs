@@ -67,14 +67,16 @@ export const DEFAULT_COUNTRY = "US";
  * policy default is a wrong answer to that one. Saying "you are in the United
  * States" to somebody we cannot place is a claim about a person rather than a
  * choice about a list, so the absence of a signal returns null and the caller
- * says nothing at all. GET /api/where is that caller.
+ * says nothing at all. It is local rather than exported because nothing outside
+ * this file asks that question any more: GET /api/where was the one caller, and
+ * the heading it fed stopped naming countries.
  *
  * DEV_GEO_COUNTRY is read here rather than in a second override of its own,
  * which is what keeps localhost exercising this path: unset means no signal,
  * `JP` means a visitor in Tokyo, and `none` -- anything that is not a country
  * code -- means an edge that could not place the address.
  */
-export function detectedCountry(geo: string | null | undefined): string | null {
+function detectedCountry(geo: string | null | undefined): string | null {
   return countryCode(geo) ?? countryCode(process.env.DEV_GEO_COUNTRY);
 }
 

@@ -13,11 +13,15 @@ import type { SortOrder } from "@/lib/search/sort-order";
  * facets panel is already on screen saying so, so the heading was restating a
  * filter the visitor can see. It now says "Open roles" in both cases.
  *
- * The tiers themselves remain, because the heading was never their only reader:
+ * Two tiers remain, because the heading was never their only reader:
  *
  *   country  a ticked country -- LocationOffer asks for this tier by name
- *   request  the country the edge read off the request, which filters NOTHING
  *   device   a real position, so "nearest to" is finally a true preposition
+ *
+ * A third, `request`, is gone with the copy that motivated it: it carried the
+ * country the edge read off the request, filtered nothing, and once the heading
+ * stopped naming countries it read identically to no tier at all. The hook and
+ * the GET /api/where route behind it went with it.
  *
  * `device` is the one tier that still speaks, and what it names is a position
  * rather than a country -- so it is not the callout that was removed. Its name
@@ -28,7 +32,6 @@ import type { SortOrder } from "@/lib/search/sort-order";
  */
 export type HeadingPlace =
   | { precision: "country"; code: string; name: string }
-  | { precision: "request"; code: string; name: string }
   | { precision: "device"; name: string | null };
 
 /**
@@ -47,10 +50,9 @@ export function listingHeading(sort: SortOrder, place: HeadingPlace | null): str
     return place.name ? `Open roles nearest to ${place.name}` : "Open roles nearest to you";
   }
 
-  // Every remaining case: a ticked country, a country read off the request, or
-  // nowhere known at all. The first two are the country the URL already carries
-  // and the facets panel already shows ticked; the third has nothing to say in
-  // the first place. All three claim nothing here, and the offer below is what
-  // asks for the missing half.
+  // Every remaining case: a ticked country, or nowhere known at all. The first
+  // is the country the URL already carries and the facets panel already shows
+  // ticked; the second has nothing to say in the first place. Both claim
+  // nothing here, and the offer below is what asks for the missing half.
   return "Open roles";
 }
