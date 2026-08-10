@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -11,6 +11,7 @@ const SHARE = jobShare(SAMPLE_JOB);
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
+  vi.useRealTimers();
 });
 
 /**
@@ -53,6 +54,28 @@ describe("the control that ships", () => {
   });
 });
 
+describe("when the sheet opens and the visitor uses it", () => {
+  /**
+   * The sheet IS the confirmation -- the visitor watched their own operating
+   * system hand the link to Messages. Copying on top of that would put
+   * something on their clipboard they never asked for, and a "Link copied"
+   * note would describe a thing that did not happen.
+   */
+  it("copies nothing and says nothing, because the sheet already said it", async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    const share = vi.fn().mockResolvedValue(undefined);
+
+    vi.stubGlobal("navigator", { share, clipboard: { writeText } });
+
+    render(<ShareButton share={SHARE} />);
+    fireEvent.click(screen.getByRole("link"));
+
+    await waitFor(() => expect(share).toHaveBeenCalledWith(SHARE));
+    expect(writeText).not.toHaveBeenCalled();
+    expect(document.querySelector(".share-note--on")).toBeNull();
+  });
+});
+
 describe("when there is no share sheet", () => {
   it("copies the canonical url and says so", async () => {
     const writeText = vi.fn().mockResolvedValue(undefined);
@@ -66,6 +89,27 @@ describe("when there is no share sheet", () => {
       expect(document.querySelector(".share-note--on")).toBeTruthy(),
     );
     expect(writeText).toHaveBeenCalledWith(SAMPLE_JOB.canonical_url);
+  });
+
+  // The note takes itself away. Left up, it stops being a confirmation of the
+  // press that just happened and becomes furniture beside the button.
+  it("takes the confirmation away again without being asked", async () => {
+    vi.useFakeTimers();
+    vi.stubGlobal("navigator", {
+      clipboard: { writeText: vi.fn().mockResolvedValue(undefined) },
+    });
+
+    render(<ShareButton share={SHARE} />);
+    fireEvent.click(screen.getByRole("link"));
+    await act(async () => {});
+
+    expect(document.querySelector(".share-note--on")).toBeTruthy();
+
+    act(() => vi.advanceTimersByTime(2600));
+
+    expect(document.querySelector(".share-note--on")).toBeNull();
+    // The slot stays, so nothing moves when the note goes.
+    expect(document.querySelector(".share-note")).toBeTruthy();
   });
 
   /**
