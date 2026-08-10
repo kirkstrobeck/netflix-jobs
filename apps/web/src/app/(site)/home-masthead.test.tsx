@@ -2,6 +2,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
 import { BAR_ALPHA, BAR_COUNT } from "@/app/_bars/bars-tunables";
+import { readCss, rule } from "@/app/(site)/css-rule";
 import { HEADLINE, HomeMasthead } from "@/app/(site)/home-masthead";
 
 const html = () => renderToStaticMarkup(<HomeMasthead />);
@@ -34,6 +35,30 @@ describe("HomeMasthead", () => {
     expect(markup).toContain('class="bars"');
     expect(markup).toContain('class="bars-stage__content"');
     expect(markup.indexOf('class="bars"')).toBeLessThan(markup.indexOf("<h1"));
+  });
+});
+
+/**
+ * ONE RULE SAYS HOW BIG THE HEADLINE IS.
+ *
+ * The clamp in .masthead__title is the whole answer, so a later override that
+ * scales it would split the size across two places and leave neither of them
+ * true. This pins the clamp itself, and pins that nothing else sets a size on
+ * the headline -- which is what makes "change it at the source" enforceable
+ * rather than a habit.
+ *
+ * All three terms are in the assertion because the middle one is the slope: a
+ * rescale that moves only the floor and the ceiling changes the shape of the
+ * curve instead of moving it.
+ */
+describe("the headline's size lives in one clamp", () => {
+  const css = readCss("home-masthead.css");
+
+  it("states the whole ramp in .masthead__title and nowhere else", () => {
+    expect(rule(css, ".masthead__title")).toContain(
+      "font-size: clamp(2.925rem, 1.71rem + 5.58vw, 5.85rem)",
+    );
+    expect(css.match(/font-size:/g)).toHaveLength(1);
   });
 });
 

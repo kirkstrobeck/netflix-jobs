@@ -41,15 +41,30 @@
    - max-inline-size is gone rather than retuned. It was doing real work at 18ch
      against the wide Bold cut, which ran the headline past the column. This cut
      sets the whole line in 8.2em, so it clears the 76rem shell on one line from
-     about 700px up and stacks to two below that on its own. Every ch value big
-     enough not to break that single-line lockup is also wider than the column,
-     i.e. inert -- so the honest version is to let the shell govern the measure
-     and let text-wrap: balance even up the two lines when it does wrap. */
+     about 500px up and stacks to two below that on its own. Swept in Chromium
+     against the running page: one line from 500px, two from 480px down, and the
+     few widths either side of 485px flip about because text-wrap: balance is
+     choosing between them. Every ch value big enough not to break that
+     single-line lockup is also wider than the column, i.e. inert -- so the
+     honest version is to let the shell govern the measure and let text-wrap:
+     balance even up the two lines when it does wrap.
+
+   THE CLAMP IS THE SIZE, AND ALL THREE TERMS MOVE TOGETHER
+
+   The headline came down 10%, and the way to spend that is on the clamp rather
+   than on an override further down the sheet: this rule is the only thing that
+   says how big the headline is, so a second rule saying "but 10% less" would
+   leave the real number somewhere else. All three terms are scaled, not just
+   the ends -- 3.25/1.9/6.2/6.5 to 2.925/1.71/5.58/5.85 -- because the middle
+   term is the slope. Scaling only the floor and the ceiling would leave the
+   growth rate untouched, so the headline would hit its new ceiling early and
+   run flat across the widths in between instead of tracking the same curve
+   10% down. Measured at 1280px: 104px before, 93.6px after. */
 .masthead__title {
   margin: 0;
   color: var(--ink);
   font-family: var(--font-netflix-sans-ultra-condensed);
-  font-size: clamp(3.25rem, 1.9rem + 6.2vw, 6.5rem);
+  font-size: clamp(2.925rem, 1.71rem + 5.58vw, 5.85rem);
   font-weight: 700;
   line-height: 0.88;
   letter-spacing: 0.01em;
