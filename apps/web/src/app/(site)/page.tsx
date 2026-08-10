@@ -7,6 +7,7 @@ import { JsonLd } from "@/lib/seo/json-ld";
 import { netflixOrganization } from "@/lib/seo/organization";
 import { parseJobQuery, type RawSearchParams } from "@/lib/search/parse-query";
 
+import "@/app/_ultra/ultra.css";
 import "@/app/(site)/home-masthead.css";
 import "@/app/(site)/_listing/jobs-listing.css";
 import "@/app/(site)/_listing/result-row.css";

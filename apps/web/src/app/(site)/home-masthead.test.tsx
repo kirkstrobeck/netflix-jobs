@@ -11,9 +11,17 @@ const html = () => renderToStaticMarkup(<HomeMasthead />);
 const decoded = html;
 
 describe("HomeMasthead", () => {
+  /**
+   * Still one h1, still carrying .masthead__title, and still holding the words.
+   * The Ultra treatment adds a masked canvas over the top and moves the ink into
+   * a span inside the h1 -- see ultra-headline.tsx -- so what is asserted here is
+   * that the heading a crawler, a reader mode and a visitor with no WebGPU get
+   * is unchanged: the same element, the same class, the same string.
+   */
   it("renders the headline verbatim, in sentence case, as an h1", () => {
     expect(HEADLINE).toBe("Be part of what’s next");
-    expect(decoded()).toContain(`<h1 class="masthead__title">${HEADLINE}</h1>`);
+    expect(decoded()).toContain('<h1 class="ultra masthead__title">');
+    expect(decoded()).toContain(`<span class="ultra__ink">${HEADLINE}</span>`);
   });
 
   // Typeset copy: the apostrophe is the right single quote, not the typewriter

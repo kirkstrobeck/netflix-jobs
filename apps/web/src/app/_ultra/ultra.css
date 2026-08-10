@@ -1,0 +1,70 @@
+/* Ultra mode by Kirk Strobeck – https://UltraDarkMode.com */
+
+/* The h1 itself, and the only thing it gains: a positioned box for the mask and
+   the canvas to fill. Every type rule still comes from the class beside this one
+   -- .masthead__title or .job-title -- and both copies of the word inherit it. */
+.ultra {
+  position: relative;
+}
+
+/* The real text, in flow, defining the box.
+
+   It keeps its ordinary ink until the headline says `data-ultra="on"`, which is
+   set only when the fill is painting AND the mask has the words in it. Every
+   other state -- no WebGPU, no adapter, nothing measured yet, JavaScript off,
+   the server render -- is an ordinary white headline rather than an invisible
+   one, which is what the alternative would be: transparent text under a canvas
+   that is painting nothing.
+
+   color: transparent, not opacity and not visibility. The text has to keep its
+   layout, its selection and its place in the accessibility tree, and lose only
+   its ink. */
+.ultra__ink {
+  display: block;
+}
+
+.ultra[data-ultra="on"] .ultra__ink {
+  color: transparent;
+}
+
+/* The mask, over the text and out of reach of the pointer.
+
+   user-select is the one that was measured: without it the mask's own copy of
+   the word joins the selection, and copying the headline gives it twice. */
+.ultra__mask {
+  position: absolute;
+  inset: 0;
+  inline-size: 100%;
+  block-size: 100%;
+  pointer-events: none;
+  user-select: none;
+}
+
+.ultra__fill {
+  position: absolute;
+  inset: 0;
+  inline-size: 100%;
+  block-size: 100%;
+  pointer-events: none;
+}
+
+/* REQUIRED, AND UNCONDITIONAL.
+
+   Without it the browser tone-maps the canvas back down to SDR and the Ultra
+   fill looks identical to plain white. It is stated on the canvas itself and is
+   not nested inside any site-wide dynamic-range switch: Ultra text opts in on
+   its own, or it silently renders as ordinary white. */
+.ultra-fill {
+  dynamic-range-limit: no-limit;
+}
+
+/* No WebGPU, no adapter, or no context. The canvas paints nothing, so it is
+   taken out of the page rather than left as an invisible box over the words.
+
+   The headline itself needs no rule for this case: without `data-ultra="on"` its
+   ink was never taken away. There is no second technique here -- no CSS
+   fallback that gets close, no HDR colour token, no SVG text. The headline is
+   ordinary white and that is the whole of it. */
+.ultra-fill[data-ultra-fill="unsupported"] {
+  display: none;
+}
