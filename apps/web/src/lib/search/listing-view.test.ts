@@ -14,6 +14,7 @@ describe("deriveListing", () => {
     expect(Object.keys(view.facets).sort()).toEqual([
       "businessUnit",
       "country",
+      "seniority",
       "site",
       "team",
       "workType",

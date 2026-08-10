@@ -73,6 +73,11 @@ export const SITES: Site[] = [
 //   businessUnit  Streaming 4, Animation 1
 //   country       US 4, JP 1
 //   site          us-los-gatos 2, us-remote 2, jp-tokyo 1, us-new-york 1
+//   seniority     senior 1, staff 1, manager 1 -- and TWO postings in none of
+//                 them, which is the shape of the real board too: "Marketing
+//                 manager" and "Brand designer" name no rung, so they are
+//                 counted under no option. That is the case a levels facet has
+//                 that the other five do not, so the fixture carries it.
 export const JOBS: JobSummary[] = [
   summary({ title: "Senior software engineer", team: "Engineering" }),
   summary({ title: "Staff software engineer", team: "Engineering" }),

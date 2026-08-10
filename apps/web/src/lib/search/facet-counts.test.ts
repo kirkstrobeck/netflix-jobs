@@ -45,6 +45,44 @@ describe("facetOptions", () => {
     expect(counts(options(EMPTY_QUERY, "country"))).toEqual({ US: 4, JP: 1 });
   });
 
+  /**
+   * The one facet whose counts do not sum to the board.
+   *
+   * Three of the five fixture postings state a rung; "Marketing manager" and
+   * "Brand designer" state none and are counted under no option at all. That
+   * gap is the honest reading of a title -- see seniority.ts -- and it must not
+   * be closed here with an "Other" bucket, which would be a filter named after
+   * an absence of evidence.
+   */
+  it("counts only the postings whose titles state a level", () => {
+    expect(counts(options(EMPTY_QUERY, "seniority"))).toEqual({
+      senior: 1,
+      staff: 1,
+      manager: 1,
+    });
+  });
+
+  // The URL carries the slug; the panel shows the label. Both are written in
+  // seniority.ts so the two cannot drift.
+  it("labels a seniority slug with its name, in sentence case", () => {
+    const staff = options(EMPTY_QUERY, "seniority").find((o) => o.value === "staff");
+
+    expect(staff?.label).toBe("Staff and principal");
+  });
+
+  // Same answer as an unknown country code: the option renders as itself so the
+  // box that a hand-typed `?level=` ticked is a box that can be unticked.
+  it("labels an unknown seniority slug with the slug", () => {
+    const option = facetOptions(
+      JOBS,
+      { ...EMPTY_QUERY, seniority: ["archmage"] },
+      "seniority",
+      catalog,
+    ).find((entry) => entry.value === "archmage");
+
+    expect(option).toMatchObject({ label: "archmage", count: 0, selected: true });
+  });
+
   it("labels a country by name and an office by its name within it", () => {
     const us = options(EMPTY_QUERY, "country").find((o) => o.value === "US");
     const losGatos = options(EMPTY_QUERY, "site").find(

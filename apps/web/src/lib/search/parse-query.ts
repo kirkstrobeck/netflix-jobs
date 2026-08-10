@@ -50,6 +50,15 @@ function readCountries(raw: string | string[] | undefined): string[] {
   return [...new Set(values)].sort((a, b) => a.localeCompare(b));
 }
 
+// The same fold as readCountries and in the same order -- case first, THEN
+// de-duplicate and sort -- because doing it the other way round lets
+// `?level=Senior&level=senior` through as two entries that are one rung.
+function readLevels(raw: string | string[] | undefined): string[] {
+  const values = readList(raw).map((value) => value.toLowerCase());
+
+  return [...new Set(values)].sort((a, b) => a.localeCompare(b));
+}
+
 const ALL = EVERYWHERE.toUpperCase();
 
 export function parseJobQuery(params: RawSearchParams): JobQuery {
@@ -71,6 +80,10 @@ export function parseJobQuery(params: RawSearchParams): JobQuery {
     // the same way. canonical-search.ts unspells it in the address bar.
     country: countries.filter((code) => code !== ALL),
     site: readList(params[PARAM.site]),
+    // Unknown slugs are NOT rejected, exactly as an unknown `?team=` is not:
+    // they match no posting and render as a clearable option with a count of
+    // zero, which is a URL a visitor can undo rather than a 400 they cannot.
+    seniority: readLevels(params[PARAM.seniority]),
     // Keywords keep their own casing for display in the chip; matching lowers
     // both sides. De-duplication is therefore case-sensitive here on purpose:
     // "Remote" and "remote" look different in a chip, so they stay two chips.

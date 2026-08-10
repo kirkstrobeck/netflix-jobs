@@ -128,20 +128,48 @@ describe("FacetsPanel", () => {
     expect(html).not.toContain("Los Gatos");
   });
 
-  // Work type, keywords, location, team, business unit: the questions people
-  // arrive with, in the order they arrive with them. Work type is asked for
-  // first by name, and it earns it -- two values, complete on screen, and for
-  // the roles that are remote it answers half the location question below it.
-  // Business unit is last because it is the one nobody arrives with; it is here
-  // so the role pages have a filter to link to and a box to untick.
-  it("orders the groups work type, keywords, location, team, business unit", () => {
+  // Work type, keywords, location, seniority, team, business unit: the
+  // questions people arrive with, in the order they arrive with them. Work type
+  // is asked for first by name, and it earns it -- two values, complete on
+  // screen, and for the roles that are remote it answers half the location
+  // question below it. Seniority follows location because "where" and "at what
+  // level" are the pair, and it precedes team because six closed options are a
+  // shorter read than thirty-odd. Business unit is last because it is the one
+  // nobody arrives with; it is here so the role pages have a filter to link to
+  // and a box to untick.
+  it("orders the groups work type, keywords, location, seniority, team, unit", () => {
     const html = panel(EMPTY_QUERY);
     const at = (legend: string) => html.indexOf(`>${legend}`);
 
     expect(at("Work type")).toBeLessThan(at("Keywords"));
     expect(at("Keywords")).toBeLessThan(at("Location"));
-    expect(at("Location")).toBeLessThan(at("Team"));
+    expect(at("Location")).toBeLessThan(at("Seniority"));
+    expect(at("Seniority")).toBeLessThan(at("Team"));
     expect(at("Team")).toBeLessThan(at("Business unit"));
+  });
+
+  /**
+   * The seniority group, drawn from the same markup as every other group: a
+   * fieldset, a legend, checkboxes with labels, and the selected state carried
+   * on the option's class. There is no seniority component, no seniority
+   * stylesheet and no seniority branch in the panel -- which is the point.
+   */
+  it("draws seniority as an ordinary checkbox group with readable labels", () => {
+    const html = panel(EMPTY_QUERY);
+
+    expect(html).toContain("Seniority");
+    expect(html).toContain("Staff and principal");
+    expect(html).toContain("Search seniority levels");
+  });
+
+  // Selection is markup and CSS: a ticked box and the class the stylesheet
+  // reads. Nothing about it is computed at paint time or held in script.
+  it("marks a selected seniority in the markup, not in a style", () => {
+    const html = panel(toggleFacet(EMPTY_QUERY, "seniority", "staff"));
+
+    expect(html).toContain("option option--on");
+    expect(html).toContain(">1 selected<");
+    expect(html).not.toContain("style=");
   });
 
   // Nothing to clear, no control offering to clear it.

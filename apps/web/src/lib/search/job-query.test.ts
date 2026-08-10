@@ -53,6 +53,22 @@ describe("parseJobQuery", () => {
     expect(parseJobQuery({ country: ["us", "US"] }).country).toEqual(["US"]);
   });
 
+  // The same fold one facet over. The slugs are lower case in seniority.ts and
+  // in every link the panel writes, so `?level=Senior` is that rung, not a
+  // seventh one -- and the two spellings together are still one selection.
+  it("folds the case of a seniority slug", () => {
+    expect(parseJobQuery({ level: ["Senior", "senior"] }).seniority).toEqual([
+      "senior",
+    ]);
+  });
+
+  // Unknown values are not rejected here any more than an unknown team is. It
+  // matches nothing and renders as a box that can be unticked, which is a URL
+  // a visitor can get out of.
+  it("keeps a seniority slug it does not recognise", () => {
+    expect(parseJobQuery({ level: "archmage" }).seniority).toEqual(["archmage"]);
+  });
+
   /**
    * `?country=all` used to mean "everywhere, and I mean it" -- an answer the
    * URL could give that a bare `/` could not. The URL has no word for it now:
@@ -90,6 +106,32 @@ describe("jobsHref", () => {
   it("leaves page 1 out but writes any later page", () => {
     expect(jobsHref(withPage(EMPTY_QUERY, 1))).toBe("/");
     expect(jobsHref(withPage(EMPTY_QUERY, 3))).toBe("/?page=3");
+  });
+
+  // The URL always mirrors the active facets: selecting writes the param,
+  // deselecting removes it, and nothing is left behind in between.
+  it("writes a seniority as `level`, and drops it when it is cleared", () => {
+    const on = toggleFacet(EMPTY_QUERY, "seniority", "senior");
+    const two = toggleFacet(on, "seniority", "staff");
+
+    expect(jobsHref(on)).toBe("/?level=senior");
+    expect(jobsHref(two)).toBe("/?level=senior&level=staff");
+    expect(jobsHref(toggleFacet(two, "seniority", "senior"))).toBe("/?level=staff");
+    expect(jobsHref(toggleFacet(on, "seniority", "senior"))).toBe("/");
+  });
+
+  // Seniority is last in FACET_KEYS, appended rather than slotted in beside
+  // work type, so every link shared before it existed still writes byte for
+  // byte the URL it always did.
+  it("writes seniority after the facets that came before it", () => {
+    const query: JobQuery = {
+      ...EMPTY_QUERY,
+      country: ["US"],
+      workType: ["Remote"],
+      seniority: ["staff"],
+    };
+
+    expect(jobsHref(query)).toBe("/?country=US&type=Remote&level=staff");
   });
 
   it("writes the same URL whatever order the values arrived in", () => {
@@ -135,6 +177,7 @@ describe("round trip", () => {
         businessUnit: ["Animation"],
         country: ["JP", "US"],
         site: ["jp-tokyo", "us-remote"],
+        seniority: ["senior", "staff"],
         keywords: ["design", "senior"],
         sort: "nearest",
         page: 7,

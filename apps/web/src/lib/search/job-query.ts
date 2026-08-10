@@ -4,7 +4,9 @@ import { DEFAULT_SORT, sortParam, type SortOrder } from "@/lib/search/sort-order
 // that knows how it is spelled there, so a link, a facet toggle and the server
 // render all agree by construction rather than by convention.
 
-export type FacetKey = "team" | "workType" | "businessUnit" | "country" | "site";
+// prettier-ignore
+export type FacetKey =
+  "team" | "workType" | "businessUnit" | "country" | "site" | "seniority";
 
 export type JobQuery = {
   team: string[];
@@ -19,6 +21,12 @@ export type JobQuery = {
   country: string[];
   /** public.locations slugs, always inside a selected country. */
   site: string[];
+  /**
+   * Rungs, as slugs. The only facet whose values are not a column: it is read
+   * off the title, so a posting that names no level offers none -- see
+   * seniority.ts.
+   */
+  seniority: string[];
   keywords: string[];
   /**
    * How the results are ordered. NOT a facet -- it changes no result, only the
@@ -41,6 +49,8 @@ export const PARAM: Record<FacetKey | "keywords" | "sort" | "page", string> = {
   businessUnit: "unit",
   country: "country",
   site: "site",
+  // `level`, the shorter of the two words the facet answers to.
+  seniority: "level",
   keywords: "q",
   sort: "sort",
   page: "page",
@@ -69,13 +79,17 @@ export const EVERYWHERE = "all";
 // spelling of a URL, and a URL that reshuffles itself because a sidebar was
 // rearranged is a URL that stops matching the links people have already shared.
 // The panel's order lives in facets-panel.tsx, where it is a design decision;
-// this one only has to never change.
+// this one only has to never change. Seniority is therefore APPENDED, not
+// slotted in beside work type where it belongs by kind: every existing key
+// keeps the position it had, so every link already shared still writes itself
+// out byte for byte.
 export const FACET_KEYS: FacetKey[] = [
   "country",
   "site",
   "workType",
   "team",
   "businessUnit",
+  "seniority",
 ];
 
 export const EMPTY_QUERY: JobQuery = {
@@ -84,6 +98,7 @@ export const EMPTY_QUERY: JobQuery = {
   businessUnit: [],
   country: [],
   site: [],
+  seniority: [],
   keywords: [],
   sort: DEFAULT_SORT,
   page: 1,

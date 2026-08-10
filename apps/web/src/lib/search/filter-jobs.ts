@@ -10,7 +10,7 @@ import { locationMatcher } from "@/lib/search/location-filter";
 // Only the flat facets are handled this way. Country and site are nested, so
 // they are one predicate built in location-filter.ts rather than two entries in
 // this list -- see the comment there for why ANDing them is wrong.
-const FLAT_KEYS: FacetKey[] = ["workType", "team", "businessUnit"];
+const FLAT_KEYS: FacetKey[] = ["workType", "team", "businessUnit", "seniority"];
 
 function matchesFacet(
   job: JobSummary,

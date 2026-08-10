@@ -4,6 +4,12 @@ import { useId } from "react";
 
 import { CountryFacet } from "@/app/(site)/_listing/country-facet";
 import { FacetGroup } from "@/app/(site)/_listing/facet-group";
+import {
+  BUSINESS_UNIT,
+  SENIORITY,
+  TEAM,
+  WORK_TYPE,
+} from "@/app/(site)/_listing/facet-groups";
 import { KeywordFacet } from "@/app/(site)/_listing/keyword-facet";
 import { QueryLink } from "@/app/(site)/_listing/query-link";
 import { useCountryChoice } from "@/app/(site)/_listing/use-country-choice";
@@ -16,11 +22,11 @@ import {
   type JobQuery,
 } from "@/lib/search/job-query";
 
-// The options arrive counted. deriveListing does it once for all four groups,
-// over the whole board, so the panel is a layout and the arithmetic has exactly
-// one home -- the same one the server render uses.
+// The options arrive counted. deriveListing does it once for every group, over
+// the whole board, so the panel is a layout and the arithmetic has exactly one
+// home -- the same one the server render uses.
 //
-// THE ORDER, WHICH IS WORK TYPE, KEYWORDS, LOCATION, TEAM
+// THE ORDER, WHICH IS WORK TYPE, KEYWORDS, LOCATION, SENIORITY, TEAM
 //
 // Location led for a while, on the grounds that a country can arrive ALREADY
 // TICKED and a filter that applied itself should be the first thing on the
@@ -38,50 +44,14 @@ import {
 // clears with Clear all, and it narrows the list exactly as a ticked box does.
 // If it is a filter for all of that, it is a filter for this too.
 //
-// It also happens to be the better panel. Work type is two values, so it is the
-// one group that is complete on screen -- no search box worth using, no
-// disclosure -- and for the 97 roles that are remote it half-answers the
-// location question below it. Keywords is the control that rewards being found
-// second: someone who arrives typing goes to it regardless of what is above it,
-// and someone who does not is better served by being shown a choice than an
-// empty field.
+// It also happens to be the better panel. Keywords is the control that rewards
+// being found second: someone who arrives typing goes to it regardless of what
+// is above it, and someone who does not is better served by being shown a
+// choice than an empty field.
 //
-// `plural` and `singular` are the group's name as a noun, and the only place it
-// is written: the option search's label and the disclosure that opens the rest
-// of the list are both built from them.
-const WORK_TYPE = {
-  key: "workType" as FacetKey,
-  legend: "Work type",
-  plural: "work types",
-  singular: "work type",
-};
-const TEAM = {
-  key: "team" as FacetKey,
-  legend: "Team",
-  plural: "teams",
-  singular: "team",
-};
-
-// LAST, AND IT IS HERE BECAUSE THE ROLE PAGES LINK TO IT
-//
-// Three values -- Streaming 428, Animation 43, Creations 10 -- so it is the
-// coarsest question on the panel and the one fewest people arrive with: nobody
-// opens a job board having already decided between Streaming and Animation.
-// What they do is read a role, notice it is an Animation posting, and want the
-// other forty-two. That link is the reason this group exists (see job-details),
-// and a filter reachable by link has to be a box you can also see and untick --
-// otherwise arriving on one is arriving on a filter with no control, which is
-// the same invisible-filter bug the top-five disclosure is careful to avoid.
-//
-// Bottom of the panel, not beside Work type, even though the two are the same
-// shape. Position here is how often a question is asked, and this one is asked
-// least; the two long lists in between are the ones people came for.
-const BUSINESS_UNIT = {
-  key: "businessUnit" as FacetKey,
-  legend: "Business unit",
-  plural: "business units",
-  singular: "business unit",
-};
+// Each group's own name and its own reason for sitting where it does are in
+// facet-groups.ts, beside the group rather than above the component that draws
+// all five.
 
 type FacetsPanelProps = {
   facets: Record<FacetKey, FacetOption[]>;
@@ -220,6 +190,15 @@ export function FacetsPanel({
         <KeywordFacet draft={draft} onDraft={onDraft} query={query} />
 
         <CountryFacet countries={facets.country} query={query} sites={facets.site} />
+
+        <FacetGroup
+          facetKey={SENIORITY.key}
+          legend={SENIORITY.legend}
+          options={facets[SENIORITY.key]}
+          plural={SENIORITY.plural}
+          query={query}
+          singular={SENIORITY.singular}
+        />
 
         <FacetGroup
           facetKey={TEAM.key}

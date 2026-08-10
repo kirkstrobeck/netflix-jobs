@@ -46,6 +46,24 @@ describe("facetValues", () => {
   it("is empty for a posting with no sites at all", () => {
     expect(facetValues(summary({ sites: [] }), "country", catalog)).toEqual([]);
   });
+
+  // The only facet read off a string rather than a column, so the index is
+  // where the parsing lands -- once per row, not once per row per keystroke.
+  // seniority.ts owns which rung a title states; this owns that the index
+  // exposes it like every other facet.
+  it("reads the seniority a title states", () => {
+    const job = summary({ title: "Staff software engineer" });
+
+    expect(facetValues(job, "seniority", catalog)).toEqual(["staff"]);
+  });
+
+  // The case the other five facets do not have. A null column is already empty
+  // here; an unlevelled title has to be empty the same way, so it is counted in
+  // no option and matched by no selection.
+  it("is empty where the title states no level", () => {
+    expect(facetValues(summary({ title: "Brand designer" }), "seniority", catalog))
+      .toEqual([]);
+  });
 });
 
 describe("keywordText", () => {

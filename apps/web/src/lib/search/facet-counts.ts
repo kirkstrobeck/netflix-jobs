@@ -4,6 +4,7 @@ import { siteLabel } from "@/lib/jobs/site";
 import { filterJobs } from "@/lib/search/filter-jobs";
 import { facetValues } from "@/lib/search/job-index";
 import type { FacetKey, JobQuery } from "@/lib/search/job-query";
+import { SENIORITY_LABELS, type SeniorityLevel } from "@/lib/search/seniority";
 
 export type FacetOption = {
   value: string;
@@ -34,6 +35,14 @@ function labelFor(key: FacetKey, value: string, catalog: SiteCatalog): string {
     const site = catalog.bySlug.get(value);
 
     return site ? siteLabel(site) : value;
+  }
+
+  // `senior` -> "Senior", `staff` -> "Staff and principal". A slug the table
+  // does not hold shows as itself, which is the same answer an unknown country
+  // code gets above: a `?level=` somebody typed by hand still renders as a
+  // ticked box that can be unticked.
+  if (key === "seniority") {
+    return SENIORITY_LABELS[value as SeniorityLevel] ?? value;
   }
 
   return value;

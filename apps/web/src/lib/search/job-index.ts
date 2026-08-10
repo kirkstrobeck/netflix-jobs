@@ -2,6 +2,7 @@ import type { SiteCatalog } from "@/lib/jobs/board";
 import type { JobSummary } from "@/lib/jobs/job-summary";
 import type { Site } from "@/lib/jobs/site";
 import type { FacetKey } from "@/lib/search/job-query";
+import { seniorityLevels } from "@/lib/search/seniority";
 
 /**
  * The derived strings every filter pass needs, computed once per job.
@@ -28,6 +29,7 @@ type JobIndex = {
   businessUnit: string[];
   country: string[];
   site: string[];
+  seniority: string[];
   /** Lowercased, everything a keyword is allowed to match, joined. */
   keywords: string;
 };
@@ -57,6 +59,12 @@ function build(job: JobSummary, catalog: SiteCatalog): JobIndex {
     // counting the same posting twice.
     country: [...new Set(sites.map((site) => site.country_code))],
     site: sites.map((site) => site.slug),
+    // The one facet whose values are parsed rather than read, which is exactly
+    // why it belongs in here: the regex work is a fact about the TITLE, so it
+    // runs once per posting instead of once per posting per keystroke.
+    // Usually one rung, none for an unlevelled title, two for the eleven
+    // postings advertised at "4/5" or "5/6".
+    seniority: seniorityLevels(job.title),
     // display_name carries the city, the region and the country in one string,
     // so "Los Gatos", "California" and "United States" all match without the
     // three being listed separately. description_text is deliberately absent:
@@ -95,7 +103,10 @@ function indexOf(job: JobSummary, catalog: SiteCatalog): JobIndex {
 // The values a job offers to each facet. A job has one team, one work type and
 // one business unit but can be posted at several sites in several countries, so
 // every facet is a list and the single-valued ones are lists of length one --
-// which lets counting and matching treat all five identically.
+// which lets counting and matching treat all six identically. Seniority is the
+// one that can also be EMPTY, and nothing here has to know that: a job that
+// offers no value to a facet is counted in none of its options and matched by
+// none of its selections, which is what an unlevelled title should do.
 export function facetValues(
   job: JobSummary,
   key: FacetKey,

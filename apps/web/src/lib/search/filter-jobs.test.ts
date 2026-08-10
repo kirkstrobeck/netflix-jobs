@@ -102,6 +102,35 @@ describe("filterJobs", () => {
     expect(filter(query, "team")).toHaveLength(5);
   });
 
+  // Seniority narrows like any other flat facet, ORing within itself.
+  it("filters by seniority, and ORs two rungs together", () => {
+    const senior = toggleFacet(EMPTY_QUERY, "seniority", "senior");
+    const both = toggleFacet(senior, "seniority", "staff");
+
+    expect(titles(filter(senior))).toEqual(["Senior software engineer"]);
+    expect(titles(filter(both))).toEqual([
+      "Senior software engineer",
+      "Staff software engineer",
+    ]);
+  });
+
+  /**
+   * The consequence of the fall-through, stated as a test because it is the one
+   * thing about this facet a reader has to know.
+   *
+   * Two of the five fixture postings state no rung. Ticking ANY seniority
+   * therefore excludes them -- not because they are junior, but because their
+   * titles do not say. A filter that let them through would be answering a
+   * question nobody asked; one that pretends they are entry level would be
+   * worse. They come back the moment the filter is cleared.
+   */
+  it("excludes a posting whose title states no level", () => {
+    const query = toggleFacet(EMPTY_QUERY, "seniority", "manager");
+
+    expect(titles(filter(query))).toEqual(["Engineering manager, playback"]);
+    expect(titles(filter(query, "seniority"))).toHaveLength(5);
+  });
+
   it("still applies the other facets when one is ignored", () => {
     const query = toggleFacet(
       toggleFacet(EMPTY_QUERY, "team", "Engineering"),
