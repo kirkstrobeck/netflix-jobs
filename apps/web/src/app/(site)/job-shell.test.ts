@@ -1,3 +1,6 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+
 import { describe, expect, it } from "vitest";
 
 import { readCss as read, rule } from "@/app/(site)/css-rule";
@@ -62,6 +65,50 @@ describe("no scrolling in the filters", () => {
   // The shared .job-page :focus-visible ring is the whole focus state.
   it("adds no second focus treatment on the search inputs", () => {
     expect(facets).not.toContain(".facet__search:focus-visible");
+  });
+});
+
+/**
+ * THE GAP UNDER A LEGEND, IN THE GROUPS THAT HAVE NOTHING BETWEEN THEM.
+ *
+ * The panel's scale is three ascending steps -- 8px binds a heading to its own
+ * controls, 12px separates controls inside a group, 24px separates the groups.
+ * The option list used to carry the 12px as its own top margin, which is right
+ * only when a search box sits above it. hidesOptions() gives a box only to a
+ * group that is holding options back, so work type (two rows) and a filtered
+ * board's country group render legend-then-list and stacked 8 + 12 into 20px --
+ * a gap wider than the within-group step, under the heading that is supposed to
+ * be bound tightest to what it names.
+ *
+ * So the step is stated once, on the seam it describes.
+ */
+describe("the facet panel's spacing scale", () => {
+  it("hangs the inner step off the search box, not off the list", () => {
+    expect(rule(options, ".facet__options")).toContain("margin: 0");
+    expect(
+      rule(options, ".facet__search + .facet__options,\n.facet__search + .facet__none"),
+    ).toContain("margin-block-start: var(--facet-inner)");
+  });
+
+  // The legend's own lead is then the whole gap in a group with no box, which is
+  // the case this fixes -- there is nothing else above the first option.
+  it("leaves a boxless group with only the legend's lead", () => {
+    expect(rule(facets, ".facet__legend")).toContain(
+      "margin-block-end: var(--facet-lead)",
+    );
+    expect(rule(facets, ".facet__none")).toContain("margin: 0");
+  });
+
+  // The override that existed only to undo the margin that is now gone, and the
+  // class it was written against.
+  it("keeps no undo for a margin nothing sets", () => {
+    expect(options).not.toContain("facet__options--rest");
+    expect(
+      readFileSync(
+        join(process.cwd(), "src/app/(site)/_listing/facet-options.tsx"),
+        "utf8",
+      ),
+    ).not.toContain("facet__options--rest");
   });
 });
 

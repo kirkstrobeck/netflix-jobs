@@ -3,11 +3,33 @@
 
 /* No cap and no scroll. A list this long is reached by the search box above it
    or by "Show all" below it; a scrollbar inside a sidebar is a second place to
-   get lost in, and it was also what clipped the search input's focus ring. */
+   get lost in, and it was also what clipped the search input's focus ring.
+
+   NO TOP MARGIN OF ITS OWN. The 12px inner step is the gap BETWEEN the search
+   box and the list, so it belongs to the pair, not to the list -- and a group
+   with no search box does not have that pair.
+
+   Not every group gets a box: hidesOptions() gives one only to a group that is
+   holding options back, so work type (two rows) and a filtered board's country
+   group (sometimes three) render legend-then-list. Those stacked the legend's
+   8px lead and this list's own 12px into a 20px gap -- wider than the 12px that
+   separates controls INSIDE a group, and two and a half times the lead that is
+   supposed to be the tightest step in the scale. The heading came away from the
+   group it names in exactly the groups small enough to read as one block, which
+   is the opposite of what the scale is for.
+
+   Adjacent-sibling, so it lands only where there is a box above to be spaced
+   from: the list inside the "Show n more" disclosure keeps its own 0, since the
+   summary above it is already the gap. */
 .facet__options {
-  margin: var(--facet-inner) 0 0;
+  margin: 0;
   padding: 0;
   list-style: none;
+}
+
+.facet__search + .facet__options,
+.facet__search + .facet__none {
+  margin-block-start: var(--facet-inner);
 }
 
 .option {
@@ -129,12 +151,11 @@
    script -- the browser gives it the keyboard behaviour and the
    expanded/collapsed announcement for free.
 
-   The list inside gets no top margin, since the summary above it is already the
-   gap. Opening the group has to look like the list continuing, not like a
-   second list starting. */
-.facet__options--rest {
-  margin-block-start: 0;
-}
+   .facet__options--rest had a rule here setting margin-block-start back to 0,
+   because the list it names inherited a top margin it had to undo. There is no
+   top margin to undo any more -- the gap moved onto `.facet__search +` above,
+   which cannot reach inside a <details> -- so the rule is gone, and so is the
+   class, which existed only to carry it. */
 
 /* "Show all 31 teams" rather than "Show more": the count is the useful part of
    the promise, and the noun says which list it opens -- which is what a screen

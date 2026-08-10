@@ -120,7 +120,7 @@ export function FacetOptions({
             <span className="facet__more-fewer">Show fewer {plural}</span>
           </summary>
 
-          <ul className="facet__options facet__options--rest">
+          <ul className="facet__options">
             {rest.map((option) => (
               <Option
                 key={option.value}

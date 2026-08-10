@@ -190,9 +190,11 @@
 }
 
 /* "No matches" -- what the option search says when it has narrowed a group to
-   nothing. It sits where the option list would. */
+   nothing. It sits where the option list would, and takes its gap from the same
+   place: the .facet__search + rule in jobs-options.css, not a 0.75rem of its
+   own that happened to equal --facet-inner. */
 .facet__none {
-  margin: 0.75rem 0 0;
+  margin: 0;
   color: var(--ink-faint);
   font-size: 0.875rem;
 }
