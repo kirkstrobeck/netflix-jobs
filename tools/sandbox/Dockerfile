@@ -1,7 +1,7 @@
 FROM node:24.17.0-bookworm-slim
 
 ENV DEBIAN_FRONTEND=noninteractive
-LABEL com.netflix-jobs.sandbox.agent-stack="claude-v2"
+LABEL com.netflix-jobs.sandbox.agent-stack="claude-v3"
 
 ARG HOST_UID=501
 ARG HOST_GID=20
@@ -85,6 +85,28 @@ RUN PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS=1 \
       npx --yes playwright-core@${PLAYWRIGHT_VERSION} install chromium \
     && /home/agent/.cache/ms-playwright/chromium-*/chrome-linux/chrome --version
 USER root
+
+# GitHub CLI, from GitHub's own apt repo — Debian bookworm has no gh package at
+# all. This is what makes the token bridge work: boot.sh writes the host's token
+# into .cache/gh/hosts.yml, compose mounts that at /home/agent/.config/gh, and
+# `gh auth git-credential` (wired in entrypoint.sh) feeds it to git over HTTPS.
+#
+# Deliberately placed after the Playwright layer: this invalidates on every gh
+# release, and putting it earlier would re-download the 195MB browser each time.
+RUN install -d -m 0755 /etc/apt/keyrings \
+    && curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
+         -o /etc/apt/keyrings/githubcli-archive-keyring.gpg \
+    && chmod go+r /etc/apt/keyrings/githubcli-archive-keyring.gpg \
+    && echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" \
+         >/etc/apt/sources.list.d/github-cli.list \
+    && apt-get update && apt-get install -y --no-install-recommends gh \
+    && rm -rf /var/lib/apt/lists/* \
+    && gh --version
+
+# Pre-create the mount point owned by the agent. Docker would otherwise create
+# /home/agent/.config as root on first boot, leaving the agent unable to write
+# anything else under it.
+RUN install -d -o agent -g ${HOST_GID} /home/agent/.config /home/agent/.config/gh
 
 # Bind-mounted host worktrees show ownership that doesn't always match the
 # container UID through Colima's filesystem layer. Trust everything; the

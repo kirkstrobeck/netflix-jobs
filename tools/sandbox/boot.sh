@@ -9,7 +9,8 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 # shellcheck source=common.sh
 source "$SCRIPT_DIR/common.sh"
 
-AGENT_STACK="claude-v2"
+# v3 = gh CLI in the image; an older baked-in label forces a rebuild.
+AGENT_STACK="claude-v3"
 STACK_LABEL="com.netflix-jobs.sandbox.agent-stack"
 
 # shellcheck source=colima-inotify.sh
@@ -43,6 +44,10 @@ ensure_image() {
 
 prepare_cache() {
   mkdir -p "$CACHE_DIR/claude-home"
+  # Mount point for the GitHub token bridge. Must exist before compose runs or
+  # Docker creates it root-owned and gh can't write a token refresh back.
+  mkdir -p "$CACHE_DIR/gh"
+  chmod 700 "$CACHE_DIR/gh" 2>/dev/null || true
   # Refresh the container's copy of ~/.claude.json from the host's live file.
   # The host rewrites it constantly, so a naive copy can catch a torn write;
   # retry until jq validates, and keep the last good copy if it never does.
@@ -124,6 +129,10 @@ container_is_current() {
     *) return 1 ;;
   esac
 
+  # A container predating the token bridge looks healthy — it boots, it
+  # dispatches — and only fails at `git push`. Mounts are fixed at create time.
+  case "$mounts" in *"/home/agent/.config/gh"*) ;; *) return 1 ;; esac
+
   if [ ! -d "$REFERENCE_ROOT" ]; then
     return 0
   fi
@@ -176,6 +185,12 @@ sandbox_require_docker
 stop_colima_inotify
 ensure_image
 prepare_cache
+# DELIBERATE DEVIATION: the reference hard-stops when the token sync fails.
+# dispatch.sh is the ONLY channel to inner, so a boot that exits leaves no agent
+# and the dev server down. A missing token costs one `git push`; a failed boot
+# costs everything — warn loudly, boot anyway, and let the push carry the error.
+bash "$SCRIPT_DIR/github-token-sync.sh" \
+  || echo "WARNING: GitHub token sync failed — inner has NO push access." >&2
 ensure_container
 fix_volume_ownership
 stop_dev_watch_helpers

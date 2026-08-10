@@ -33,6 +33,24 @@ if [ -n "${HOST_GIT_EMAIL:-}" ]; then
   gosu agent env HOME=/home/agent git config --global user.email "$HOST_GIT_EMAIL" || true
 fi
 
+# Authenticate git to GitHub through the bridged token. gh reads the hosts.yml
+# that boot.sh's github-token-sync.sh wrote into the mounted config dir and
+# hands git a username/password on demand — no key, no agent, no prompt.
+gosu agent env HOME=/home/agent git config --global \
+  'credential.https://github.com.helper' '!gh auth git-credential' || true
+
+# DELIBERATE DEVIATION from the reference, which rewrites `origin` to an HTTPS
+# URL. We must not: .git/config is inside the bind-mounted worktree, so it is
+# the SAME FILE the Mac uses. origin is an SSH-form GitHub remote and the host
+# pushes over SSH with the operator's own key; flipping the remote to HTTPS to
+# suit the container would break every push made outside it.
+#
+# So the rewrite lives in the container's own ~/.gitconfig instead — which is
+# NOT on the bind mount. The SSH-form remote silently resolves to HTTPS in here,
+# and the host's remote is untouched.
+gosu agent env HOME=/home/agent git config --global \
+  'url.https://github.com/.insteadOf' 'git@github.com:' || true
+
 # Never let an accidental `git commit` without -m/-F open an editor on the host.
 gosu agent env HOME=/home/agent git config --global core.editor /bin/false || true
 export GIT_EDITOR=/bin/false

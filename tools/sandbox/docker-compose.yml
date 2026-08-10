@@ -58,6 +58,15 @@ services:
       # any refresh home via `push`.
       - ${REPO_ROOT}/tools/sandbox/.cache/claude-home:/home/agent/.claude
       - ${REPO_ROOT}/tools/sandbox/.cache/claude.json:/home/agent/.claude.json:ro
+      # The GitHub token bridge. boot.sh runs github-token-sync.sh on the host,
+      # which writes a gh-shaped hosts.yml here; entrypoint.sh points git's
+      # credential helper at `gh auth git-credential`, so inner authenticates to
+      # GitHub over HTTPS with no SSH key mounted anywhere.
+      #
+      # WRITABLE on purpose (no :ro). gh rewrites hosts.yml in place when it
+      # refreshes a token; a read-only mount turns that refresh into a hard
+      # error and strands inner on a credential it cannot renew.
+      - ${REPO_ROOT}/tools/sandbox/.cache/gh:/home/agent/.config/gh
     environment:
       - HOST_GIT_NAME
       - HOST_GIT_EMAIL
@@ -67,6 +76,9 @@ services:
       # Lets AGENTS.md / the outer gate distinguish inner from outer and avoid
       # recursive dispatch.
       - NETFLIX_JOBS_SANDBOX_INNER=1
+      # Point gh at the mounted config explicitly rather than relying on the
+      # XDG default, so it finds the bridged token regardless of HOME.
+      - GH_CONFIG_DIR=/home/agent/.config/gh
       # Prevent accidental git/editor prompts if inner forgets -m/-F.
       - GIT_EDITOR=/bin/false
       - VISUAL=/bin/false
