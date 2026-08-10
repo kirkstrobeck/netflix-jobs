@@ -2,8 +2,14 @@
 
 /* The h1 itself, and the only thing it gains: a positioned box for the mask and
    the canvas to fill. Every type rule still comes from the class beside this one
-   -- .masthead__title or .job-title -- and both copies of the word inherit it. */
+   -- .masthead__title or .job-title -- and both copies of the word inherit it.
+
+   --ultra-bleed is how far the two overlay layers grow past that box on every
+   side. It is ULTRA_BLEED in lib/ultra/ultra-config.ts, and ultra-bleed.test.ts
+   holds the two to the same number. */
 .ultra {
+  --ultra-bleed: 50%;
+
   position: relative;
 }
 
@@ -27,25 +33,46 @@
   color: transparent;
 }
 
-/* The mask, over the text and out of reach of the pointer.
+/* BOTH LAYERS GROW PAST THE WORD BOX. THIS IS THE CLIPPING FIX.
 
-   user-select is the one that was measured: without it the mask's own copy of
-   the word joins the selection, and copying the headline gives it twice. */
-.ultra__mask {
-  position: absolute;
-  inset: 0;
-  inline-size: 100%;
-  block-size: 100%;
-  pointer-events: none;
-  user-select: none;
-}
+   The mask viewport is a rectangle, and pinned to the text box at inset: 0 that
+   rectangle is exactly the line box -- so anything a glyph puts outside it is
+   cut with a straight edge the letterform does not have. An overshooting G, an
+   accent above the cap line, a descender below the baseline: all painted right
+   up to the box and then squared off.
 
+   So both layers take the same rectangle, grown --ultra-bleed on every side.
+   Symmetrically, so a mask that centres its content keeps it in the same place.
+
+   inline-size and block-size are NOT optional here, and this is the trap. An
+   <svg> is a replaced element: left at auto it falls back to its intrinsic
+   300x150, ignores the right and bottom insets, and the mask slides off the
+   word entirely. Stating both sizes is what makes the negative inset a growth
+   rather than a displacement.
+
+   It costs no GPU work. The canvas is still 1x1 -- one texel, scaled by CSS --
+   so a bigger box is a bigger scale factor and nothing else.
+
+   pointer-events: none on both, which now matters more than it did: at 200% the
+   layers overlap whatever sits beside the heading, and neither may intercept a
+   click meant for it. user-select on the mask is the measured one -- without it
+   the mask's own copy of the word joins the selection and copying the headline
+   gives it twice.
+
+   If a glyph still clips after this, the next suspect is an ancestor with
+   overflow: hidden. .job-page uses overflow-x: clip, which trims only the
+   horizontal axis and leaves ascenders and descenders alone. */
+.ultra__mask,
 .ultra__fill {
   position: absolute;
-  inset: 0;
-  inline-size: 100%;
-  block-size: 100%;
+  inset: calc(-1 * var(--ultra-bleed));
+  inline-size: calc(100% + 2 * var(--ultra-bleed));
+  block-size: calc(100% + 2 * var(--ultra-bleed));
   pointer-events: none;
+}
+
+.ultra__mask {
+  user-select: none;
 }
 
 /* REQUIRED, AND UNCONDITIONAL.

@@ -33,18 +33,22 @@ export function UltraHeadline({ className, children }: UltraHeadlineProps) {
   // React ids contain colons, which are invalid inside url(#...).
   const maskId = `ultra-${useId().replace(/[^a-zA-Z0-9]/g, "")}`;
   const mask = `url(#${maskId})`;
-  const host = useRef<HTMLHeadingElement>(null);
+  // THE MASK SVG IS THE ORIGIN, NOT THE HEADING.
+  //
+  // The <text> coordinates are absolute pixels in the SVG's own user space, and
+  // ultra.css grows that SVG --ultra-bleed past the heading on every side, so
+  // its top-left is no longer the heading's. Measuring against the SVG makes the
+  // bleed free: grow it, shrink it, change the number, and the glyph positions
+  // follow with no arithmetic anywhere. Measuring against the heading instead
+  // would slide every line up and left by half the box.
+  const host = useRef<SVGSVGElement>(null);
   const ink = useRef<HTMLSpanElement>(null);
   const [painting, setPainting] = useState(false);
   const lines = useGlyphLines(ink, host, children);
   const lit = painting && lines.length > 0;
 
   return (
-    <h1
-      className={`ultra ${className}`}
-      data-ultra={lit ? "on" : undefined}
-      ref={host}
-    >
+    <h1 className={`ultra ${className}`} data-ultra={lit ? "on" : undefined}>
       <span className="ultra__ink" ref={ink}>
         {children}
       </span>
@@ -53,7 +57,7 @@ export function UltraHeadline({ className, children }: UltraHeadlineProps) {
           zero-size box clips it. It paints nothing anyway -- a <mask> inside
           <defs> is a definition, not a drawing -- and ultra.css takes it out of
           the selection so copying the headline does not yield the word twice. */}
-      <svg aria-hidden className="ultra__mask">
+      <svg aria-hidden className="ultra__mask" ref={host}>
         <defs>
           <mask id={maskId}>
             {lines.map((line) => (

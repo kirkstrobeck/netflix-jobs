@@ -16,3 +16,17 @@
  * the fill is painted at, and the only place it is decided.
  */
 export const ULTRA_HEADROOM = 4;
+
+/**
+ * How far the Ultra overlay layers grow past the box they cover, per side, as a
+ * percentage.
+ *
+ * The mask viewport is a rectangle. Pinned to the text box it IS the line box,
+ * so a glyph that overshoots it -- an accent, a descender, the tail of a G -- is
+ * cut off with a straight edge the letterform does not have. Growing both layers
+ * symmetrically puts the cut somewhere no glyph reaches.
+ *
+ * ultra.css states it as `--ultra-bleed` and derives both the negative inset and
+ * the 200% size from it; ultra-bleed.test.ts holds the two to this number.
+ */
+export const ULTRA_BLEED = 50;

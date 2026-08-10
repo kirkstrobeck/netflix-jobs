@@ -27,7 +27,7 @@
 
 export type GlyphLine = {
   text: string;
-  /** Both relative to the headline's own box, which is what the mask spans. */
+  /** Both in the mask SVG's user space -- see `host` in glyphLines below. */
   x: number;
   y: number;
 };
@@ -92,11 +92,17 @@ function runs(node: Text, text: string): LineRun[] {
 }
 
 /**
- * `ink` is the visible text, `host` the box the mask spans. Returns [] when
- * there is nothing measurable yet -- no text node, or no 2D canvas to read font
- * metrics from -- and the caller leaves the headline in its ordinary ink.
+ * `ink` is the visible text. `host` is the MASK SVG, not the heading: the
+ * coordinates returned are absolute pixels in that SVG's user space, and
+ * ultra.css grows it --ultra-bleed past the heading on every side so no glyph is
+ * cut by the edge of the mask viewport. Measuring against the element the
+ * coordinates are FOR means the bleed costs no arithmetic here.
+ *
+ * Returns [] when there is nothing measurable yet -- no text node, or no 2D
+ * canvas to read font metrics from -- and the caller leaves the headline in its
+ * ordinary ink.
  */
-export function glyphLines(ink: HTMLElement, host: HTMLElement): GlyphLine[] {
+export function glyphLines(ink: HTMLElement, host: Element): GlyphLine[] {
   const node = ink.firstChild;
 
   if (!(node instanceof Text)) return [];

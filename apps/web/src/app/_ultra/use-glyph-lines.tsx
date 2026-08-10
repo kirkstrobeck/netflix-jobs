@@ -25,7 +25,7 @@ import { glyphLines, type GlyphLine } from "@/lib/ultra/glyph-lines";
  */
 export function useGlyphLines(
   ink: RefObject<HTMLElement | null>,
-  host: RefObject<HTMLElement | null>,
+  host: RefObject<Element | null>,
   text: string,
 ): GlyphLine[] {
   const [lines, setLines] = useState<GlyphLine[]>([]);
