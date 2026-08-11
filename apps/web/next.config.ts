@@ -64,6 +64,28 @@ const nextConfig: NextConfig = {
   //
   // /jobs/[jobid] is untouched: the source matches that one segment exactly.
   redirects: async () => [{ source: "/jobs", destination: "/", permanent: true }],
+  // THE MISSING HALF OF THE ROOT LAYOUT'S DECISION.
+  //
+  // Streaming metadata (03-api-reference/04-functions/generate-metadata.md,
+  // "Streaming metadata") sends the UI first and APPENDS the metadata tags to
+  // `<body>` when they resolve at request time. Under Cache Components that
+  // applies to any route whose render defers -- "metadata streams in with other
+  // deferred content" -- which is the listing, because searchParams is
+  // request-time. Measured on the built output: the listing closed `</head>` at
+  // byte 1750 and then put `<title>` at 30878 and `<meta name="description">`
+  // at 30917, in the body, reaching the head only if React's runtime hoists
+  // them. Lighthouse scored `meta-description` 0 and the listing's SEO 0.910.
+  //
+  // `/.*/ ` is the documented way to turn it off wholesale
+  // (05-config/01-next-config-js/htmlLimitedBots.md, "Disabling"). The doc's
+  // caution is that blocking metadata costs response time -- but this app has
+  // already spent that. The root layout wraps `<body>` in
+  // `<Suspense fallback={null}>` precisely so there is no static shell and
+  // "every request blocks until the page is fully rendered"; nothing below it
+  // suspends. Streaming the metadata out of a document that is not otherwise
+  // streamed bought nothing and cost a head. This is that decision finished,
+  // not a new one.
+  htmlLimitedBots: /.*/,
 };
 
 export default nextConfig;
