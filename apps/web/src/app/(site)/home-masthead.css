@@ -47,7 +47,7 @@
 }
 
 /* --ink, and no scrim. See the note in home-masthead.tsx: the worst the bars can
-   ever make the backdrop is rgb(183,8,16), where this measures 6.28:1. Neither
+   ever make the backdrop is rgb(210,8,18), where this measures 5.10:1. Neither
    the cut nor the casing below moves that number -- it is a colour pair.
 
    Ultra-condensed bold, in caps, and every value here is retuned for it rather
