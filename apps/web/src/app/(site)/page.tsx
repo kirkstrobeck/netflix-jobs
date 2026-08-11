@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import localFont from "next/font/local";
 
 import { BoardPage } from "@/app/(site)/_listing/board-page";
 import { HomeMasthead } from "@/app/(site)/home-masthead";
@@ -24,33 +23,32 @@ export const metadata: Metadata = {
   description: "Search open roles at Netflix by team, work type and location.",
 };
 
-// The masthead headline only, in the ultra-condensed bold cut. It is declared
-// here and not in the (site) layout for the same reason the layout stops at the
-// (site) boundary: next/font emits a <link rel="preload"> for the file, and the
-// job detail route has no business fetching 41KB of display face it never sets.
-// This is a page file, which is what makes that preload fire at all -- next/font
-// only preloads fonts declared in a page or layout.
+// WHY THIS ONE FACE IS NOT next/font.
 //
-// Exposed as a variable rather than a className because the h1 lives two
-// components down, inside <HomeMasthead>; threading the class through would put
-// a font detail in that component's props. .masthead__title reads the variable.
-// adjustFontFallback stays on: next derives size-adjust from this face's own
-// metrics, so the Arial standing in during the swap is squeezed to roughly the
-// condensed width and the headline does not reflow the listing under it.
-const netflixSansUltraCondensed = localFont({
-  src: [
-    {
-      path: "../../../public/fonts/NetflixSans_W_UCdBd.c6a7edc6.woff2",
-      weight: "700",
-      style: "normal",
-    },
-  ],
-  display: "swap",
-  adjustFontFallback: "Arial",
-  fallback: ["Arial Narrow", "Arial", "sans-serif"],
-  variable: "--font-netflix-sans-ultra-condensed",
-  preload: true,
-});
+// It used to be `localFont({..., preload: true})` here, on the stated ground that
+// "next/font only preloads fonts declared in a page or layout", so declaring it
+// in the listing's page file would keep the hint off the other two routes. That
+// is not what the build does. Measured on 16.2.12: Turbopack writes
+// next-font-manifest.json with the UNION of every face declared anywhere under
+// (site) against EVERY entry in that subtree -- (site)/about/page,
+// (site)/jobs/[jobid]/page and even the @header and @footer slots all listed
+// this file -- and getPreloadableFonts() then faithfully emits a hint for it on
+// all three pages. 41KB of display face preloaded at High priority on two routes
+// that never set it. Hoisting the shared ultra.css out of the page files did not
+// change the attribution, because it is a subtree union and not a chunk one.
+//
+// So the face is declared in CSS instead, in home-masthead.css, which only this
+// page imports -- and a webfont is only fetched when a rule actually matches an
+// element, so /about and /jobs/[jobid] now pay nothing at all for it, not even
+// the request. The one thing next/font was buying that hand-written CSS is not,
+// the metric-matched Arial fallback, is written out beside it with the exact
+// override values next/font itself computed from this face; see that file.
+//
+// The preload has to be stated explicitly now, and this is the right place for
+// it: React hoists a <link> rendered by a Server Component into <head>. It is
+// worth stating, because this headline IS the listing's LCP element and dropping
+// the hint measurably reflowed the rows under it.
+const ULTRA_CONDENSED_FONT = "/fonts/NetflixSans_W_UCdBd.subset.woff2";
 
 type HomeProps = { searchParams: Promise<RawSearchParams> };
 
@@ -80,7 +78,17 @@ export default async function Home({ searchParams }: HomeProps) {
   const query = parseJobQuery(await searchParams);
 
   return (
-    <div className={`${netflixSansUltraCondensed.variable} listing`}>
+    <div className="listing">
+      {/* crossOrigin is not decoration: a @font-face fetch is always made in
+          CORS mode, so a preload without it is a second, separate request and
+          the hint costs a round trip instead of saving one. */}
+      <link
+        as="font"
+        crossOrigin="anonymous"
+        href={ULTRA_CONDENSED_FONT}
+        rel="preload"
+        type="font/woff2"
+      />
       {/* Netflix, described once, here. Google's Organization guidance is to
           "place this information on your home page, or a single page that
           describes your organization" -- so not the root layout, which would

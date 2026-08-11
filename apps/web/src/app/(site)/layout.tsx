@@ -14,20 +14,33 @@ import "@/app/(site)/site-masthead-scroll.css";
 // a <link rel="preload"> for fonts whose localFont() call sits in a page or layout
 // file. Here rather than the root layout so it still stops at the (site) boundary:
 // /foo is a bare prototype route and has no business preloading three webfonts.
+// SUBSET, and the subset is measured rather than assumed. tools/fonts/subset.mjs
+// regenerates these and prints the inventory it kept. The shipped faces carried
+// 1014-1152 codepoints each: Greek (75), Cyrillic (128), Latin Extended-B (95)
+// and Latin Extended Additional (168) among them. Scanned against every string
+// this site can render -- all 480 postings' titles, teams, locations and
+// description text, plus the three rendered pages -- the content uses 685
+// distinct codepoints, of which these faces can draw only 108; the other 577 are
+// CJK the browser falls back for whether or not they are in the file. The kept
+// range is a deliberate superset of those 108: all of Basic Latin, Latin-1
+// Supplement and Latin Extended-A, so a future posting in Polish, Turkish,
+// Czech or Portuguese still renders, plus General Punctuation, the euro, the
+// trade mark, one-third and the four arrows. 379 codepoints, 181928 -> 69448
+// bytes across the four faces.
 const netflixSans = localFont({
   src: [
     {
-      path: "../../../public/fonts/NetflixSans_W_Rg.013xgptcmkvot.woff2",
+      path: "../../../public/fonts/NetflixSans_W_Rg.subset.woff2",
       weight: "400",
       style: "normal",
     },
     {
-      path: "../../../public/fonts/NetflixSans_W_Md.9d31b8ed.woff2",
+      path: "../../../public/fonts/NetflixSans_W_Md.subset.woff2",
       weight: "500",
       style: "normal",
     },
     {
-      path: "../../../public/fonts/NetflixSans_W_Bd.437347b6.woff2",
+      path: "../../../public/fonts/NetflixSans_W_Bd.subset.woff2",
       weight: "700",
       style: "normal",
     },

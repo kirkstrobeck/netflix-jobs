@@ -87,10 +87,47 @@
    growth rate untouched, so the headline would hit its new ceiling early and
    run flat across the widths in between instead of tracking the same curve
    10% down. Measured at 1280px: 104px before, 93.6px after. */
+/* THE DISPLAY CUT, DECLARED WHERE ONLY THIS PAGE CAN SEE IT.
+
+   This sheet is imported by (site)/page.tsx and by nothing else, so the two
+   rules below never reach /about or a posting -- and a browser fetches a webfont
+   only when a rule actually matches an element, so those routes do not request
+   the file either. That is the whole point: declared through next/font it was
+   preloaded on all three routes regardless of where the call sat, because
+   Turbopack's font manifest unions every face in the (site) subtree onto every
+   entry in it. page.tsx carries the long version of that finding.
+
+   The second @font-face is the metric-matched Arial that stands in during the
+   swap. The four override values are not invented and not tuned by eye: they are
+   exactly what next/font's `adjustFontFallback: "Arial"` computed from this
+   face's own metrics, read back out of the build it used to produce. They are
+   what keeps `font-display: swap` from reflowing the rows under the headline --
+   measured, when the hint was dropped: 0.016 CLS on this page and 0.246 on a
+   posting. Subsetting does not touch hhea/OS2, so a subset file keeps the same
+   metrics and the same numbers stay correct. */
+@font-face {
+  font-family: netflixSansUltraCondensed;
+  src: url("/fonts/NetflixSans_W_UCdBd.subset.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "netflixSansUltraCondensed Fallback";
+  src: local("Arial");
+  ascent-override: 139.78%;
+  descent-override: 41.07%;
+  line-gap-override: 0%;
+  size-adjust: 70.61%;
+}
+
 .masthead__title {
   margin: 0;
   color: var(--ink);
-  font-family: var(--font-netflix-sans-ultra-condensed);
+  font-family:
+    netflixSansUltraCondensed, "netflixSansUltraCondensed Fallback",
+    "Arial Narrow", Arial, sans-serif;
   font-size: clamp(2.925rem, 1.71rem + 5.58vw, 5.85rem);
   font-weight: 700;
   line-height: 0.88;
