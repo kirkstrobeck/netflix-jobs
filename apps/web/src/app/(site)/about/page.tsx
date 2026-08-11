@@ -1,6 +1,13 @@
 import type { Metadata } from "next";
 
-import { CLOSING, HEADLINES, SECTIONS } from "@/app/(site)/about/about-copy";
+import {
+  GIFT,
+  GROUPS,
+  HEADLINES,
+  LINKEDIN,
+  SIGNATURE,
+  TITLE,
+} from "@/app/(site)/about/about-copy";
 import { BarsStage } from "@/app/_bars/bars-stage";
 import { UltraText } from "@/app/_ultra/ultra-text";
 
@@ -8,9 +15,9 @@ import "@/app/_ultra/ultra.css";
 import "@/app/(site)/about/about.css";
 
 export const metadata: Metadata = {
-  title: "About this board",
+  title: TITLE,
   description:
-    "A server-rendered mirror of the Netflix careers board: 100% test coverage, 100 Lighthouse on mobile and desktop, and no migration.",
+    "What this project does: 100% test coverage, 100 Lighthouse on desktop across all five categories, and every page rendered on the server.",
 };
 
 // No route segment config. Under cacheComponents a page with no dynamic input
@@ -18,31 +25,31 @@ export const metadata: Metadata = {
 // so it is one static document and `dynamic` would be rejected as redundant.
 
 /**
- * The one page that describes the board rather than searching it.
+ * A catalogue of what this project does.
  *
- * Its markup is the site's own: the same <BarsStage> masthead the listing and
- * the role pages carry, the same <UltraText> headline, the same .shell column,
- * the same type scale and tokens. about.css adds a stat grid and a prose measure
- * and nothing else -- no framework, no new dependency.
+ * The order is masthead, page title, five claims, then one h2 per group. There
+ * is no narrative: a reader who stops after any group has read whole facts.
  *
- * The five claims come first, as a list, because a reader who stops after the
- * top of the page should still have the whole argument.
+ * THE TITLE IS IN THE BAND, AT DISPLAY SIZE.
+ *
+ * It was on .masthead__title, a class that lives in home-masthead.css and which
+ * only the listing imports -- so on this page the h1 had no rules, inherited
+ * body type, and rendered at 16px inside a 24px band. Measured in Chromium.
+ *
+ * The band and the title are this page's own now. .about-masthead gives the band
+ * a height to sit in and .about__title the display scale, both in about.css, so
+ * the h1 reads as a page title over the bars rather than as a line of chrome.
  */
 export default function AboutPage() {
   return (
     <>
-      <BarsStage as="header" className="masthead" contentClassName="shell">
-        <UltraText as="h1" className="masthead__title">
-          Built to be read, indexed and applied to
+      <BarsStage as="header" className="about-masthead" contentClassName="shell">
+        <UltraText as="h1" className="about__title">
+          {TITLE}
         </UltraText>
       </BarsStage>
 
       <div className="shell about">
-        <p className="about__lede">
-          Every open role at Netflix, server-rendered, on Netflix&rsquo;s own data
-          and platform. Here is what that is worth.
-        </p>
-
         <ul className="about__stats">
           {HEADLINES.map((item) => (
             <li className="stat" key={item.claim}>
@@ -55,25 +62,34 @@ export default function AboutPage() {
           ))}
         </ul>
 
-        {SECTIONS.map((section) => (
-          <section aria-labelledby={section.id} className="about__section" key={section.id}>
-            <h2 className="about__heading" id={section.id}>
-              {section.heading}
+        {GROUPS.map((group) => (
+          <section aria-labelledby={group.id} className="about__group" key={group.id}>
+            <h2 className="about__heading" id={group.id}>
+              {group.heading}
             </h2>
-            {section.body.map((paragraph) => (
-              <p className="about__body" key={paragraph.slice(0, 24)}>
-                {paragraph}
-              </p>
-            ))}
+            <ul className="about__list">
+              {group.points.map((point) => (
+                <li className="about__point" key={point}>
+                  {point}
+                </li>
+              ))}
+            </ul>
           </section>
         ))}
 
-        <section aria-labelledby="next" className="about__section">
-          <h2 className="about__heading" id="next">
-            Where this goes next
-          </h2>
-          <p className="about__body">{CLOSING}</p>
-        </section>
+        {/* Last on the page, and the only place a name appears. */}
+        <p className="about__gift">{GIFT}</p>
+        <p className="about__signature">
+          {SIGNATURE}
+          <a
+            className="about__link"
+            href={LINKEDIN.href}
+            rel="noopener noreferrer"
+            target="_blank"
+          >
+            {LINKEDIN.label}
+          </a>
+        </p>
       </div>
     </>
   );
