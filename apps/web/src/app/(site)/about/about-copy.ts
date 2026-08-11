@@ -2,10 +2,37 @@
  * The words on /about, as data.
  *
  * Separated from the markup so the page component is a layout and the copy can
- * be reviewed on its own. about.test.tsx asserts the claims here against the
- * numbers they came from.
+ * be reviewed on its own.
  *
- * Every figure was measured. When one changes, it changes here.
+ * Every figure here was measured. When one changes, it changes here.
+ *
+ * WHICH OF THEM A TEST WILL CATCH, AND WHICH IT WILL NOT
+ *
+ * about-figures.test.ts pins every DATABASE-DERIVED figure -- the board size,
+ * the location links, the sites with coordinates, the roles that reach one, and
+ * the filter counts -- by reading the real board through the app's own queries
+ * and the app's own facet code. Those cannot rot silently: a crawl that moves
+ * one turns the suite red.
+ *
+ * about.test.tsx pins STRUCTURE AND WORDING only -- five claims, a heading per
+ * group, sentence case, no first person. It is not a check on any number, and
+ * this docstring used to say it was. That claim is exactly why the board sat at
+ * 479 in this file while the database said 480: nothing was looking.
+ *
+ * The rest are HAND MAINTAINED and nothing verifies them on commit:
+ *
+ *   - the test counts, from `pnpm test`
+ *   - the Lighthouse scores, from `pnpm test:lighthouse`
+ *   - the render-blocking byte count, from tools/probe/blocking-css.mjs
+ *   - the frame rate, the tab stops, the contrast ratios, the wrap figures
+ *
+ * The test count is hand maintained DELIBERATELY and must stay that way. A suite
+ * that asserted its own size would change that size by existing: the assertion
+ * would fail on the commit that introduced it, and every commit afterwards that
+ * added or removed any test anywhere would have to come back and edit it to
+ * agree with itself. That is a test measuring the test run rather than the
+ * software. The number below is what the gate printed when it was last run, and
+ * the honest statement of its limitation is this paragraph.
  *
  * The page is five claims, then the groups, then the gift and the signature.
  * Nothing here speaks in the first person.
@@ -17,13 +44,13 @@ export const HEADLINES = [
     stat: "100%",
     claim: "test coverage",
     detail:
-      "1,067 tests on the web app and 247 on the crawler. Statements, branches, functions and lines, all at 100%.",
+      "1,075 tests on the web app and 247 on the crawler. Statements, branches, functions and lines, all at 100%.",
   },
   {
     stat: "100",
-    claim: "Lighthouse on desktop, all five categories",
+    claim: "Lighthouse on mobile, four of five categories",
     detail:
-      "Performance, accessibility, best practices, SEO and agentic browsing, on all three pages. On mobile, four of the five are 100 and performance is 89 to 95.",
+      "Accessibility, best practices, SEO and agentic browsing, on all three pages. Mobile performance is 97 on the listing and 99 on both a role page and this one; on desktop all three pages score 100. The same four hold on desktop, apart from accessibility on a role page, which scores 96 on one colour-contrast check.",
   },
   {
     stat: "60.2",
@@ -62,11 +89,15 @@ export const GROUPS = [
     id: "performance",
     heading: "Performance",
     points: [
-      "Desktop Lighthouse: 100 for performance, accessibility, best practices, SEO and agentic browsing, on all three pages",
       "Mobile Lighthouse: 100 for accessibility, best practices, SEO and agentic browsing, on all three pages",
-      "Mobile performance: 89 on the listing, 95 on a role page, 95 on this page",
-      "Both runs use three passes per page and take the median score, against the deployed site",
-      "Render-blocking CSS totals 46,244 bytes",
+      "Mobile performance: 97 on the listing, 99 on a role page, 99 on this page",
+      "Mobile falls short of 100 on simulated largest contentful paint alone, at 2.4, 2.3 and 2.1 seconds: Lantern models a slow 4G pipe and multiplies observed CPU time by four, and the critical path it is modelling is already five stylesheets and 8,726 gzipped bytes",
+      "Desktop Lighthouse: 100 for performance, best practices, SEO and agentic browsing on all three pages, and 100 for accessibility on the listing and this page",
+      "Desktop accessibility on a role page is 96: one colour-contrast check reads the masthead's fact list as grey on white, and the fact list is grey on near-black",
+      "Every run takes three passes per page and the median score, against a production build served locally on port 3210",
+      "These are local numbers from a shared arm64 container, not from the deployment: the load average read 1.6 rising to 2.7 across the mobile pass, and this machine is never fully idle",
+      "The listing keeps its country redirect, and pays about 610 ms of largest contentful paint for it",
+      "Render-blocking CSS on this page totals 37,915 bytes uncompressed, 8,726 gzipped, across five stylesheets",
       "The masthead bars run at 60.2 fps",
     ],
   },
@@ -74,7 +105,7 @@ export const GROUPS = [
     id: "testing",
     heading: "Test coverage",
     points: [
-      "The web app: 1,067 tests covering 100% of statements, branches, functions and lines",
+      "The web app: 1,075 tests covering 100% of statements, branches, functions and lines",
       "The crawler: 247 tests covering 100% of statements, branches, functions and lines",
       "Coverage thresholds are set to 100, so the suite fails below that",
     ],
@@ -88,7 +119,7 @@ export const GROUPS = [
       "The option search appears only in groups that hide options, so work type's two rows get neither control",
       "Seniority sorts by rank, entry through management, and appears last",
       "Every other facet sorts by count, largest first",
-      "Filters apply across groups: select Remote and United States goes from 302 to 98, Los Angeles from 131 to 7",
+      "Filters apply across groups: select Remote and United States goes from 303 to 99, Los Angeles from 133 to 7",
       "A group keeps its own totals, so an unselected option shows how many roles selecting it returns",
       "Active filters appear in the URL, so every view of the listing is a link",
     ],
@@ -97,8 +128,8 @@ export const GROUPS = [
     id: "location",
     heading: "Location",
     points: [
-      "All 479 active roles resolve to a site record",
-      "The 479 roles resolve to 684 location links",
+      "All 480 active roles resolve to a site record",
+      "The 480 roles resolve to 644 location links",
       "31 of the 36 sites carry coordinates; the 5 without them are the remote sites",
       "383 roles resolve to at least one site with coordinates",
       "Nearest sorts by distance from browser geolocation, computed in the browser",
@@ -116,7 +147,7 @@ export const GROUPS = [
       "The masthead bars and the footer glow are HTML elements animated by CSS keyframes; the page contains 0 video elements",
       "Both effects pause while they are off screen and resume where they stopped",
       "The masthead shows 73px at the top of the page and 49px after 128px of scroll, driven by a scroll-progress timeline",
-      "text-wrap: balance sets the display type and text-wrap: pretty sets the running copy, so no line ends on a single stranded word",
+      "text-wrap: balance sets the display type and text-wrap: pretty sets the running copy: of the 43 blocks that wrap on a role page at 390px and 1280px, 10 used to end on a word alone and none do now",
       "Posted dates render as a full date on the server and change to '3 days ago' in the browser",
       "Share opens the operating system's share sheet, and copies the link where there is no sheet",
       "The share preview image returns HTTP 200, image/jpeg, 244,928 bytes, cached for a year as immutable",

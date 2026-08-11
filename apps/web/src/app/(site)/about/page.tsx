@@ -17,7 +17,7 @@ import "@/app/(site)/about/about.css";
 export const metadata: Metadata = {
   title: TITLE,
   description:
-    "What this project does: 100% test coverage, 100 Lighthouse on desktop across all five categories, and every page rendered on the server.",
+    "What this project does: 100% test coverage, 100 Lighthouse on mobile for accessibility, best practices, SEO and agentic browsing across all three pages, and every page rendered on the server.",
 };
 
 // No route segment config. Under cacheComponents a page with no dynamic input

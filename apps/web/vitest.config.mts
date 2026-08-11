@@ -1,5 +1,42 @@
+import { readFileSync } from "node:fs";
+
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vitest/config";
+
+/**
+ * .env.local, as process.env for the test run -- the same file `next` reads and
+ * the same variables turbo.json passes to the build.
+ *
+ * Parsed here rather than through Vite's loadEnv: `vite` is not a direct
+ * dependency of this package, so importing it from a config file that pnpm
+ * resolves strictly fails to load the config at all. Twelve lines beats a
+ * dependency edit for a file with two keys in it.
+ *
+ * An already-set variable wins, which is what `next` does too: an environment
+ * that deliberately points the suite at another stack is not overridden by a
+ * file on disk.
+ */
+function envFile(path: string): Record<string, string> {
+  const text = (() => {
+    try {
+      return readFileSync(path, "utf8");
+    } catch {
+      return "";
+    }
+  })();
+
+  return Object.fromEntries(
+    text
+      .split("\n")
+      .map((line) => line.trim())
+      .filter((line) => line !== "" && !line.startsWith("#") && line.includes("="))
+      .map((line) => [
+        line.slice(0, line.indexOf("=")),
+        line.slice(line.indexOf("=") + 1).replace(/^["']|["']$/g, ""),
+      ])
+      .filter(([key]) => !(key in process.env)),
+  );
+}
 
 export default defineConfig({
   plugins: [react()],
@@ -11,6 +48,14 @@ export default defineConfig({
   test: {
     environment: "jsdom",
     setupFiles: ["./vitest.setup.ts"],
+    // about-figures.test.ts reads the real database through the app's own
+    // SUPABASE_URL / SUPABASE_ANON_KEY, because a number on /about can only be
+    // pinned to the source it came from by going and asking the source. Without
+    // this the suite has no credentials and that file cannot exist.
+    //
+    // env.test.ts is unaffected and stays honest: it stubs both to undefined per
+    // test, so the fail-closed paths are still the ones it exercises.
+    env: envFile(new URL("./.env.local", import.meta.url).pathname),
     // cache-headers and next.config sit beside the app rather than under src/,
     // and they are shipped behaviour -- the HTTP policy and the /jobs redirect --
     // so their tests live beside them and are collected the same way.

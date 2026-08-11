@@ -40,7 +40,7 @@ describe("the about page", () => {
 
     expect(claims).toEqual([
       "100% test coverage",
-      "100 Lighthouse on desktop, all five categories",
+      "100 Lighthouse on mobile, four of five categories",
       "60.2 fps on the animated masthead",
       "112 tab stops, all with a visible focus state",
       "1 cache entry per URL",
