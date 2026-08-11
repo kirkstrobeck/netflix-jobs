@@ -18,9 +18,9 @@ export const HEADLINES = [
   },
   {
     stat: "100",
-    claim: "Lighthouse, mobile and desktop",
+    claim: "Lighthouse on desktop, all five categories",
     detail:
-      "Performance, accessibility, best practices, SEO and agentic browsing. Five categories, two form factors, three runs each, median score.",
+      "Performance, accessibility, best practices, SEO and agentic browsing, on all three pages. On mobile, four of the five hold at 100; performance runs 89 to 95, and the listing's 775ms country redirect is most of the gap.",
   },
   {
     stat: "0",
