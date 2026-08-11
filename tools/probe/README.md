@@ -31,6 +31,12 @@ Then:
 | `first-paint.mjs` | what the render-blocking stylesheets cost first contentful paint |
 | `css-parse.mjs` | what a stylesheet costs the main thread, transfer excluded       |
 | `orbs.mjs`    | where the glow's hundred lights actually are, frame by frame     |
+| `places.mjs`  | whether a list hangs its indent, per line box, at a given width   |
+| `wrap.mjs`    | every element whose text wraps, and how ragged its lines are      |
+| `wrap-diff.mjs` | two `wrap.mjs` snapshots side by side, better against worse     |
+| `wordmark-gap.mjs` | the painted gap between the mark and JOBS, down the scroll  |
+| `bars-contrast.mjs` | the headline's contrast over the bars, from the tunables   |
+| `blocking-css.mjs`  | what one page's render-blocking stylesheets weigh          |
 
 `wordmark.mjs` is the one that has to be a browser. The marks are served by the
 `@header`/`@footer` slots, which do not re-render for the panel's pushState, so
@@ -94,6 +100,60 @@ whichever one the shutter caught. It takes a state:
 `PROBE_HIDE` matters for focus: the outline sits 3px out from the box, so the
 band the backdrop is read from otherwise lands on the next control's rim and
 reports a neighbour as if it were the background.
+
+`places.mjs` is the one that settles an indent argument. A list's element box is
+a single rect spanning every line it wraps to, so it answers nothing about
+either line — the reading has to come from a Range, whose client rects are one
+per line box. `list-style-position: inside` puts the marker in the content box
+as the first inline box of line one, so line two starts at the content edge, to
+the LEFT of the marker; `outside` leaves the content box's inline start where it
+is on every line. The test is therefore arithmetic, not a screenshot: line one's
+x and line two's x are equal, or the item does not read as one item. It skips
+`.visually-hidden` runs, which are clipped rather than removed and so still
+report a line box nobody can see:
+
+    node tools/probe/places.mjs http://localhost:3000/jobs/JR39786 390 .detail-places
+
+`wrap.mjs` and `wrap-diff.mjs` are a pair, and the pair is the point. A
+`text-wrap` change is not self-evidently an improvement: `balance` equalises
+line widths but every engine caps it at a few lines and past that cap it does
+nothing at all, while `pretty` only moves the LAST line and can leave the ones
+above it more ragged than it found them. So the rule is measure, change, re-run
+the identical sweep, keep what got better and revert what did not.
+
+`wrap.mjs` sweeps three pages at 390px and 1280px and reports, per element that
+actually wraps, its line count, the width of every line box, the raggedness
+(the population standard deviation of those widths, over every line including
+the last — which is the quantity `balance` minimises, so it is the one to score
+against), and the number of words on the final line, which is the direct test of
+whether a block ends on a stranded word. Candidates are the innermost block
+container of a text run only; an ancestor would report its descendants' lines as
+its own. `wrap-diff.mjs` matches two snapshots on page, width, selector and text
+and prints the rows that moved, with a WORSE list at the bottom that is meant to
+be acted on rather than read past:
+
+    node tools/probe/wrap.mjs http://127.0.0.1:3103 /tmp/wrap-before.json
+    # change the CSS, rebuild, restart
+    node tools/probe/wrap.mjs http://127.0.0.1:3103 /tmp/wrap-after.json
+    node tools/probe/wrap-diff.mjs /tmp/wrap-before.json /tmp/wrap-after.json
+
+`wordmark-gap.mjs` reads painted edges, not layout boxes, and that distinction
+is the bug it was written for: `scale` on the mark paints from the centre of a
+box it does not resize, so the mark's painted right edge walks left while every
+box in the row reports no movement. `offsetWidth` reports a constant across the
+whole scroll and misses it entirely.
+
+`bars-contrast.mjs` takes no browser at all. It reads `BAR_RGB`, `BAR_ALPHA` and
+`BAR_COUNT` out of `_bars/bars-tunables.ts` and `--surface` / `--ink` out of
+`(site)/job-shell.css`, composites N bars over the surface and prints the ratio.
+It exists because that number rotted once: the comments said 6.28:1 for a long
+while after `BAR_ALPHA` moved from 0.10 to 0.15, and it is a public
+accessibility claim on /about.
+
+`blocking-css.mjs` counts only `<link rel="stylesheet">` inside `<head>` of the
+served document, which is deliberately not the import graph — Turbopack merges
+and splits per route, and the glow's sheet is imported by a component that keeps
+it off the critical path on purpose.
 
 `sweep.mjs` is the one worth keeping around. Word separation delegated to a
 margin or a flex gap is invisible on screen and wrong everywhere else — in the

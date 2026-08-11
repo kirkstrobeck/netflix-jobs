@@ -19,6 +19,30 @@
   margin-block-end: 0;
 }
 
+/* RUNNING COPY, SO `pretty` AND NOT `balance`.
+
+   This is the largest body of prose on the site -- a full job description, up to
+   sixteen line boxes in one paragraph at 390px -- and until now it set no
+   text-wrap at all, which made /about's claim that "text-wrap: pretty sets the
+   running copy" false in the one place it mattered most.
+
+   `balance` is the wrong tool here and not a matter of taste: every engine caps
+   it at a handful of lines (it is allowed to, and Chromium does), so on a
+   sixteen-line paragraph it would do nothing whatsoever, and on the short ones
+   it would square off a paragraph's last line, which is the shape running copy
+   is supposed to have.
+
+   What `pretty` buys is the LAST line: it pulls a word back rather than leave
+   one stranded alone at the end of a block. Measured with tools/probe/wrap.mjs
+   over both widths and all three pages -- see the before/after table in the
+   commit. The lines above the last are barely touched, which is why the
+   raggedness column moves so little on the long paragraphs and a lot on the
+   two- and three-line list items, where the last line IS most of the block. */
+.job-prose p,
+.job-prose li {
+  text-wrap: pretty;
+}
+
 .job-prose p {
   margin-block: 1.25em;
 }

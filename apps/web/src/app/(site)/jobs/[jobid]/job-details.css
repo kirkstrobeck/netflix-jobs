@@ -49,22 +49,53 @@
    listener would otherwise have to count out of a comma-joined sentence. Faked
    bullets would look identical and announce nothing.
 
-   `inside`, not the default `outside`: outside hangs the marker in the margin,
-   and this card's rows have no inline padding to hang it into -- the value
-   column starts at the card's edge. Inside keeps every marker in the column the
-   value already occupies, and a wrapped second line indents under the text
-   rather than under the dot.
+   `outside`, the default, and the list carries its own inline padding to hang
+   the marker into. This rule used to say `inside` on the grounds that the card's
+   rows have no padding to spare, and claimed a wrapped line would then indent
+   under the text -- it does the opposite. `inside` puts the marker IN the
+   content box as the first inline box of the first line, so line one starts
+   after the bullet and every line after it starts at the content edge, to the
+   LEFT of the bullet. At 390px 'Los Angeles, California, United States' wraps,
+   and 'United States' landed further left than the marker: three lines of one
+   fact that no longer read as one item. Outside hangs the marker in the padding
+   and leaves the content box's inline start where it is on every line, so the
+   wrap aligns with the first line of text. The 1.125rem is the padding the
+   marker hangs into -- the same the /about list uses.
+
+   Square in the accent, not a grey disc. Every other list on the site that
+   carries markers -- /about's points, the posting's own prose -- draws them in
+   --accent, and this one was the odd grey out. --accent, not a second literal:
+   the token is defined once on .job-page in job-shell.css.
 
    A single-place role renders no list at all, so there is no rule here for one.
    See job-details.tsx. */
 .detail-places {
   margin: 0;
-  padding: 0;
-  list-style: disc inside;
+  padding: 0 0 0 1.125rem;
+  list-style: square outside;
+}
+
+/* `balance`, because a place name is a display block and not a sentence.
+
+   'Los Angeles, California, United States' is two lines in this column at both
+   390px and 1280px, and left alone it broke 231px / 48px -- a full line and then
+   the word 'roles' on its own underneath, which reads as a second item rather
+   than the tail of the first. Two lines is comfortably inside every engine's
+   balance cap, so this is the case the property was added for: it is short, it
+   is a name, and the two lines should be the same length.
+
+   Measured, both widths, with tools/probe/wrap.mjs. The raggedness on this item
+   is in the commit's before/after table.
+
+   Not `pretty`: pretty only moves the last line, and with two lines the last
+   line is half the block -- it would shorten one line without lengthening the
+   other. Balance sets both at once. */
+.detail-places__item {
+  text-wrap: balance;
 }
 
 .detail-places__item::marker {
-  color: var(--ink-faint);
+  color: var(--accent);
 }
 
 /* A VALUE THAT IS ALSO A FILTER.

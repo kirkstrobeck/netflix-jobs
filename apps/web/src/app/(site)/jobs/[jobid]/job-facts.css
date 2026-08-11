@@ -14,8 +14,14 @@
   font-size: 1rem;
 }
 
+/* CANDIDATE: `balance`. The location fact is a display block -- a list of place
+   names, not a sentence -- and at 390px a role open in four places breaks
+   315px / 46px, stranding one word. Verified against the probe rather than
+   assumed, because four line boxes is at the edge of what balance will act on.
+   See the before/after table; if it did not move, this rule comes back out. */
 .job-facts__item {
   position: relative;
+  text-wrap: balance;
 }
 
 .job-facts__empty {
