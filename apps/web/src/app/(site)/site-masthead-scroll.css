@@ -70,6 +70,32 @@
     }
   }
 
+  /* THE SUFFIX FOLLOWS THE MARK IN, BECAUSE `scale` DOES NOT MOVE A LAYOUT BOX.
+
+     That is the whole point of using it -- nothing reflows -- but it has one
+     consequence that has to be paid for here rather than lived with. scale
+     paints from the centre of the box and leaves the box alone, so the mark's
+     PAINTED right edge walks left while the box it is laid out against does not.
+     The suffix is positioned off that box, so it stays put, and the gap between
+     the two grows by exactly half of what the scale takes off the width.
+
+     Measured on the built page with tools/probe/wordmark-gap.mjs: the mark rests
+     87.05px wide, so at 0.769231 it paints 66.96px and its right edge moves
+     87.05 * (1 - 0.769231) / 2 = 10.05px. The gap read 10.00px at scroll 0 and
+     20.05px at 8rem -- the suffix drifting a full mark-height away as the header
+     closed. 0.628rem is 10.05px at the root size, so the suffix arrives where
+     the paint does.
+
+     Same range and same easing as the scale it answers, so the two are one
+     movement at every position rather than only at the ends. translate, not
+     margin or transform: margin is layout, which is the cost this whole block
+     exists to avoid, and transform is spoken for by .site-header .wordmark::after. */
+  @keyframes site-header-suffix {
+    to {
+      translate: -0.628rem 0;
+    }
+  }
+
   .site-header {
     position: sticky;
     inset-block-start: 0;
@@ -90,6 +116,12 @@
 
   .site-header .wordmark__mark {
     animation: site-header-mark linear both;
+    animation-timeline: scroll(root block);
+    animation-range: 0 8rem;
+  }
+
+  .site-header .wordmark__suffix {
+    animation: site-header-suffix linear both;
     animation-timeline: scroll(root block);
     animation-range: 0 8rem;
   }

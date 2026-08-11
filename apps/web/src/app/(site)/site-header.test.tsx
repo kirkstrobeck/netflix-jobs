@@ -113,6 +113,7 @@ describe("what the masthead animates as the page scrolls", () => {
       ".site-header",
       ".site-header__inner",
       ".site-header .wordmark__mark",
+      ".site-header .wordmark__suffix",
     ]) {
       const body = rule(scroll, selector);
 
