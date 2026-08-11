@@ -26,7 +26,10 @@ describe("the Ultra overlay's bleed", () => {
       `--ultra-bleed: ${ULTRA_BLEED}%`,
     );
 
-    const layers = rule(ultra, ".ultra__mask,\n.ultra__fill");
+    // Three layers now, and one rectangle: the white floor has to land on the
+    // same pixels as the fill that covers it, or the handover between them is a
+    // visible edge rather than nothing at all.
+    const layers = rule(ultra, ".ultra__backdrop,\n.ultra__mask,\n.ultra__fill");
 
     expect(layers).toContain("inset: calc(-1 * var(--ultra-bleed))");
     expect(layers).toContain("inline-size: calc(100% + 2 * var(--ultra-bleed))");
@@ -50,8 +53,8 @@ describe("the Ultra overlay's bleed", () => {
    * may take a click meant for it -- and the mask's own copy of the word must
    * stay out of the selection, or copying the headline yields it twice.
    */
-  it("keeps both layers out of the pointer's way, and the mask out of selections", () => {
-    expect(rule(ultra, ".ultra__mask,\n.ultra__fill")).toContain(
+  it("keeps every layer out of the pointer's way, and the mask out of selections", () => {
+    expect(rule(ultra, ".ultra__backdrop,\n.ultra__mask,\n.ultra__fill")).toContain(
       "pointer-events: none",
     );
     expect(rule(ultra, ".ultra__mask")).toContain("user-select: none");

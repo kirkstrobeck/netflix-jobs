@@ -88,6 +88,22 @@ export function UltraText({
         </defs>
       </svg>
 
+      {/* THE WHITE FLOOR, AND IT IS WHY THE HEADLINE NEVER GOES MISSING.
+
+          The real text gives up its ink the instant data-ultra="on" lands, and
+          what replaces it is a WebGPU surface. Any frame where that surface has
+          not presented yet -- the first one after the switch, a lost context, a
+          slow adapter -- has no word in it at all. Measured on this page: 24,623
+          ink pixels in the h1 box, then 0.
+
+          So the same masked rectangle is painted in plain white FIRST, and the
+          canvas paints over it. Before it, in document order, because these are
+          absolutely positioned siblings and document order is paint order. The
+          floor is never the wrong thing to show: unlit, it lands exactly on the
+          white text underneath it; lit, it is the word until the fill is
+          brighter than it. There is no state in which it flashes. */}
+      <span aria-hidden className="ultra__backdrop" style={{ mask, WebkitMask: mask }} />
+
       <UltraFillCanvas
         className="ultra__fill"
         onPainting={setPainting}

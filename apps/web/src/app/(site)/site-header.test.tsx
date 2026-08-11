@@ -1,11 +1,12 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
-import { readCss, rule } from "@/app/(site)/css-rule";
+import { keyframeProperties, readCss, rule } from "@/app/(site)/css-rule";
 import { SiteHeader } from "@/app/(site)/site-header";
 import { WORDMARK_RED } from "@/app/(site)/wordmark";
 
 const masthead = readCss("site-masthead.css");
+const scroll = readCss("site-masthead-scroll.css");
 
 describe("SiteHeader", () => {
   it("renders a skip link that targets the main content landmark", () => {
@@ -67,5 +68,57 @@ describe("the masthead wordmark's hit area", () => {
     expect(rule(masthead, ".site-header .wordmark::after")).toContain("inset-inline: 0");
     expect(masthead).not.toContain("align-self: stretch");
     expect(rule(masthead, ".site-header .wordmark")).not.toContain("block-size");
+  });
+});
+
+/**
+ * The header shrank by animating min-block-size and block-size on a scroll
+ * timeline: layout properties on a sticky, in-flow element, so every scrolled
+ * frame re-laid-out the document below it. It shipped anyway, because the
+ * comment above the rule asserted it was compositor work and nothing checked.
+ *
+ * This is that check, and it is deliberately an assertion about the PROPERTIES
+ * rather than about the prose. A comment can be wrong; a property list cannot.
+ * Both masthead sheets are read, so moving a keyframe back into the resting one
+ * does not slip past.
+ */
+describe("what the masthead animates as the page scrolls", () => {
+  // transform is here because it is compositable, not because this file uses
+  // it -- the scroll block deliberately uses translate and scale so that
+  // .site-header .wordmark::after keeps sole ownership of transform.
+  const COMPOSITOR_ONLY = ["translate", "scale", "rotate", "transform", "opacity"];
+
+  it("animates nothing that costs a layout", () => {
+    const animated = keyframeProperties(`${masthead}\n${scroll}`);
+
+    // Guards the assertion below against a stylesheet this stopped finding
+    // keyframes in, which would otherwise pass by being empty.
+    expect(animated.length).toBeGreaterThan(0);
+    expect(animated.filter((property) => !COMPOSITOR_ONLY.includes(property))).toEqual(
+      [],
+    );
+  });
+
+  // The band closes because the header is painted higher, not because anything
+  // resizes. If the box ever starts moving again, these two are how it shows.
+  it("leaves the header row's own box at its resting height", () => {
+    expect(rule(masthead, ".site-header__inner")).toContain("min-block-size: 4.5rem");
+    expect(scroll).not.toContain("min-block-size");
+  });
+
+  // The shorthand resets animation-timeline, so a timeline declared before it is
+  // silently discarded -- the trap globals.css records.
+  it("declares each timeline after the shorthand that would reset it", () => {
+    for (const selector of [
+      ".site-header",
+      ".site-header__inner",
+      ".site-header .wordmark__mark",
+    ]) {
+      const body = rule(scroll, selector);
+
+      expect(body.indexOf("animation-timeline")).toBeGreaterThan(
+        body.indexOf("animation:"),
+      );
+    }
   });
 });

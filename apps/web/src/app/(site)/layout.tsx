@@ -2,6 +2,7 @@ import localFont from "next/font/local";
 
 import "@/app/(site)/job-shell.css";
 import "@/app/(site)/site-masthead.css";
+import "@/app/(site)/site-masthead-scroll.css";
 
 // Netflix Sans already shipped in public/fonts but nothing declared it. Loading it
 // through next/font/local (rather than a hand-written @font-face) is what keeps the

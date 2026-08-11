@@ -115,7 +115,7 @@ export const GROUPS = [
       "The text under the mask stays selectable and readable by a screen reader",
       "The masthead bars and the footer glow are HTML elements animated by CSS keyframes; the page contains 0 video elements",
       "Both effects pause while they are off screen and resume where they stopped",
-      "The masthead measures 73px at the top of the page and 49px after 128px of scroll, driven by a scroll-progress timeline",
+      "The masthead shows 73px at the top of the page and 49px after 128px of scroll, driven by a scroll-progress timeline",
       "text-wrap: balance sets the display type and text-wrap: pretty sets the running copy, so no line ends on a single stranded word",
       "Posted dates render as a full date on the server and change to '3 days ago' in the browser",
       "Share opens the operating system's share sheet, and copies the link where there is no sheet",

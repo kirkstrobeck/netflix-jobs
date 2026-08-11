@@ -71,6 +71,7 @@
    If a glyph still clips after this, the next suspect is an ancestor with
    overflow: hidden. .job-page uses overflow-x: clip, which trims only the
    horizontal axis and leaves ascenders and descenders alone. */
+.ultra__backdrop,
 .ultra__mask,
 .ultra__fill {
   position: absolute;
@@ -82,6 +83,31 @@
 
 .ultra__mask {
   user-select: none;
+}
+
+/* THE WHITE FLOOR. The headline is painted TWICE, and this is the lower one.
+
+   The real text goes color: transparent the moment data-ultra="on" lands, and
+   the canvas that replaces it is a GPU surface that may not have presented yet.
+   Without something under it, that gap is a headline that is simply not there --
+   read off this page as 24,623 ink pixels in the h1 box, then 0. The screen
+   recording that reported this caught exactly that frame.
+
+   Plain white, on the same rectangle and through the same mask as the fill, so
+   it is the word in the same place at the same size. It is not a second
+   technique and not a fallback: it paints in every state, and the fill paints
+   over it whenever the fill has anything to paint. Unlit it lands on the white
+   text underneath it, which is why it does not flash in the other direction
+   either.
+
+   SDR white, deliberately -- no dynamic-range-limit here. That declaration is
+   what makes the fill brighter than white, and the floor's whole job is to be
+   the ordinary white the fill is brighter THAN.
+
+   The geometry, the bleed and pointer-events: none all come from the group
+   above; this rule is the colour and nothing else. */
+.ultra__backdrop {
+  background: #ffffff;
 }
 
 /* REQUIRED, AND UNCONDITIONAL.
