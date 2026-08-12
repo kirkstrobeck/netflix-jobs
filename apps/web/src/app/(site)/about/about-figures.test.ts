@@ -170,6 +170,29 @@ describe("what /about says about filtering", () => {
     return option.count;
   };
 
+  /**
+   * The other database-derived number in this group, and nothing was looking at
+   * it. "Work type's two rows" is a count of the distinct work types the board
+   * carries, not a constant: a crawl that introduced a third would leave the
+   * sentence claiming a control is absent from a group that now shows one, and
+   * every test here would have stayed green. It is two because Netflix posts
+   * Onsite and Remote; that is a fact about the board, so it is read off it.
+   */
+  it("states how many rows the work type group has", () => {
+    const rows = facetOptions(
+      jobs,
+      readSearchParams(new URLSearchParams("")),
+      "workType",
+      catalog,
+    );
+
+    expect(rows).toHaveLength(2);
+    expect(points("filtering")).toContain(
+      "The option search appears only in groups that hide options, so work type's " +
+        "two rows get neither control",
+    );
+  });
+
   it("states what selecting Remote does to the United States and Los Angeles", () => {
     const country = "United States";
     const site = "Los Angeles, California";

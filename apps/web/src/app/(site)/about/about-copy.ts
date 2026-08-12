@@ -9,10 +9,10 @@
  * WHICH OF THEM A TEST WILL CATCH, AND WHICH IT WILL NOT
  *
  * about-figures.test.ts pins every DATABASE-DERIVED figure -- the board size,
- * the location links, the sites with coordinates, the roles that reach one, and
- * the filter counts -- by reading the real board through the app's own queries
- * and the app's own facet code. Those cannot rot silently: a crawl that moves
- * one turns the suite red.
+ * the location links, the sites with coordinates, the roles that reach one, the
+ * filter counts and work type's row count -- by reading the real board through
+ * the app's own queries and the app's own facet code. Those cannot rot silently:
+ * a crawl that moves one turns the suite red.
  *
  * about.test.tsx pins STRUCTURE AND WORDING only -- five claims, a heading per
  * group, sentence case, no first person. It is not a check on any number, and
@@ -44,7 +44,7 @@ export const HEADLINES = [
     stat: "100%",
     claim: "test coverage",
     detail:
-      "1,075 tests on the web app and 247 on the crawler. Statements, branches, functions and lines, all at 100%.",
+      "1,076 tests on the web app and 247 on the crawler. Statements, branches, functions and lines, all at 100%.",
   },
   {
     stat: "100",
@@ -105,7 +105,7 @@ export const GROUPS = [
     id: "testing",
     heading: "Test coverage",
     points: [
-      "The web app: 1,075 tests covering 100% of statements, branches, functions and lines",
+      "The web app: 1,076 tests covering 100% of statements, branches, functions and lines",
       "The crawler: 247 tests covering 100% of statements, branches, functions and lines",
       "Coverage thresholds are set to 100, so the suite fails below that",
     ],
@@ -119,7 +119,7 @@ export const GROUPS = [
       "The option search appears only in groups that hide options, so work type's two rows get neither control",
       "Seniority sorts by rank, entry through management, and appears last",
       "Every other facet sorts by count, largest first",
-      "Filters apply across groups: select Remote and United States goes from 303 to 99, Los Angeles from 133 to 7",
+      "Filters apply across groups: select Remote and United States goes from 310 to 103, Los Angeles from 136 to 7",
       "A group keeps its own totals, so an unselected option shows how many roles selecting it returns",
       "Active filters appear in the URL, so every view of the listing is a link",
     ],
@@ -128,10 +128,10 @@ export const GROUPS = [
     id: "location",
     heading: "Location",
     points: [
-      "All 480 active roles resolve to a site record",
-      "The 480 roles resolve to 644 location links",
+      "All 489 active roles resolve to a site record",
+      "The 489 roles resolve to 655 location links",
       "31 of the 36 sites carry coordinates; the 5 without them are the remote sites",
-      "383 roles resolve to at least one site with coordinates",
+      "388 roles resolve to at least one site with coordinates",
       "Nearest sorts by distance from browser geolocation, computed in the browser",
       "The server reads the visitor's country from an IP header and puts it in the URL as a filter",
       "A role open in more than one place lists one location per line",
