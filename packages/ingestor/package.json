@@ -2,6 +2,7 @@
   "name": "@netflix-jobs/ingestor",
   "version": "1.0.0",
   "private": true,
+  "license": "MIT",
   "type": "module",
   "description": "Mirrors the Netflix Eightfold careers board into local Supabase.",
   "scripts": {
