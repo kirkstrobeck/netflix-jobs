@@ -33,10 +33,12 @@ describe("cacheHeaders", () => {
     expect(await cacheHeaders()).toEqual([]);
   });
 
-  it("gives the board payload a year, because the ?v= addresses its content", async () => {
+  it("keeps the board at the edge but makes browsers revalidate it", async () => {
     const rule = ruleFor(await production(), "/api/board");
 
-    expect(valueOf(rule!, "Cache-Control")).toBe("public, max-age=31536000, immutable");
+    expect(valueOf(rule!, "Cache-Control")).toBe(
+      "public, max-age=0, s-maxage=31536000, must-revalidate",
+    );
   });
 
   // Next's appendHeader stores even a single value as an ARRAY, and next start's

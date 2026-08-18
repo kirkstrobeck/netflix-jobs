@@ -9,6 +9,13 @@ const immutable = [
   },
 ];
 
+const boardCache = [
+  {
+    key: "Cache-Control",
+    value: "public, max-age=0, s-maxage=31536000, must-revalidate",
+  },
+];
+
 // The same content type the route handler sets, stated again here, and the
 // duplication is load-bearing rather than sloppy.
 //
@@ -52,14 +59,13 @@ export async function cacheHeaders(): Promise<HeaderList> {
   }
 
   return [
-    // The board payload, which is content-addressed by the ?v= the listing
-    // appends, so it gets the same year-long policy as a hashed asset. It has to
-    // be stated BEFORE the catch-all and excluded from it: a 60-second s-maxage
-    // on the one file the client filtering depends on would put a round trip
-    // back in front of the interaction this whole thing exists to remove.
+    // The board payload is content-addressed by the ?v= the listing appends, and
+    // Vercel can keep it at the edge until the jobs-board tag is revalidated.
+    // Browsers still have to revalidate their copy, because a tab can keep an
+    // older page/render alive and ask for the previous board URL after a crawl.
     {
       source: "/api/board",
-      headers: [...immutable, ...boardType],
+      headers: [...boardCache, ...boardType],
     },
     // Not /:path* -- that also swallowed /_next/static, whose URLs Next DOES
     // content-hash in a production build and already serves as immutable.
@@ -104,7 +110,7 @@ export async function cacheHeaders(): Promise<HeaderList> {
     // spelling of it that wins.
     //
     // What is expensive is cached elsewhere and unaffected -- the 108KB board is
-    // immutable under /api/board, the chunks are immutable under /_next/static
+    // edge-cached under /api/board, the chunks are immutable under /_next/static
     // -- so what is left to pay is the listing hole, streamed into a shell that
     // no longer costs anything.
     {
