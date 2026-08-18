@@ -12,7 +12,7 @@ const immutable = [
 const boardCache = [
   {
     key: "Cache-Control",
-    value: "public, max-age=0, s-maxage=31536000, must-revalidate",
+    value: "public, max-age=86400, s-maxage=31536000, immutable",
   },
 ];
 
@@ -61,8 +61,8 @@ export async function cacheHeaders(): Promise<HeaderList> {
   return [
     // The board payload is content-addressed by the ?v= the listing appends, and
     // Vercel can keep it at the edge until the jobs-board tag is revalidated.
-    // Browsers still have to revalidate their copy, because a tab can keep an
-    // older page/render alive and ask for the previous board URL after a crawl.
+    // Browsers may keep one addressed board payload for a day, but not for the
+    // year a hashed asset gets.
     {
       source: "/api/board",
       headers: [...boardCache, ...boardType],

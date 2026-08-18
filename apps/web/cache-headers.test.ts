@@ -33,11 +33,11 @@ describe("cacheHeaders", () => {
     expect(await cacheHeaders()).toEqual([]);
   });
 
-  it("keeps the board at the edge but makes browsers revalidate it", async () => {
+  it("keeps the board at the edge and gives browsers a one-day immutable copy", async () => {
     const rule = ruleFor(await production(), "/api/board");
 
     expect(valueOf(rule!, "Cache-Control")).toBe(
-      "public, max-age=0, s-maxage=31536000, must-revalidate",
+      "public, max-age=86400, s-maxage=31536000, immutable",
     );
   });
 
