@@ -118,6 +118,31 @@ describe('main', () => {
     await main(exit);
     expect(exit).toHaveBeenCalledWith(1);
   });
+
+  it('passes REVALIDATE_URL and REVALIDATE_SECRET to the hosted ingest subprocess', async () => {
+    vi.mocked(hostedCreds).mockResolvedValue({
+      ...CREDS,
+      revalidateUrl: 'https://prod/api/revalidate',
+      revalidateSecret: 'secret-abc',
+    });
+    const { main } = await import('./reingest.ts');
+    await main(vi.fn());
+    const calls = (vi.mocked(spawnSync) as any).mock.calls;
+    // second call is the hosted ingest
+    const hostedEnv = calls[1][2].env as Record<string, string>;
+    expect(hostedEnv['REVALIDATE_URL']).toBe('https://prod/api/revalidate');
+    expect(hostedEnv['REVALIDATE_SECRET']).toBe('secret-abc');
+  });
+
+  it('does not set REVALIDATE vars when hostedCreds omits them', async () => {
+    vi.mocked(hostedCreds).mockResolvedValue(CREDS);
+    const { main } = await import('./reingest.ts');
+    await main(vi.fn());
+    const calls = (vi.mocked(spawnSync) as any).mock.calls;
+    const hostedEnv = calls[1][2].env as Record<string, string>;
+    expect(hostedEnv['REVALIDATE_URL']).toBeUndefined();
+    expect(hostedEnv['REVALIDATE_SECRET']).toBeUndefined();
+  });
 });
 
 describe('entry point guard', () => {

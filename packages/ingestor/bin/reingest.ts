@@ -28,6 +28,7 @@ export function runIngest(
   which: 'local' | 'hosted',
   url: string,
   serviceRoleKey: string,
+  extraEnv?: Record<string, string>,
 ): number {
   const log = logPath(which);
   console.log(`\n── ${which} ingest (log: ${log}) ──`);
@@ -41,6 +42,7 @@ export function runIngest(
         PNPM_HOME: process.env.PNPM_HOME ?? '/home/agent/.pnpm',
         SUPABASE_URL: url,
         SUPABASE_SERVICE_ROLE_KEY: serviceRoleKey,
+        ...extraEnv,
       },
       encoding: 'utf8',
       maxBuffer: 10 * 1024 * 1024,
@@ -65,7 +67,11 @@ export async function main(
   const localStatus = runIngest('local', local.url, local.serviceRoleKey);
   console.log(`\nlocal exit: ${localStatus}`);
 
-  const hostedStatus = runIngest('hosted', hosted.url, hosted.serviceRoleKey);
+  const hostedExtraEnv: Record<string, string> = {};
+  if (hosted.revalidateUrl) hostedExtraEnv['REVALIDATE_URL'] = hosted.revalidateUrl;
+  if (hosted.revalidateSecret) hostedExtraEnv['REVALIDATE_SECRET'] = hosted.revalidateSecret;
+
+  const hostedStatus = runIngest('hosted', hosted.url, hosted.serviceRoleKey, hostedExtraEnv);
   console.log(`\nhosted exit: ${hostedStatus}`);
 
   console.log('\n── database counts ──');

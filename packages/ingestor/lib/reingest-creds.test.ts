@@ -221,6 +221,49 @@ describe('hostedCreds', () => {
     expect(c.url).toBe('http://h');
   });
 
+  it('returns revalidateUrl and revalidateSecret when present in Vercel env', async () => {
+    (vi.mocked(existsSync) as any)
+      .mockReturnValueOnce(false)  // .env.hosted missing
+      .mockReturnValueOnce(true)   // auth.json found
+      .mockReturnValueOnce(true);  // .env.hosted exists after write
+
+    (vi.mocked(readFileSync) as any).mockReturnValueOnce('{"token":"vt"}');
+
+    let written = '';
+    vi.mocked(writeFileSync).mockImplementation((_p, data) => {
+      written = String(data);
+    });
+    (vi.mocked(readFileSync) as any).mockImplementationOnce(() => written);
+
+    fetchMock
+      .mockResolvedValueOnce(apiOk({ projects: [{ id: 'p1', name: 'netflix-jobs' }] }))
+      .mockResolvedValueOnce(
+        apiOk({
+          envs: [
+            { key: 'SUPABASE_URL', value: 'http://h', target: ['production'] },
+            { key: 'SUPABASE_SERVICE_ROLE_KEY', value: 'k', target: ['production'] },
+            { key: 'REVALIDATE_URL', value: 'https://prod/api/revalidate', target: ['production'] },
+            { key: 'REVALIDATE_SECRET', value: 'secret-abc', target: ['production'] },
+          ],
+        }),
+      );
+
+    const c = await hostedCreds('/fake/.env.hosted');
+    expect(c.url).toBe('http://h');
+    expect(c.revalidateUrl).toBe('https://prod/api/revalidate');
+    expect(c.revalidateSecret).toBe('secret-abc');
+  });
+
+  it('returns undefined revalidate fields when Vercel env lacks them', async () => {
+    (vi.mocked(existsSync) as any).mockReturnValueOnce(true);
+    (vi.mocked(readFileSync) as any).mockReturnValueOnce(
+      'SUPABASE_URL=http://hosted\nSUPABASE_SERVICE_ROLE_KEY=svc-key',
+    );
+    const c = await hostedCreds('/fake/.env.hosted');
+    expect(c.revalidateUrl).toBeUndefined();
+    expect(c.revalidateSecret).toBeUndefined();
+  });
+
   it('throws when Vercel projects API fails', async () => {
     (vi.mocked(existsSync) as any)
       .mockReturnValueOnce(false)

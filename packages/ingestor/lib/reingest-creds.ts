@@ -8,6 +8,7 @@ const VERCEL_TEAM_ID = 'team_EPy6b0j3x1VvmGdr7oBuJGN1';
 const VERCEL_PROJECT_NAME = 'netflix-jobs';
 
 export type Creds = { url: string; serviceRoleKey: string };
+export type HostedCreds = Creds & { revalidateUrl?: string; revalidateSecret?: string };
 
 export function parseEnvFile(text: string): Record<string, string> {
   const out: Record<string, string> = {};
@@ -28,14 +29,19 @@ export function localCreds(): Creds {
   };
 }
 
-function readCredsFile(path: string): Creds | null {
+function readCredsFile(path: string): HostedCreds | null {
   if (!existsSync(path)) return null;
   const env = parseEnvFile(readFileSync(path, 'utf8'));
   const url = env['SUPABASE_URL'];
   const key = env['SUPABASE_SERVICE_ROLE_KEY'];
   if (!url) return null;
   if (!key) return null;
-  return { url: url.replace(/\/+$/, ''), serviceRoleKey: key };
+  return {
+    url: url.replace(/\/+$/, ''),
+    serviceRoleKey: key,
+    revalidateUrl: env['REVALIDATE_URL'],
+    revalidateSecret: env['REVALIDATE_SECRET'],
+  };
 }
 
 function vercelAuthPaths(): string[] {
@@ -100,12 +106,15 @@ async function pullVercelCreds(outPath: string): Promise<void> {
   const key = env['SUPABASE_SERVICE_ROLE_KEY'];
   if (!url) throw new Error('Vercel production env is missing SUPABASE_URL for netflix-jobs');
   if (!key) throw new Error('Vercel production env is missing SUPABASE_SERVICE_ROLE_KEY for netflix-jobs');
-  writeFileSync(outPath, `SUPABASE_URL=${url}\nSUPABASE_SERVICE_ROLE_KEY=${key}\n`, 'utf8');
+  let contents = `SUPABASE_URL=${url}\nSUPABASE_SERVICE_ROLE_KEY=${key}\n`;
+  if (env['REVALIDATE_URL']) contents += `REVALIDATE_URL=${env['REVALIDATE_URL']}\n`;
+  if (env['REVALIDATE_SECRET']) contents += `REVALIDATE_SECRET=${env['REVALIDATE_SECRET']}\n`;
+  writeFileSync(outPath, contents, 'utf8');
 }
 
-export async function hostedCreds(envHostedPath: string): Promise<Creds> {
+export async function hostedCreds(envHostedPath: string): Promise<HostedCreds> {
   const existing = readCredsFile(envHostedPath);
   if (existing) return existing;
   await pullVercelCreds(envHostedPath);
-  return readCredsFile(envHostedPath) as Creds;
+  return readCredsFile(envHostedPath) as HostedCreds;
 }
