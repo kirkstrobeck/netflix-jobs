@@ -168,7 +168,11 @@ export async function main(
     // last crawl rendered and names exactly the tags that are now wrong. A run
     // that changed nothing sends nothing. It never throws, so a web app that is
     // down cannot demote a finished crawl to a failed run.
-    cache = (await flushCaches(rows, counts.deactivated, prior)).note;
+    const { report: cacheReport, note: cacheNote } = await flushCaches(rows, counts.deactivated, prior);
+    cache = cacheNote;
+    if (process.env.REVALIDATE_URL && cacheReport.outcome !== 'ok' && cacheReport.outcome !== 'unchanged') {
+      throw new Error(`hosted cache revalidation ${cacheReport.outcome}`);
+    }
   } catch (err) {
     status = 'failed';
     failures.push(err instanceof Error ? err.message : String(err));

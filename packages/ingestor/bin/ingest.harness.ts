@@ -16,6 +16,7 @@ const ENV_KEYS = [
   'READER_SPACING_MS',
   'WRITE_BATCH',
   'MAX_JOBS',
+  'REVALIDATE_URL',
 ];
 
 const originalEnv = Object.fromEntries(ENV_KEYS.map((key) => [key, process.env[key]]));

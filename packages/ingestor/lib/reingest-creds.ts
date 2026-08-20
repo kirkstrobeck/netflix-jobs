@@ -114,7 +114,7 @@ async function pullVercelCreds(outPath: string): Promise<void> {
 
 export async function hostedCreds(envHostedPath: string): Promise<HostedCreds> {
   const existing = readCredsFile(envHostedPath);
-  if (existing) return existing;
+  if (existing?.revalidateUrl && existing?.revalidateSecret) return existing;
   await pullVercelCreds(envHostedPath);
   return readCredsFile(envHostedPath) as HostedCreds;
 }

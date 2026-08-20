@@ -112,7 +112,7 @@ describe('hostedCreds', () => {
   it('reads creds from an existing .env.hosted file', async () => {
     (vi.mocked(existsSync) as any).mockReturnValueOnce(true);
     (vi.mocked(readFileSync) as any).mockReturnValueOnce(
-      'SUPABASE_URL=http://hosted\nSUPABASE_SERVICE_ROLE_KEY=svc-key',
+      'SUPABASE_URL=http://hosted\nSUPABASE_SERVICE_ROLE_KEY=svc-key\nREVALIDATE_URL=https://p/r\nREVALIDATE_SECRET=s',
     );
     const c = await hostedCreds('/fake/.env.hosted');
     expect(c.url).toBe('http://hosted');
@@ -122,7 +122,7 @@ describe('hostedCreds', () => {
   it('strips trailing slashes from the url in the file', async () => {
     (vi.mocked(existsSync) as any).mockReturnValueOnce(true);
     (vi.mocked(readFileSync) as any).mockReturnValueOnce(
-      'SUPABASE_URL=http://hosted///\nSUPABASE_SERVICE_ROLE_KEY=k',
+      'SUPABASE_URL=http://hosted///\nSUPABASE_SERVICE_ROLE_KEY=k\nREVALIDATE_URL=https://p/r\nREVALIDATE_SECRET=s',
     );
     const c = await hostedCreds('/fake/.env.hosted');
     expect(c.url).toBe('http://hosted');
@@ -255,13 +255,69 @@ describe('hostedCreds', () => {
   });
 
   it('returns undefined revalidate fields when Vercel env lacks them', async () => {
-    (vi.mocked(existsSync) as any).mockReturnValueOnce(true);
-    (vi.mocked(readFileSync) as any).mockReturnValueOnce(
-      'SUPABASE_URL=http://hosted\nSUPABASE_SERVICE_ROLE_KEY=svc-key',
-    );
+    // Cached file has only DB creds → cache miss → re-pull from Vercel → Vercel also lacks them
+    (vi.mocked(existsSync) as any)
+      .mockReturnValueOnce(true)   // .env.hosted exists but incomplete
+      .mockReturnValueOnce(true)   // auth.json found
+      .mockReturnValueOnce(true);  // .env.hosted after write
+    (vi.mocked(readFileSync) as any)
+      .mockReturnValueOnce('SUPABASE_URL=http://hosted\nSUPABASE_SERVICE_ROLE_KEY=svc-key')
+      .mockReturnValueOnce('{"token":"vt"}');
+
+    let written = '';
+    vi.mocked(writeFileSync).mockImplementation((_p, data) => {
+      written = String(data);
+    });
+    (vi.mocked(readFileSync) as any).mockImplementationOnce(() => written);
+
+    fetchMock
+      .mockResolvedValueOnce(apiOk({ projects: [{ id: 'p1', name: 'netflix-jobs' }] }))
+      .mockResolvedValueOnce(
+        apiOk({
+          envs: [
+            { key: 'SUPABASE_URL', value: 'http://hosted', target: ['production'] },
+            { key: 'SUPABASE_SERVICE_ROLE_KEY', value: 'svc-key', target: ['production'] },
+          ],
+        }),
+      );
+
     const c = await hostedCreds('/fake/.env.hosted');
     expect(c.revalidateUrl).toBeUndefined();
     expect(c.revalidateSecret).toBeUndefined();
+  });
+
+  it('re-pulls from Vercel when cached .env.hosted is missing revalidate vars', async () => {
+    (vi.mocked(existsSync) as any)
+      .mockReturnValueOnce(true)   // .env.hosted exists but incomplete
+      .mockReturnValueOnce(true)   // auth.json found
+      .mockReturnValueOnce(true);  // .env.hosted after write
+    (vi.mocked(readFileSync) as any)
+      .mockReturnValueOnce('SUPABASE_URL=http://hosted\nSUPABASE_SERVICE_ROLE_KEY=svc-key')
+      .mockReturnValueOnce('{"token":"vt"}');
+
+    let written = '';
+    vi.mocked(writeFileSync).mockImplementation((_p, data) => {
+      written = String(data);
+    });
+    (vi.mocked(readFileSync) as any).mockImplementationOnce(() => written);
+
+    fetchMock
+      .mockResolvedValueOnce(apiOk({ projects: [{ id: 'p1', name: 'netflix-jobs' }] }))
+      .mockResolvedValueOnce(
+        apiOk({
+          envs: [
+            { key: 'SUPABASE_URL', value: 'http://hosted', target: ['production'] },
+            { key: 'SUPABASE_SERVICE_ROLE_KEY', value: 'svc-key', target: ['production'] },
+            { key: 'REVALIDATE_URL', value: 'https://prod/api/revalidate', target: ['production'] },
+            { key: 'REVALIDATE_SECRET', value: 'secret-abc', target: ['production'] },
+          ],
+        }),
+      );
+
+    const c = await hostedCreds('/fake/.env.hosted');
+    expect(vi.mocked(writeFileSync)).toHaveBeenCalled();
+    expect(c.revalidateUrl).toBe('https://prod/api/revalidate');
+    expect(c.revalidateSecret).toBe('secret-abc');
   });
 
   it('throws when Vercel projects API fails', async () => {
