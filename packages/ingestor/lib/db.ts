@@ -179,13 +179,14 @@ export async function readActiveJobs(): Promise<JobRow[]> {
   for (;;) {
     const end = start + PAGE - 1;
     const res = await fetch(
-      `${supabaseUrl()}/rest/v1/jobs?is_active=eq.true&select=position_id,display_job_id,title,team,business_unit,work_type,posting_date,department,location,locations,description_html,description_text,canonical_url,source_created_at&order=position_id`,
+      `${supabaseUrl()}/rest/v1/jobs?is_active=eq.true&select=position_id,display_job_id,title,team,business_unit,work_type,posting_date,department,location,locations,job_locations(location_slug),description_html,description_text,canonical_url,source_created_at&order=position_id`,
       { headers: authHeaders({ Range: `${start}-${end}` }) },
     );
     const body = await res.text();
     if (!res.ok) throw new Error(`GET /rest/v1/jobs -> ${res.status}: ${body}`);
-    const page = body ? (JSON.parse(body) as JobRow[]) : [];
-    all.push(...page);
+    type RawRow = Omit<JobRow, 'location_slugs'> & { job_locations: Array<{ location_slug: string }> };
+    const page = body ? (JSON.parse(body) as RawRow[]) : [];
+    all.push(...page.map((r) => ({ ...r, location_slugs: r.job_locations.map((l) => l.location_slug) })));
     if (page.length < PAGE) break;
     start += PAGE;
   }

@@ -30,6 +30,7 @@ build/
 
 # env files (can opt-in for committing if needed)
 .env*
+secrets.env
 
 # vercel
 .vercel
@@ -49,3 +50,10 @@ next-env.d.ts
 .cache/
 core
 .sandbox-run/
+
+# sandbox credentials and run state — never commit
+tools/sandbox/sandbox.local.conf
+tools/sandbox/.install-hashes
+
+# ingestor run logs — local artifacts, not source
+packages/ingestor/*.log
