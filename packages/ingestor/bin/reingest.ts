@@ -67,7 +67,7 @@ export async function main(
   const localStatus = runIngest('local', local.url, local.serviceRoleKey);
   console.log(`\nlocal exit: ${localStatus}`);
 
-  const hostedExtraEnv: Record<string, string> = {};
+  const hostedExtraEnv: Record<string, string> = { REQUIRE_REVALIDATE: '1' };
   if (hosted.revalidateUrl) hostedExtraEnv['REVALIDATE_URL'] = hosted.revalidateUrl;
   if (hosted.revalidateSecret) hostedExtraEnv['REVALIDATE_SECRET'] = hosted.revalidateSecret;
 

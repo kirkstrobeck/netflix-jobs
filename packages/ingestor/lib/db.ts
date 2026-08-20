@@ -171,3 +171,23 @@ export async function countJobs(): Promise<number> {
   const range = res.headers.get('content-range') ?? '';
   return Number(range.split('/')[1] ?? 0);
 }
+
+export async function readActiveJobs(): Promise<JobRow[]> {
+  const PAGE = 100;
+  const all: JobRow[] = [];
+  let start = 0;
+  for (;;) {
+    const end = start + PAGE - 1;
+    const res = await fetch(
+      `${supabaseUrl()}/rest/v1/jobs?is_active=eq.true&select=position_id,display_job_id,title,team,business_unit,work_type,posting_date,department,location,locations,description_html,description_text,canonical_url,source_created_at&order=position_id`,
+      { headers: authHeaders({ Range: `${start}-${end}` }) },
+    );
+    const body = await res.text();
+    if (!res.ok) throw new Error(`GET /rest/v1/jobs -> ${res.status}: ${body}`);
+    const page = body ? (JSON.parse(body) as JobRow[]) : [];
+    all.push(...page);
+    if (page.length < PAGE) break;
+    start += PAGE;
+  }
+  return all;
+}

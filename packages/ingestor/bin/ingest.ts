@@ -8,7 +8,6 @@
 // description_text — so one bad posting cannot abort a 481-job run.
 
 import { pathToFileURL } from 'node:url';
-
 import {
   LIST_PAGE_SIZE,
   SORT_ORDERS,
@@ -143,6 +142,7 @@ export async function main(
   let cache = 'cache: not reached';
 
   try {
+    if (process.env.REQUIRE_REVALIDATE && !process.env.REVALIDATE_SECRET) throw new Error('REQUIRE_REVALIDATE is set but REVALIDATE_SECRET is missing — aborting before crawl');
     const positions = await enumeratePositions();
     counts.listed = positions.length;
     console.log(`enumerated ${counts.listed} positions; fetching details`);
@@ -170,7 +170,7 @@ export async function main(
     // down cannot demote a finished crawl to a failed run.
     const { report: cacheReport, note: cacheNote } = await flushCaches(rows, counts.deactivated, prior);
     cache = cacheNote;
-    if (process.env.REVALIDATE_URL && cacheReport.outcome !== 'ok' && cacheReport.outcome !== 'unchanged') {
+    if (process.env.REQUIRE_REVALIDATE && cacheReport.outcome !== 'ok' && cacheReport.outcome !== 'unchanged') {
       throw new Error(`hosted cache revalidation ${cacheReport.outcome}`);
     }
   } catch (err) {

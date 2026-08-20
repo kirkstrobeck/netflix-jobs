@@ -17,6 +17,8 @@ const ENV_KEYS = [
   'WRITE_BATCH',
   'MAX_JOBS',
   'REVALIDATE_URL',
+  'REVALIDATE_SECRET',
+  'REQUIRE_REVALIDATE',
 ];
 
 const originalEnv = Object.fromEntries(ENV_KEYS.map((key) => [key, process.env[key]]));

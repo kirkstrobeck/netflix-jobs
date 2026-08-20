@@ -101,7 +101,7 @@ describe('cache flush', () => {
   });
 
   it('exits non-zero on a hosted run when revalidation is skipped', async () => {
-    const ctx = await loadIngest({ REVALIDATE_URL: 'https://prod/api/revalidate' });
+    const ctx = await loadIngest({ REQUIRE_REVALIDATE: '1', REVALIDATE_SECRET: 'secret' });
     ctx.eightfold.fetchListPage.mockResolvedValue({ positions: [position(1)], total: 1 });
     ctx.eightfold.fetchDetail.mockResolvedValue({ id: 1, job_description: '<p>Work</p>' });
     ctx.cacheFlush.flushCaches.mockResolvedValue({
@@ -116,7 +116,7 @@ describe('cache flush', () => {
   });
 
   it('exits non-zero on a hosted run when revalidation fails', async () => {
-    const ctx = await loadIngest({ REVALIDATE_URL: 'https://prod/api/revalidate' });
+    const ctx = await loadIngest({ REQUIRE_REVALIDATE: '1', REVALIDATE_SECRET: 'secret' });
     ctx.eightfold.fetchListPage.mockResolvedValue({ positions: [position(1)], total: 1 });
     ctx.eightfold.fetchDetail.mockResolvedValue({ id: 1, job_description: '<p>Work</p>' });
     ctx.cacheFlush.flushCaches.mockResolvedValue({
@@ -127,6 +127,18 @@ describe('cache flush', () => {
     const exit = vi.fn();
     await ctx.main(exit);
 
+    expect(exit).toHaveBeenCalledWith(1);
+  });
+
+  it('exits non-zero on a hosted run when REVALIDATE_SECRET is missing', async () => {
+    const ctx = await loadIngest({ REQUIRE_REVALIDATE: '1' });
+    ctx.eightfold.fetchListPage.mockResolvedValue({ positions: [position(1)], total: 1 });
+    ctx.eightfold.fetchDetail.mockResolvedValue({ id: 1, job_description: '<p>Work</p>' });
+
+    const exit = vi.fn();
+    await ctx.main(exit);
+
+    expect(ctx.cacheFlush.flushCaches).not.toHaveBeenCalled();
     expect(exit).toHaveBeenCalledWith(1);
   });
 });
