@@ -1,3 +1,4 @@
+import { TITLE } from "@/app/(site)/about/about-copy";
 import { Wordmark } from "@/app/(site)/wordmark";
 import type { RawSearchParams } from "@/lib/search/parse-query";
 
@@ -25,6 +26,11 @@ export function SiteHeader({ searchParams }: SiteHeaderProps) {
       </a>
       <div className="shell site-header__inner">
         <Wordmark className="wordmark" loading="eager" searchParams={searchParams} />
+        <nav aria-label="Site navigation" className="site-header__nav">
+          <a className="site-header__nav-link" href="/about">
+            {TITLE}
+          </a>
+        </nav>
       </div>
     </header>
   );

@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import {
   GIFT,
   GROUPS,
+  HEADLINE,
   HEADLINES,
   LINKEDIN,
   SIGNATURE,
@@ -45,7 +46,7 @@ export default function AboutPage() {
     <>
       <BarsStage as="header" className="about-masthead" contentClassName="shell">
         <UltraText as="h1" className="about__title">
-          {TITLE}
+          {HEADLINE}
         </UltraText>
       </BarsStage>
 

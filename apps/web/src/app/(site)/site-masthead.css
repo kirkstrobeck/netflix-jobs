@@ -136,3 +136,21 @@
   block-size: 4.5rem;
   transform: translateY(-50%);
 }
+
+.site-header__nav {
+  margin-inline-start: auto;
+}
+
+.site-header__nav-link {
+  font-size: 0.875rem;
+  color: var(--ink);
+  text-decoration: none;
+  opacity: 0.7;
+  /* Hover-OFF only. */
+  transition: opacity 150ms ease;
+}
+
+.site-header__nav-link:is(:hover, :focus-visible) {
+  opacity: 1;
+  transition-duration: 0s;
+}

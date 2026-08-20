@@ -33,6 +33,14 @@ describe("SiteHeader", () => {
     expect(html).toContain(WORDMARK_RED);
     expect(html).toContain('loading="eager"');
   });
+
+  it("renders an About nav link to /about", () => {
+    const html = renderToStaticMarkup(<SiteHeader />);
+
+    expect(html).toContain('aria-label="Site navigation"');
+    expect(html).toContain('href="/about"');
+    expect(html).toContain("About this project");
+  });
 });
 
 /**

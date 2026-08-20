@@ -5,6 +5,7 @@ import AboutPage from "@/app/(site)/about/page";
 import {
   GIFT,
   GROUPS,
+  HEADLINE,
   HEADLINES,
   LINKEDIN,
   SIGNATURE,
@@ -119,7 +120,7 @@ describe("the about page", () => {
     expect(markup).toContain('<header class="bars-stage about-masthead">');
     expect(markup).toContain('<h1 class="ultra about__title">');
     expect(markup).not.toContain("masthead__title");
-    expect(markup).toContain(TITLE);
+    expect(markup).toContain(HEADLINE);
   });
 
   // The page is about a project. "This board" is Netflix's careers board and

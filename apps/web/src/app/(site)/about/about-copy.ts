@@ -171,6 +171,8 @@ export const GROUPS = [
 /** The page's own title. Rendered below the masthead, not inside it. */
 export const TITLE = "About this project";
 
+export const HEADLINE = "A gift to Netflix";
+
 /** The one statement on the page that is not a measurement. */
 export const GIFT = "This project is a gift to Netflix.";
 
