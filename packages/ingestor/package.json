@@ -7,6 +7,7 @@
   "description": "Mirrors the Netflix Eightfold careers board into local Supabase.",
   "scripts": {
     "ingest": "node bin/ingest.ts",
+    "reingest": "node bin/reingest.ts",
     "relink": "node bin/relink-locations.ts",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage"
