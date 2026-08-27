@@ -57,3 +57,5 @@ tools/sandbox/.install-hashes
 
 # ingestor run logs — local artifacts, not source
 packages/ingestor/*.log
+.reingest.log
+.cache-bust.log
