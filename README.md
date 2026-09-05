@@ -1,5 +1,7 @@
 # Netflix Jobs
 
+**https://netflix.kirkstrobeck.com**
+
 A [Turborepo](https://turbo.build/repo) containing the `web` Next.js app and a
 local Supabase mirror of the Netflix careers board.
 
